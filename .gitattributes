@@ -3,3 +3,7 @@
 
 # Reference snapshots stay byte-identical to their sources.
 reference/** -text
+
+# Windows command scripts need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf

@@ -30,7 +30,10 @@ Status: `planned`. No delivery has been made.
 
 ## Standing authorizations
 
-None recorded. Git writes (commit, push, branch, remote changes), system package installation, and source imports each need a direct owner instruction or a task packet. The owner's instruction of 2026-10-11 authorized `git init` and one commit and push at the end of round 3; that authorization does not stand for later rounds.
+None recorded. Git writes (commit, push, branch, remote changes), system package installation, and source imports each need a direct owner instruction or a task packet. One-time authorizations so far, none of which stands for later rounds:
+
+- 2026-10-11, round 3: `git init`, and one commit and push at the end of the round.
+- 2026-10-11, round 4: commits and pushes during the round; downloading the EUI-NEO v0.6.1 tag archive into the Learn library; tidying the Learn library (moving the EUI-NEO snapshot, extracting and indexing the CrispASR archive, updating its `README.md`).
 
 ## Workflow
 
@@ -49,5 +52,5 @@ Material that does not come from this repository arrives only through the owner,
 
 | Source | Purpose | Version | License | Location (in the Learn library) | Digest and notes |
 | --- | --- | --- | --- | --- | --- |
-| `sudoevolve/EUI-NEO` | UI framework | `v0.6.1`, commit `1647709068e36834ab26da5a97ef4ad98aa34c9d` | Apache-2.0 | `sources/github.com/sudoevolve/EUI-NEO-v0.6.1` | The release archive is not in `.downloads/`; the tree matches the Learn index (42M, 1428 files). The directory name differs from the Learn naming convention (`<repo>/<snapshot>`), and the Learn README's path list omits it. Details in [ENVIRONMENT.md §4.1](../ENVIRONMENT.md#41-eui-neo-snapshot) |
-| CrispASR | Engine CLI flags ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 2); provenance of `reference/crispasr/` | 0.8.42, zip comment `3be8bcb4390b8080dc73f807b7abb34dc0aca9c3` | MIT | `.downloads/CrispASR-0.8.42.zip`, not extracted | SHA-256 `2a6ba392a2d253c76a857e264e5564e7a47b4202a08a48e3863800fab1104664`; not yet listed in the Learn README |
+| `sudoevolve/EUI-NEO` | UI framework | `v0.6.1`, commit `1647709068e36834ab26da5a97ef4ad98aa34c9d` | Apache-2.0 | `sources/github.com/sudoevolve/EUI-NEO/v0.6.1` (moved from `EUI-NEO-v0.6.1` on 2026-10-11) | Archive `.downloads/EUI-NEO-v0.6.1.zip`, SHA-256 `f0709a325b343691cf2d0ac1ce51cbe6d321e8a972304e0e7deffe6c71b3a2c6`, downloaded with the owner's authorization; its content matches the snapshot. Details in [ENVIRONMENT.md §4.1](../ENVIRONMENT.md#41-eui-neo-snapshot) |
+| `CrispStrobe/CrispASR` | Engine CLI flags ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 2); provenance of `reference/crispasr/` | `v0.8.42`, commit `3be8bcb4390b8080dc73f807b7abb34dc0aca9c3` | MIT | `sources/github.com/CrispStrobe/CrispASR/v0.8.42` | Archive `.downloads/CrispASR-v0.8.42.zip` (provided by the owner as `CrispASR-0.8.42.zip`), SHA-256 `2a6ba392a2d253c76a857e264e5564e7a47b4202a08a48e3863800fab1104664`; zip comment and `git ls-remote` agree on the commit; 3841 files |

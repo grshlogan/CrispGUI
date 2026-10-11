@@ -8,12 +8,12 @@
 |---|---|---|---|
 | `crispasr/` | CrispASR (the engine) | `E:\AI\ASR\CrispASR\Source` (v0.8.42 snapshot) | MIT |
 | `crisperweaver/` | CrisperWeaver (official GUI) | `E:\AI\ASR\CrisperWeaver\Source` (v0.11.0) | AGPL-3.0 (as recorded by the audit phase; not re-verified) |
-| `eui-neo/` | EUI-NEO (UI framework) | `E:\project\Learn\sources\github.com\sudoevolve\EUI-NEO-v0.6.1` (pinned); the full snapshot is at `/home/claude/projects/Learn/sources/github.com/sudoevolve/EUI-NEO-v0.6.1` in WSL2 | Apache-2.0 |
+| `eui-neo/` | EUI-NEO (UI framework) | `E:\project\Learn\sources\github.com\sudoevolve\EUI-NEO-v0.6.1` (pinned); the full snapshot is at `/home/claude/projects/Learn/sources/github.com/sudoevolve/EUI-NEO/v0.6.1` in WSL2 | Apache-2.0 |
 | `audits/` | This project's audit reports | Written by the audit phase | Internal |
 
 `crispasr/start-crispasr.ps1` and `crispasr/profiles-japanese/` come from the owner's CrispASR deployment, not from the upstream source.
 
-Verification (2026-10-11, A003): the other six files in `crispasr/` (`crispasr_server.cpp`, `crispasr_output.cpp`, `crispasr_backend.h`, `crispasr_session.h`, `concurrency.md`, `diarization-speakers.md`) have the same SHA-256 as the files of the same name in the CrispASR 0.8.42 source archive in the Learn library (`/home/claude/projects/Learn/.downloads/CrispASR-0.8.42.zip`, SHA-256 `2a6ba392a2d253c76a857e264e5564e7a47b4202a08a48e3863800fab1104664`, zip comment `3be8bcb4390b8080dc73f807b7abb34dc0aca9c3`). In the archive they sit under `examples/cli/`, `include/`, and `docs/`. The archive's `LICENSE` is MIT, which corrects the AGPL-3.0 this table used to show for CrispASR.
+Verification (2026-10-11, A003): the other six files in `crispasr/` (`crispasr_server.cpp`, `crispasr_output.cpp`, `crispasr_backend.h`, `crispasr_session.h`, `concurrency.md`, `diarization-speakers.md`) have the same SHA-256 as the files of the same name in the CrispASR 0.8.42 source archive in the Learn library (now `/home/claude/projects/Learn/.downloads/CrispASR-v0.8.42.zip`, extracted at `sources/github.com/CrispStrobe/CrispASR/v0.8.42`; SHA-256 `2a6ba392a2d253c76a857e264e5564e7a47b4202a08a48e3863800fab1104664`, zip comment `3be8bcb4390b8080dc73f807b7abb34dc0aca9c3`). In the archive they sit under `examples/cli/`, `include/`, and `docs/`. The archive's `LICENSE` is MIT, which corrects the AGPL-3.0 this table used to show for CrispASR.
 
 Study freely; when code is adapted into this repository, keep this in mind: CrisperWeaver is AGPL-3.0, and substantial adaptation of its code would make this repository AGPL-3.0 as well. CrispASR (MIT) and EUI-NEO (Apache-2.0) allow adaptation with their notices kept. Prefer reading for concepts and writing our own implementation in every case (which is also the intent — the audits extract patterns, not code to copy verbatim).
 

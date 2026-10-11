@@ -2,20 +2,14 @@
 
 The single register of undecided questions. Each entry states the context, the options, A003's recommendation, and the status. When the owner decides, the entry moves to "Resolved" with a pointer to the document that now records the decision.
 
-OQ-1 (Windows build path) and OQ-2 (Git repository) are resolved; see [Resolved](#resolved). The numbers are not reused.
-
-## OQ-3: WSL2 toolchain installation
-
-- Context: MinGW-w64 is installed (OQ-1). The Linux development build still lacks a C++ compiler, CMake, Ninja, and the development packages that EUI-NEO v0.6.1 requires on Linux.
-- Request: the owner installs the packages listed in [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain). A003 derived the list from EUI-NEO's CMake files and checked the package names with `apt-cache policy` on 2026-10-11; installing them needs sudo.
-- Status: waiting for the owner, who offered on 2026-10-11 to install from a list. Blocks Phase 0.
+OQ-1 (Windows build path), OQ-2 (Git repository), and OQ-3 (WSL2 toolchain) are resolved; see [Resolved](#resolved). The numbers are not reused.
 
 ## OQ-4: Source material needed
 
 - Context: The parameter catalog needs engine data that the reference library does not contain.
 - Items:
   1. The EUI-NEO v0.6.1 source: resolved; see [Resolved](#resolved).
-  2. The engine's CLI flag names and backend capability names. The CrispASR 0.8.42 source archive is now in the Learn library (`.downloads/CrispASR-0.8.42.zip`, not yet listed in the Learn README), and its `examples/cli/cli.cpp` holds the CLI argument parser, so A003 extracts the flag table from source in Phase 2. The text output of `crispasr.exe --help` and `crispasr.exe --list-backends-json` from the deployed `cuda13` build remains useful to confirm that the deployment matches 0.8.42.
+  2. The engine's CLI flag names and backend capability names. The CrispASR v0.8.42 source is now in the Learn library (`sources/github.com/CrispStrobe/CrispASR/v0.8.42`, indexed in the Learn README), and its `examples/cli/cli.cpp` holds the CLI argument parser, so A003 extracts the flag table from source in Phase 2. The text output of `crispasr.exe --help` and `crispasr.exe --list-backends-json` from the deployed `cuda13` build remains useful to confirm that the deployment matches 0.8.42.
   3. Optional: one short Japanese sample with the SRT the server produces for it, for parser and SRT-writer tests without models.
 - Status: item 1 resolved; item 2 has a source to work from; item 3 open.
 
@@ -77,3 +71,4 @@ Owner directions of 2026-10-11:
 | OQ-1: the Windows executable is cross-compiled in WSL2 with MinGW-w64; the owner approved and installed the toolchain | [ENVIRONMENT.md §1](ENVIRONMENT.md#1-target-and-toolchains) |
 | OQ-2: a local Git repository with a private GitHub remote, `grshlogan/CrispGUI`, which the owner created; the first commit and push were authorized for round 3 | [agents/README.md](agents/README.md#checkouts) |
 | OQ-4 item 1: EUI-NEO v0.6.1 comes from the shared Learn library | [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
+| OQ-3: the owner installed the WSL2 packages | [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain) |

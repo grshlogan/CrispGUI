@@ -12,15 +12,15 @@
 
 ## Phase 0 — Build environment (no application code)
 
-Blocked on the owner's package installation ([OQ-3](OPEN-QUESTIONS.md#oq-3-wsl2-toolchain-installation); see [STATUS.md](STATUS.md#blockers)).
+In progress: the Linux and MinGW smoke builds pass; the Windows run is pending ([Phase 0 report](devlog/phase-0.md)).
 
 - [x] EUI-NEO v0.6.1 source available: the owner placed it in the shared Learn library; location and provenance are in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot).
 - [x] Windows build path decided: MinGW-w64 cross-compilation in WSL2. The owner installed the toolchain, and a probe of EUI-NEO's static link mode passes ([ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain)).
 - [x] Git initialized with `.gitignore` and `.gitattributes`; the remote `origin` is the owner's private GitHub repository ([agents/README.md](agents/README.md#checkouts)).
-- [ ] The owner installs the Linux packages of [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain); record the installed versions.
-- [ ] [Linux] Smoke build: configure EUI-NEO from the Learn library into `build/eui-smoke-linux` with its examples on and `EUI_DEPS_MODE=bundled`; `eui_demo` opens under WSLg, and nothing is written inside the Learn library.
-- [ ] Add `cmake/toolchains/mingw-w64-x86_64.cmake` and cross-build the same `eui_demo` into `build/eui-smoke-mingw`.
-- [ ] [Windows] First delivery: the owner runs that `eui_demo` folder on Windows.
+- [x] The owner installed the Linux packages; the versions are in [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain).
+- [x] [Linux] Smoke build: `tools/smoke/build-eui-smoke.sh` configures EUI-NEO from the Learn library into `build/eui-smoke-linux` with its examples and tests and `EUI_DEPS_MODE=bundled`; `eui_demo` opens and renders under WSLg, and nothing is left inside the Learn library.
+- [x] `cmake/toolchains/mingw-w64-x86_64.cmake` added; the same script cross-builds EUI-NEO into `build/eui-smoke-mingw`.
+- [ ] [Windows] First delivery: the owner runs `eui_demo.exe`, `multipage_table.exe`, and `run-eui-smoke.cmd` from the delivery folder ([agents/README.md](agents/README.md#delivery-to-windows)).
 - [ ] Acceptance: Linux and Windows builds exist for the same commit, and both results are recorded with platform and SHA.
 
 ## Phase 1 — Application skeleton

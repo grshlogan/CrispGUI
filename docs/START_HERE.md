@@ -23,12 +23,13 @@
 | Present state and open decisions | [STATUS.md](STATUS.md), [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) |
 | Reference material and its provenance | [reference/README.md](../reference/README.md) |
 | Shared upstream snapshots (EUI-NEO, the CrispASR source archive) | `/home/claude/projects/Learn`, read-only and indexed by its `README.md`; EUI-NEO in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
-| Verification entry points | None configured yet ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
+| Verification entry points | Phase 0 smoke commands ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
+| Phase reports | [devlog/](devlog/phase-0.md) |
 | Root aliases | `<WSL_ROOT>`, `<HANDOFF_OUT>` in [agents/README.md](agents/README.md); `<CRISPASR_ROOT>` in [ENVIRONMENT.md §5](ENVIRONMENT.md#5-runtime-configuration-defaults-windows) |
 
 ## Scope gate
 
-The specification is approved, but implementation starts with Phase 0 of [TASKS.md](TASKS.md), which is blocked until the owner installs the WSL2 packages ([OQ-3](OPEN-QUESTIONS.md#oq-3-wsl2-toolchain-installation)). Installing packages, importing sources, Git writes (commit, push, branch), and deliveries to Windows each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
+The specification is approved. Phase 0 of [TASKS.md](TASKS.md) is in progress: the smoke builds pass, and its acceptance waits for the owner's Windows run ([Phase 0 report](devlog/phase-0.md)). Application code starts in Phase 1. Installing packages, importing sources, Git writes (commit, push, branch), and deliveries to Windows each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
 
 ## Language
 
