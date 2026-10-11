@@ -1,0 +1,9 @@
+# Build trees (Linux and MinGW builds)
+/build*/
+
+# Development app data: settings, logs, job state, temporary files
+/appdata/
+
+# Machine-local CMake presets and tool caches
+/CMakeUserPresets.json
+/.cache/

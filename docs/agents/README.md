@@ -1,0 +1,53 @@
+# Identities and Workflow
+
+This document registers CrispRustGUI's identities, checkouts, delivery to Windows, authorizations, and workflow choice. Root rules are in [AGENTS.md](../../AGENTS.md).
+
+## Identities
+
+| Stable ID | Display name | Host | Role and write scope | Context |
+| --- | --- | --- | --- | --- |
+| `A002` | not recorded | not recorded | Author of the audit reports in `reference/audits/audit-reports/` (each report's header names A002, dated 2026-10-11). No write scope in this checkout | None in this repository |
+| `A003` | `A003[ClaudeCode]Dev Gui` | Claude Code CLI on WSL2 | GUI development: application source, build files, and tests once a task assigns them; project documentation under owner instruction; its own context | [docs/identity/A003.md](../identity/A003.md) |
+
+The owner (the user) assigns identities, approves requirements and decisions, authorizes Git, environment, and import operations, copies deliveries to Windows, and performs Windows-native acceptance. Coordinator, Coding, and Review roles are assigned per task once a workflow is selected.
+
+## Checkouts
+
+- One development checkout, `<WSL_ROOT>`, in the WSL2 distribution `claude-debian12`. Its current location is `/home/claude/projects/CrispGUI`. Identities on WSL2 share it, one writer at a time.
+- Windows holds no development checkout. It hosts the CrispASR deployment (`<CRISPASR_ROOT>`, default `E:\AI\ASR\CrispASR`) and receives deliveries.
+- `<WSL_ROOT>` is a Git repository on `main`, initialized on 2026-10-11 under the owner's instruction. Its remote `origin` is `https://github.com/grshlogan/CrispGUI`, a private repository the owner created, and the source of record. Pushes authenticate through the GitHub CLI credential helper that is already configured for `github.com`.
+- Commits use the owner's Git identity, `grshlogan <grshlogan@gmail.com>`, the same as in the owner's Chronicle Harbor repository. It is passed with `git -c` on each commit; neither the repository nor the global Git configuration stores it.
+
+## Delivery to Windows
+
+Status: `planned`. No delivery has been made.
+
+1. A delivery is built from a clean tree at a commit that has been pushed to `origin`.
+2. Default form: the MinGW-w64 release build folder (the executable plus EUI-NEO's `assets/`), zipped as `crisprustgui-<short SHA>.zip` with its SHA-256 in `<name>.zip.sha256`. A `BUILD-INFO.txt` inside the folder names the commit, the build type, and the toolchain versions. The Windows side does no development and needs no source, so a Git bundle or a `git archive` snapshot is made only on request.
+3. Deliveries go to `<HANDOFF_OUT>`, a directory outside the checkout; the proposed location is `/home/claude/projects/CrispGUI-handoff/outgoing/`. The owner copies the folder to Windows by hand or with a copy script.
+4. Windows results come back through the owner (message, log excerpt, or screenshot). They are recorded against the delivered SHA and the platform.
+5. Nothing reads or writes across the system boundary, and WSL2 never mounts Windows drives.
+
+## Standing authorizations
+
+None recorded. Git writes (commit, push, branch, remote changes), system package installation, and source imports each need a direct owner instruction or a task packet. The owner's instruction of 2026-10-11 authorized `git init` and one commit and push at the end of round 3; that authorization does not stand for later rounds.
+
+## Workflow
+
+The owner has not selected a formal Coding/Review workflow ([OQ-9](../OPEN-QUESTIONS.md#oq-9-formal-workflow-and-review-policy)). Installed candidates, checked by file listing on 2026-10-11:
+
+| Skill | Location | Use |
+| --- | --- | --- |
+| `agent-dev-loop` | `~/.claude/skills/codequality/agent-dev-loop/` (`SKILL.md` readable) | Coding, independent Review, and acceptance with task packets and frozen candidates |
+| `reference-audit` | `~/.claude/skills/codequality/reference-audit/` | Independent audits of external projects; output is advisory |
+
+A Skill file being present does not put it in a session's context; a task must name it and the session must read it.
+
+## Source imports
+
+Material that does not come from this repository arrives only through the owner, normally in the shared Learn library (`/home/claude/projects/Learn`, read-only, indexed by its `README.md`). Record each import with: source, purpose, fixed version or commit, license, location, archive SHA-256, read-only status, and missing content. Import approval does not authorize running scripts, installers, or package managers. Never transfer credentials, sessions, keyrings, or private data.
+
+| Source | Purpose | Version | License | Location (in the Learn library) | Digest and notes |
+| --- | --- | --- | --- | --- | --- |
+| `sudoevolve/EUI-NEO` | UI framework | `v0.6.1`, commit `1647709068e36834ab26da5a97ef4ad98aa34c9d` | Apache-2.0 | `sources/github.com/sudoevolve/EUI-NEO-v0.6.1` | The release archive is not in `.downloads/`; the tree matches the Learn index (42M, 1428 files). The directory name differs from the Learn naming convention (`<repo>/<snapshot>`), and the Learn README's path list omits it. Details in [ENVIRONMENT.md §4.1](../ENVIRONMENT.md#41-eui-neo-snapshot) |
+| CrispASR | Engine CLI flags ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 2); provenance of `reference/crispasr/` | 0.8.42, zip comment `3be8bcb4390b8080dc73f807b7abb34dc0aca9c3` | MIT | `.downloads/CrispASR-0.8.42.zip`, not extracted | SHA-256 `2a6ba392a2d253c76a857e264e5564e7a47b4202a08a48e3863800fab1104664`; not yet listed in the Learn README |
