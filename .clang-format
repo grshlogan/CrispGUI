@@ -1,0 +1,9 @@
+# C++ style for this project's sources (docs/CONVENTIONS.md). EUI-NEO and reference/ are not formatted.
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 120
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+PointerAlignment: Left
+IncludeBlocks: Preserve

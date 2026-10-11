@@ -4,7 +4,7 @@
 
 ## 1. Target and toolchains
 
-- **Target**: a Windows 10/11 x64 desktop application. C++17, CMake ≥ 3.14 (EUI-NEO's minimum), Ninja.
+- **Target**: a Windows 10/11 x64 desktop application. C++17, CMake ≥ 3.25 (the project uses `add_subdirectory(... SYSTEM)`; EUI-NEO itself needs 3.14), Ninja.
 - **Windows executable**: cross-compiled in WSL2 with MinGW-w64 GCC 12 and the POSIX thread model (owner decision of 2026-10-11, formerly OQ-1). The result is a statically linked executable plus EUI-NEO's `assets/` folder, so a delivery is one folder ([§4.2](#42-eui-neo-build-facts)).
 - **Development builds**: Linux, in the WSL2 distribution `claude-debian12`, rendering through WSLg with GLFW's X11 backend. EUI-NEO's `eui_demo` renders correctly under WSLg ([Phase 0 report](devlog/phase-0.md)).
 - **UI framework**: EUI-NEO v0.6.1 from the shared Learn library ([§4.1](#41-eui-neo-snapshot)), built into this project's build tree.
@@ -57,27 +57,29 @@ tools/smoke/package-eui-smoke.sh       # Windows delivery; needs a clean tree on
 
 Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shadertoy/shadertoy/` under its compile-time source path ([§4.2](#42-eui-neo-build-facts)).
 
-Project builds (`planned`; Phase 1 adds the top-level `CMakeLists.txt`):
+Project builds (`verified` on 2026-10-12; results in the [Phase 1 report](devlog/phase-1.md)):
 
 ```bash
-# Linux development build (WSLg)
+# Linux development build (WSLg); the app is build/linux/crisprustgui
 cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure
 
-# Windows build (MinGW-w64 cross-compilation)
+# Windows release build (MinGW-w64 cross-compilation) and its delivery
 cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64-x86_64.cmake
 cmake --build build/mingw
+tools/package-windows.sh               # needs a clean tree on origin/main
 ```
 
-The project's `CMakeLists.txt` will set the EUI-NEO options of [§4.2](#42-eui-neo-build-facts), so these commands need no extra flags. Build directory names must not contain the segments `vk`, `vulkan`, or `sdl2`, because EUI-NEO picks its backends from them.
+The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-build-facts) and links every MinGW executable with `-static`, so these commands need no extra flags; `-DCRISPGUI_EUI_NEO_DIR=<path>` points at another EUI-NEO snapshot. Build directory names must not contain the segments `vk`, `vulkan`, or `sdl2`, because EUI-NEO picks its backends from them.
 
 ## 3. Repository layout policy
 
 - EUI-NEO is not copied into the repository. Builds read it from the path in `CRISPGUI_EUI_NEO_DIR` ([§4.1](#41-eui-neo-snapshot)) and write what they generate into the build tree.
 - `cmake/toolchains/mingw-w64-x86_64.cmake`: the MinGW-w64 toolchain file.
-- `tools/smoke/`: the Phase 0 smoke-build, packaging, and Windows test scripts.
+- `CMakeLists.txt`, `src/`, `tests/`: the application, its two libraries (`crisp_core` without UI dependencies, `crisp_ui` on EUI-NEO), and the unit tests.
+- `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds the test runner that deliveries carry; `tools/smoke/` holds the Phase 0 smoke build and its packaging.
 - `params/`: the parameter catalog and model packs ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)); data, committed.
 - `build*/`, `appdata/`, `CMakeUserPresets.json`, and `.cache/` are ignored by Git (`.gitignore`).
 - Line endings are LF (`.gitattributes`), except CRLF for `*.cmd` and `*.bat`, and except `reference/`, which Git stores byte for byte.
@@ -126,13 +128,14 @@ From EUI-NEO v0.6.1's `CMakeLists.txt`, `3rd/dependencies.cmake`, and `.github/w
 | Server executable | `<root>\<profile.build>\crispasr.exe` | Derived from the profile |
 | Profiles directory | `<root>\profile` | Derived from the root |
 | Models directory | `<root>\models` | Derived from the root |
-| App data directory | `<app folder>\appdata`; for development runs `<WSL_ROOT>/appdata` | GUI settings; never on `C:\` |
+| App data directory | `<folder of crisprustgui.exe>\appdata`; for Linux development runs `build/linux/appdata` | Derived from the executable's folder (Phase 1); a setting from Phase 8. Never on `C:\`: the dashboard warns when it is |
 | Temporary files | `<appdata>\tmp` for the GUI, `<appdata>\tmp\server` as `TMP`/`TEMP` of the server process | Derived from the app data directory |
 | Transcription window | 300 s (*proposed*, OQ-6) | GUI settings and each job snapshot |
 
 ## 6. Verification entry points
 
-- Phase 0: the smoke commands of [§2.2](#22-commands). The Windows side runs `run-eui-smoke.cmd` from the delivery folder, which writes `smoke-results.txt`.
-- Planned after Phase 1: the project's Linux and MinGW builds, unit tests through `ctest`, HTTP tests against the stub server, and a Windows smoke run by the owner.
+- Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit tests; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`.
+- Phase 0: the smoke commands of [§2.2](#22-commands).
+- Planned: HTTP tests against a stub server (Phase 4).
 
 Each result records its command, working-directory alias, platform, commit, and exit code.

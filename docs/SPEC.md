@@ -107,7 +107,7 @@ Owner invariant (2026-10-11): every model has its own parameter set, and the pan
 
 ## 4. Non-functional requirements
 
-- Target Windows 10/11 x64, C++17, CMake ≥ 3.14. The Windows executable is cross-compiled in WSL2 with MinGW-w64 GCC 12 and linked statically, so a delivery is a folder the owner copies ([ENVIRONMENT.md §1](ENVIRONMENT.md#1-target-and-toolchains)).
+- Target Windows 10/11 x64, C++17, CMake ≥ 3.25. The Windows executable is cross-compiled in WSL2 with MinGW-w64 GCC 12 and linked statically, so a delivery is a folder the owner copies ([ENVIRONMENT.md §1](ENVIRONMENT.md#1-target-and-toolchains)).
 - All development happens in WSL2, so the application also builds and runs on Linux for development. Platform-specific code (process management, HTTP transport, paths) sits behind interfaces with Windows and Linux implementations. Windows-native behavior is accepted only on Windows.
 - UI text in English and Chinese through a string table (EUI-NEO has CJK font support and IME); code comments in English.
 - No telemetry and no network access except to the configured local server endpoints.

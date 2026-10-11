@@ -24,13 +24,13 @@ Set by the owner on the dates shown; changing one needs the owner.
 
 ## 2. Component model
 
-Status: `planned`; no source exists yet.
+Status: Phase 1 created the entries marked `(P1)`; the rest is `planned`.
 
 ```
 crisprustgui/
 ├── src/
-│   ├── main.cpp                      // EUI-NEO bootstrap: dslAppConfig(), compose()
-│   ├── app/                          // application state, page composition, UI inbox
+│   ├── main.cpp                      // (P1) EUI-NEO entry points; owns the single Application
+│   ├── app/                          // (P1) application.{h,cpp}: state and page composition; app_data.{h,cpp}: app data folder and TMP/TEMP; later the UI inbox
 │   ├── core/
 │   │   ├── profile_store.{h,cpp}     // JSONC parsing, profile model, readiness, args[] parsing
 │   │   ├── server_manager.{h,cpp}    // pre-flight, process lifecycle, health polling, log buffer
@@ -43,14 +43,15 @@ crisprustgui/
 │   │   └── step_runners/
 │   │       ├── step_runner.h         // interface
 │   │       └── asr_step.cpp          // v1's only runner: the window loop (§2.5)
-│   ├── platform/                     // HttpTransport (WinHTTP | libcurl), Process (Win32 | POSIX), paths
+│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; later HttpTransport (WinHTTP | libcurl), Process (Win32 | POSIX)
 │   ├── ui/
-│   │   ├── pages: dashboard / transcribe / batch / settings / log
+│   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp} with placeholders)
 │   │   └── widgets: generated parameter panel, profile picker, job table
-│   └── util/                         // JSON writer, logging, string table
+│   └── util/                         // (P1) string_table.{h,cpp}; later the JSON writer and logging
 ├── params/                           // data: catalog/*.json, models/<folder>/<name>.json (§2.7)
 ├── cmake/toolchains/                 // MinGW-w64 cross-compilation toolchain file
-└── tests/                            // unit tests, plus a stub server for HTTP tests
+├── tools/                            // smoke builds, Windows packaging, the Windows test runner
+└── tests/                            // (P1) unit tests with check.h; later a stub server for HTTP tests
 ```
 
 EUI-NEO is not part of the tree; the build adds it from the shared Learn library ([ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot)).

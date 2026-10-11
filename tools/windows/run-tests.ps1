@@ -1,13 +1,13 @@
-# Runs the EUI-NEO unit tests and rendering probes listed in smoke-tests.txt and records
-# each exit code in smoke-results.txt. Start it with run-eui-smoke.cmd from the delivery folder.
+# Runs the tests listed in tests.txt ("unit <name>" or "probe <name>") and records each exit
+# code in test-results.txt. Start it with run-tests.cmd from the delivery folder.
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $here
-$logDir = Join-Path $here 'smoke-logs'
+$logDir = Join-Path $here 'test-logs'
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 $lines = New-Object System.Collections.Generic.List[string]
-$lines.Add("EUI-NEO smoke run $(Get-Date -Format o)")
+$lines.Add("Test run $(Get-Date -Format o)")
 try {
     $os = Get-CimInstance Win32_OperatingSystem
     $lines.Add("Windows: $($os.Caption) $($os.Version)")
@@ -21,7 +21,7 @@ $lines.Add('')
 foreach ($line in Get-Content -LiteralPath (Join-Path $here 'BUILD-INFO.txt')) { $lines.Add($line) }
 $lines.Add('')
 
-$tests = @(Get-Content -LiteralPath (Join-Path $here 'smoke-tests.txt') | Where-Object { $_ })
+$tests = @(Get-Content -LiteralPath (Join-Path $here 'tests.txt') | Where-Object { $_ })
 $failures = 0
 foreach ($entry in $tests) {
     $kind, $name = $entry -split ' ', 2
@@ -66,5 +66,5 @@ foreach ($entry in $tests) {
 }
 $lines.Add('')
 $lines.Add("Failures: $failures of $($tests.Count)")
-$lines | Set-Content -LiteralPath (Join-Path $here 'smoke-results.txt') -Encoding UTF8
+$lines | Set-Content -LiteralPath (Join-Path $here 'test-results.txt') -Encoding UTF8
 $lines | ForEach-Object { Write-Host $_ }

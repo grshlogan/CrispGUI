@@ -25,11 +25,14 @@ Complete: accepted on 2026-10-12 after the owner's Windows run ([Phase 0 report]
 
 ## Phase 1 — Application skeleton
 
-- [ ] Top-level `CMakeLists.txt` that adds EUI-NEO from `CRISPGUI_EUI_NEO_DIR` with the options of [ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts), for both the Linux and the MinGW build.
-- [ ] Create the directory layout of [ARCHITECTURE.md §2](ARCHITECTURE.md#2-component-model) (empty modules are fine), with Windows and Linux stubs under `src/platform/`.
-- [ ] `src/main.cpp`: a minimal EUI-NEO app using `DslAppConfig` (title "CrispRustGUI", window about 1100x720, `onStart` stub), with a string table from the start. Model it after `reference/eui-neo/examples/eui_demo.cpp`.
-- [ ] Tabs shell with four empty pages: Dashboard, Transcribe, Batch, Settings (the tab pattern of `reference/eui-neo/examples/multipage_table.cpp`).
-- [ ] Create the app data directory and point the GUI process's own `TMP`/`TEMP` at it at startup.
+In progress: the Linux and MinGW builds pass; the Windows run is pending ([Phase 1 report](devlog/phase-1.md)).
+
+- [x] Top-level `CMakeLists.txt` that adds EUI-NEO from `CRISPGUI_EUI_NEO_DIR` with the options of [ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts), for both the Linux and the MinGW build.
+- [x] The directory layout of [ARCHITECTURE.md §2](ARCHITECTURE.md#2-component-model) for the modules Phase 1 needs, with Windows and Linux implementations under `src/platform/`; later modules get their directories when they are written.
+- [x] `src/main.cpp`: a minimal EUI-NEO app using `DslAppConfig` (title "CrispRustGUI", window 1100x720, `onStart`), with a string table from the start.
+- [x] Tabs shell with four pages: Dashboard, Transcribe, Batch, Settings, built on EUI-NEO's `tabs` component; Settings already switches the UI language between English and Chinese, without saving it.
+- [x] Create the app data directory (`<folder of the executable>/appdata`) and point the GUI process's own `TMP`/`TEMP` at `appdata/tmp` in `onStart`; the dashboard shows both paths and warns when they are on the system drive.
+- [x] Unit tests for the string table and the app data preparation, run by CTest on Linux and by `run-tests.cmd` on Windows.
 - [ ] Acceptance: [Linux] the app opens with four tabs, stays responsive, and closes cleanly; [Windows] the same on the owner's machine.
 
 ## Phase 2 — ProfileStore

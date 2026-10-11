@@ -4,7 +4,7 @@ Updated 2026-10-12 (round 5) by A003. The owner (the user) is the acceptance aut
 
 ## Baseline
 
-The repository holds the specification, the architecture plan, the server contract, the phased plan, the agent entry points, a read-only reference library, the MinGW-w64 toolchain file, and the Phase 0 smoke scripts. It has no application source yet. Phase 0 (build environment) is complete, and Phase 1 (application skeleton) is in progress.
+The repository holds the specification, the architecture plan, the server contract, the phased plan, the agent entry points, a read-only reference library, the MinGW-w64 toolchain file, the Phase 0 smoke scripts, and the Phase 1 application skeleton. Phase 0 (build environment) is complete; Phase 1 (application skeleton) waits for the owner's Windows run.
 
 ## Present facts
 
@@ -12,7 +12,7 @@ The repository holds the specification, the architecture plan, the server contra
 | --- | --- | --- |
 | Specification and design | SPEC approved; revised on 2026-10-11 with the owner's directions and source-review corrections. The parameter model and window loop details are proposed | [SPEC.md](SPEC.md), [ARCHITECTURE.md](ARCHITECTURE.md), [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) |
 | Server contract | Checked against the v0.8.42 server source, which is byte-identical to the same file in the CrispASR v0.8.42 snapshot in the Learn library; deployed-build behavior `not verified` | [API-CRISPASR.md](API-CRISPASR.md), [reference/README.md](../reference/README.md) |
-| Implementation | Not started; no `src/` | Directory listing |
+| Implementation | Phase 1 skeleton: four tabs, the string table, and the app data folder with `TMP`/`TEMP`. Linux: builds without warnings, 2 of 2 unit tests pass, the window opens and closes cleanly. Windows: the release build links statically; the owner's run is pending | [Phase 1 report](devlog/phase-1.md) |
 | Phase 0 | Accepted on 2026-10-12. The EUI-NEO smoke builds from commit `7e4e89e` pass: under WSLg, 26 of 26 unit tests and 7 of 8 probes (`frame_presentation_probe` fails only under WSLg); on the owner's Windows 11 machine, 0 failures of 34 and no visual problems | [Phase 0 report](devlog/phase-0.md) |
 | Repository | Git, branch `main`; the remote `origin` is the owner's private GitHub repository `grshlogan/CrispGUI` | [agents/README.md](agents/README.md#checkouts) |
 | Profiles | The four Japanese reference profiles parse as JSON after string-aware comment stripping | Python check in WSL2, exit 0 (2026-10-11) |
@@ -32,4 +32,4 @@ Evidence comes from reading the documents and sources, environment probes in WSL
 
 ## Next event
 
-A003 builds the Phase 1 application skeleton and delivers it to Windows for acceptance.
+The owner runs the Phase 1 delivery on Windows; A003 then closes Phase 1 and starts Phase 2 (ProfileStore).

@@ -25,17 +25,17 @@ mkdir -p "$stage"
 
 cp "$build/eui_demo.exe" "$build/multipage_table.exe" "$stage/"
 cp -r "$build/assets" "$stage/"
-: > "$stage/smoke-tests.txt"
+: > "$stage/tests.txt"
 for kind in unit probe; do
   for test in $(ctest --test-dir "$build" -N -L "^$kind\$" | sed -n 's/^ *Test *#[0-9]*: *//p'); do
     # shadertoy_probe writes into its compile-time source path, which does not exist on Windows.
     [ "$test" = shadertoy_probe ] && continue
     cp "$build/$test.exe" "$stage/"
-    printf '%s %s\r\n' "$kind" "$test" >> "$stage/smoke-tests.txt"
+    printf '%s %s\r\n' "$kind" "$test" >> "$stage/tests.txt"
   done
 done
-for script in run-eui-smoke.cmd run-eui-smoke.ps1; do
-  sed 's/\r*$/\r/' "$root/tools/smoke/$script" > "$stage/$script"
+for script in run-tests.cmd run-tests.ps1; do
+  sed 's/\r*$/\r/' "$root/tools/windows/$script" > "$stage/$script"
 done
 
 mingw_version="$(dpkg-query -W -f='${Version}' g++-mingw-w64-x86-64-posix)"
@@ -48,7 +48,7 @@ headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
   echo "Toolchain file: cmake/toolchains/mingw-w64-x86_64.cmake, blob $(git -C "$root" rev-parse HEAD:cmake/toolchains/mingw-w64-x86_64.cmake)"
   echo "EUI-NEO: v0.6.1, commit 1647709068e36834ab26da5a97ef4ad98aa34c9d, built by tools/smoke/build-eui-smoke.sh"
   echo "Visual check: eui_demo.exe, multipage_table.exe"
-  echo "Automatic check: run-eui-smoke.cmd runs $(grep -c '^unit ' "$stage/smoke-tests.txt") unit tests and $(grep -c '^probe ' "$stage/smoke-tests.txt") probes"
+  echo "Automatic check: run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit tests and $(grep -c '^probe ' "$stage/tests.txt") probes"
 } | sed 's/$/\r/' > "$stage/BUILD-INFO.txt"
 
 (cd "$out" && cmake -E tar cf "$name.zip" --format=zip "$name" && sha256sum "$name.zip" > "$name.zip.sha256")
