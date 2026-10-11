@@ -10,6 +10,8 @@ Status: Linux and MinGW smoke builds pass; the Windows run of the first delivery
 
 ## Linux results (WSL2, WSLg)
 
+Both builds were rebuilt from a clean tree at commit `7e4e89eb7e021ea61bcb432aadcb3883c22e3479`, the commit of the first delivery, with the same results as below.
+
 | Check | Command (in `<WSL_ROOT>`) | Result |
 |---|---|---|
 | Smoke builds | `tools/smoke/build-eui-smoke.sh all` | exit 0; 276 Linux and 295 MinGW build steps |
@@ -27,6 +29,10 @@ Status: Linux and MinGW smoke builds pass; the Windows run of the first delivery
 - `-static` for all executables: EUI-NEO links its test executables dynamically against the MinGW runtime, so the MinGW smoke build adds `CMAKE_EXE_LINKER_FLAGS=-static`.
 - `shadertoy_probe` excluded: it writes under its compile-time source path, the Learn snapshot. The first probe run left `build-shadertoy/shadertoy/` (two empty directories) there; A003 removed them, and the snapshot again matches the tag archive (`diff -rq`, exit 0). The probe is excluded from Linux runs and from the Windows delivery, where that path does not exist.
 - The Learn library was tidied at the owner's request: the EUI-NEO snapshot moved to `sources/github.com/sudoevolve/EUI-NEO/v0.6.1`, its tag archive was downloaded and verified, and the CrispASR v0.8.42 archive was renamed, extracted, and indexed (Learn `README.md`, 2026-10-11 record).
+
+## First delivery
+
+`tools/smoke/package-eui-smoke.sh` at `7e4e89e` produced `crisprustgui-eui-smoke-7e4e89e.zip` in `<HANDOFF_OUT>`: 45,685,746 bytes, SHA-256 `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b`, `unzip -tq` without errors. It holds 36 executables (130 MB unpacked), `assets/`, `BUILD-INFO.txt`, `smoke-tests.txt`, and the two run scripts.
 
 ## Open items
 

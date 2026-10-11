@@ -20,7 +20,7 @@ In progress: the Linux and MinGW smoke builds pass; the Windows run is pending (
 - [x] The owner installed the Linux packages; the versions are in [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain).
 - [x] [Linux] Smoke build: `tools/smoke/build-eui-smoke.sh` configures EUI-NEO from the Learn library into `build/eui-smoke-linux` with its examples and tests and `EUI_DEPS_MODE=bundled`; `eui_demo` opens and renders under WSLg, and nothing is left inside the Learn library.
 - [x] `cmake/toolchains/mingw-w64-x86_64.cmake` added; the same script cross-builds EUI-NEO into `build/eui-smoke-mingw`.
-- [ ] [Windows] First delivery: the owner runs `eui_demo.exe`, `multipage_table.exe`, and `run-eui-smoke.cmd` from the delivery folder ([agents/README.md](agents/README.md#delivery-to-windows)).
+- [ ] [Windows] First delivery `crisprustgui-eui-smoke-7e4e89e.zip`: the owner runs `eui_demo.exe`, `multipage_table.exe`, and `run-eui-smoke.cmd` from the delivery folder ([agents/README.md](agents/README.md#delivery-to-windows)).
 - [ ] Acceptance: Linux and Windows builds exist for the same commit, and both results are recorded with platform and SHA.
 
 ## Phase 1 — Application skeleton

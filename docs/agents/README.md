@@ -20,7 +20,13 @@ The owner (the user) assigns identities, approves requirements and decisions, au
 
 ## Delivery to Windows
 
-Status: `planned`. No delivery has been made.
+Status: one delivery made, waiting for the owner's Windows run.
+
+| Delivery | Commit | Archive SHA-256 | Contents | Windows result |
+| --- | --- | --- | --- | --- |
+| `crisprustgui-eui-smoke-7e4e89e.zip` (45,685,746 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `7e4e89eb7e021ea61bcb432aadcb3883c22e3479` | `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b` | Phase 0 smoke: `eui_demo.exe`, `multipage_table.exe`, 26 unit tests, 8 probes, `run-eui-smoke.cmd` | Pending |
+
+Steps:
 
 1. A delivery is built from a clean tree at a commit that has been pushed to `origin`.
 2. Default form: the MinGW-w64 release build folder (the executable plus EUI-NEO's `assets/`), zipped as `crisprustgui-<short SHA>.zip` with its SHA-256 in `<name>.zip.sha256`. A `BUILD-INFO.txt` inside the folder names the commit, the build type, and the toolchain versions. The Windows side does no development and needs no source, so a Git bundle or a `git archive` snapshot is made only on request.

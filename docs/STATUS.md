@@ -18,7 +18,7 @@ The repository holds the specification, the architecture plan, the server contra
 | Profiles | The four Japanese reference profiles parse as JSON after string-aware comment stripping | Python check in WSL2, exit 0 (2026-10-11) |
 | WSL2 toolchain | Complete: MinGW-w64 GCC 12 (POSIX threads), GCC 12, CMake 3.25.1, Ninja 1.11.1, and EUI-NEO's Linux development packages | [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain) |
 | EUI-NEO source | v0.6.1 in the shared Learn library, verified identical to its tag archive; not copied into this repository | [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
-| Windows side | Runtime and acceptance only; the first delivery is prepared for the owner | [agents/README.md](agents/README.md#delivery-to-windows) |
+| Windows side | Runtime and acceptance only. The first delivery, `crisprustgui-eui-smoke-7e4e89e.zip` from commit `7e4e89e`, waits for the owner's run | [agents/README.md](agents/README.md#delivery-to-windows) |
 | Identities | A003 established; A002 authored the audit reports | [agents/README.md](agents/README.md) |
 | Workflow | None selected | [OQ-9](OPEN-QUESTIONS.md#oq-9-formal-workflow-and-review-policy) |
 
