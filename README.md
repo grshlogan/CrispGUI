@@ -2,7 +2,7 @@
 
 A desktop GUI for driving the [CrispASR](https://github.com/CrispStrobe/CrispASR) speech engine, built with C++17 and the EUI-NEO UI framework.
 
-> **Status: Phase 0 (build environment) complete; Phase 1 (application skeleton) in progress.** This repository currently contains the specification, architecture plan, server contract, and reference material. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
+> **Status: Phases 0 (build environment) and 1 (application skeleton) complete; Phase 2 (ProfileStore) in progress.** This repository currently contains the specification, architecture plan, server contract, and reference material. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
 
 ## What this is
 

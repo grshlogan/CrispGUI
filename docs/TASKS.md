@@ -25,7 +25,7 @@ Complete: accepted on 2026-10-11 after the owner's Windows run ([Phase 0 report]
 
 ## Phase 1 — Application skeleton
 
-In progress: the Linux and MinGW builds pass; the delivery `crisprustgui-1817b8e.zip` waits for the owner's Windows run ([Phase 1 report](devlog/phase-1.md)).
+Complete: accepted on 2026-10-11 after the owner's Windows run of `crisprustgui-1817b8e.zip` ([Phase 1 report](devlog/phase-1.md)).
 
 - [x] Top-level `CMakeLists.txt` that adds EUI-NEO from `CRISPGUI_EUI_NEO_DIR` with the options of [ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts), for both the Linux and the MinGW build.
 - [x] The directory layout of [ARCHITECTURE.md §2](ARCHITECTURE.md#2-component-model) for the modules Phase 1 needs, with Windows and Linux implementations under `src/platform/`; later modules get their directories when they are written.
@@ -33,9 +33,11 @@ In progress: the Linux and MinGW builds pass; the delivery `crisprustgui-1817b8e
 - [x] Tabs shell with four pages: Dashboard, Transcribe, Batch, Settings, built on EUI-NEO's `tabs` component; Settings already switches the UI language between English and Chinese, without saving it.
 - [x] Create the app data directory (`<folder of the executable>/appdata`) and point the GUI process's own `TMP`/`TEMP` at `appdata/tmp` in `onStart`; the dashboard shows both paths and warns when they are on the system drive.
 - [x] Unit tests for the string table and the app data preparation, run by CTest on Linux and by `run-tests.cmd` on Windows.
-- [ ] Acceptance: [Linux] the app opens with four tabs, stays responsive, and closes cleanly; [Windows] the same on the owner's machine.
+- [x] Acceptance: [Linux] the app opens with four tabs, stays responsive, and closes cleanly; [Windows] the same on the owner's machine.
 
 ## Phase 2 — ProfileStore
+
+In progress since 2026-10-11 (round 6; [Phase 2 report](devlog/phase-2.md)).
 
 - [ ] Implement the JSONC parser with string-aware comment stripping and correct escape handling ([ARCHITECTURE.md §2.1](ARCHITECTURE.md#21-profilestore)). Unit-test it with the four profiles in `reference/crispasr/profiles-japanese/`, a string containing an escaped quote, and a corrupted file.
 - [ ] Implement `ProfileStore`: scan `<CrispASR root>/profile/*` subfolders, compute readiness (`model`/`aligner` existence under the models root), and hash each file.

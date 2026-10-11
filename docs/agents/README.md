@@ -20,12 +20,12 @@ The owner (the user) assigns identities, approves requirements and decisions, au
 
 ## Delivery to Windows
 
-Status: two deliveries made; the first is accepted.
+Status: two deliveries made; both are accepted.
 
 | Delivery | Commit | Archive SHA-256 | Contents | Windows result |
 | --- | --- | --- | --- | --- |
 | `crisprustgui-eui-smoke-7e4e89e.zip` (45,685,746 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `7e4e89eb7e021ea61bcb432aadcb3883c22e3479` | `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b` | Phase 0 smoke: `eui_demo.exe`, `multipage_table.exe`, 26 unit tests, 8 probes, `run-eui-smoke.cmd` | Passed on 2026-10-11 UTC (Windows 11 Pro for Workstations 10.0.22631): no visual problems; 33 passed, 1 skipped by design, 0 failed ([Phase 0 report](../devlog/phase-0.md#windows-results-owners-machine)) |
-| `crisprustgui-1817b8e.zip` (6,626,850 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1817b8ee4cdf82244b30fca50a349ac9815e2a04` | `dd5fe3845e9ec4f38ceb18f01dbe183c1c6cea6befbd7515c9289408addfd6a8` | Phase 1: `crisprustgui.exe`, `assets/`, 2 unit tests, `run-tests.cmd` | Pending |
+| `crisprustgui-1817b8e.zip` (6,626,850 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1817b8ee4cdf82244b30fca50a349ac9815e2a04` | `dd5fe3845e9ec4f38ceb18f01dbe183c1c6cea6befbd7515c9289408addfd6a8` | Phase 1: `crisprustgui.exe`, `assets/`, 2 unit tests, `run-tests.cmd` | Passed on 2026-10-11 UTC: the owner reports that the tests passed with no problems; `test-results.txt` was not sent ([Phase 1 report](../devlog/phase-1.md#windows-results-owners-machine)) |
 
 Steps:
 

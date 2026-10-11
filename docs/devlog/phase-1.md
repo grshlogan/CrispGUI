@@ -1,6 +1,6 @@
 # Phase 1 Report — Application Skeleton
 
-Status: the Linux and MinGW builds pass; the owner's Windows run is pending. Written by A003 on 2026-10-11 (round 5). The plan is [TASKS.md Phase 1](../TASKS.md#phase-1--application-skeleton).
+Status: complete. The Linux and MinGW builds pass, and the owner's Windows run of the delivery passed on 2026-10-11 (UTC). Written by A003 on 2026-10-11 (round 5) and closed in round 6. The plan is [TASKS.md Phase 1](../TASKS.md#phase-1--application-skeleton).
 
 ## What was built
 
@@ -35,8 +35,12 @@ Both builds were rebuilt from a clean tree at commit `1817b8ee4cdf82244b30fca50a
 - The Settings page already holds the language switch, so the Chinese strings are visible before Phase 8; the choice is not saved yet.
 - The app data folder is derived from the executable's folder; for Linux development runs that is `build/linux/appdata` instead of `<WSL_ROOT>/appdata` as ENVIRONMENT first planned.
 - The project requires CMake 3.25 instead of 3.14, for `add_subdirectory(... SYSTEM)`.
-- EUI-NEO's default UI font is its bundled bold display font `JingNanJunJunTi`. Phase 1 keeps it; a system UI font such as Microsoft YaHei is an owner decision for later.
+- EUI-NEO's default UI font is its bundled bold display font `JingNanJunJunTi`. Phase 1 keeps it. In round 6 the owner provided HarmonyOS Sans SC, which Phase 2 adopts ([Phase 2 report](phase-2.md)).
 
-## Open items
+## Windows results (owner's machine)
 
-- [Windows] The owner runs `crisprustgui.exe` from the delivery: the four tabs switch; Dashboard shows `appdata` and `appdata\tmp` next to the executable; Settings switches the labels to Chinese and back; closing the window ends the process. Then `run-tests.cmd`, and `test-results.txt` back to A003.
+The owner ran the delivery `crisprustgui-1817b8e` on 2026-10-11 UTC and reported that the Windows tests passed with no problems (owner's statement in round 6). `test-results.txt` was not sent back, so per-test exit codes are not recorded for this run.
+
+## Acceptance
+
+Phase 1 is accepted: the Linux results above and the owner's Windows run come from the same commit, `1817b8ee4cdf82244b30fca50a349ac9815e2a04`.
