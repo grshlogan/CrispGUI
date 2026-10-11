@@ -252,7 +252,7 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | Risk | Likelihood | Mitigation |
 |---|---|---|
 | EUI-NEO 0.x API changes | Medium | Version pinned to a snapshot; upgrades are explicit re-evaluation tasks |
-| EUI-NEO's MinGW-w64 path breaks | Low | Upstream CI builds Windows only with MSVC. Phase 0: the MinGW build passes after one header shim ([ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts)), and the Windows run is pending; fallback: an owner-side MSVC build or a CI build |
+| EUI-NEO's MinGW-w64 path breaks | Low | Upstream CI builds Windows only with MSVC. Phase 0: the MinGW build passes after one header shim ([ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts)), and its tests and probes pass on the owner's Windows machine; fallback: an owner-side MSVC build or a CI build |
 | The build depends on the Learn library outside the repository | Low | `CRISPGUI_EUI_NEO_DIR` names the snapshot, and configuration stops with a clear message when it is missing |
 | Release builds run without exceptions or RTTI | Low | Convention: application code uses neither ([CONVENTIONS.md](CONVENTIONS.md#c-conventions)); tests run in both Debug and Release |
 | Engine CLI flags and capability names unverified | Low | Extract them from the CrispASR 0.8.42 CLI source in the Learn library in Phase 2 (OQ-4 item 2) |

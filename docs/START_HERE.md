@@ -29,7 +29,7 @@
 
 ## Scope gate
 
-The specification is approved. Phase 0 of [TASKS.md](TASKS.md) is in progress: the smoke builds pass, and its acceptance waits for the owner's Windows run ([Phase 0 report](devlog/phase-0.md)). Application code starts in Phase 1. Installing packages, importing sources, Git writes (commit, push, branch), and deliveries to Windows each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
+The specification is approved. Phase 0 of [TASKS.md](TASKS.md) is complete ([Phase 0 report](devlog/phase-0.md)), and Phase 1, the application skeleton, is in progress. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
 
 ## Language
 

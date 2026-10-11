@@ -12,7 +12,7 @@
 
 ## Phase 0 — Build environment (no application code)
 
-In progress: the Linux and MinGW smoke builds pass; the Windows run is pending ([Phase 0 report](devlog/phase-0.md)).
+Complete: accepted on 2026-10-12 after the owner's Windows run ([Phase 0 report](devlog/phase-0.md)).
 
 - [x] EUI-NEO v0.6.1 source available: the owner placed it in the shared Learn library; location and provenance are in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot).
 - [x] Windows build path decided: MinGW-w64 cross-compilation in WSL2. The owner installed the toolchain, and a probe of EUI-NEO's static link mode passes ([ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain)).
@@ -20,8 +20,8 @@ In progress: the Linux and MinGW smoke builds pass; the Windows run is pending (
 - [x] The owner installed the Linux packages; the versions are in [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain).
 - [x] [Linux] Smoke build: `tools/smoke/build-eui-smoke.sh` configures EUI-NEO from the Learn library into `build/eui-smoke-linux` with its examples and tests and `EUI_DEPS_MODE=bundled`; `eui_demo` opens and renders under WSLg, and nothing is left inside the Learn library.
 - [x] `cmake/toolchains/mingw-w64-x86_64.cmake` added; the same script cross-builds EUI-NEO into `build/eui-smoke-mingw`.
-- [ ] [Windows] First delivery `crisprustgui-eui-smoke-7e4e89e.zip`: the owner runs `eui_demo.exe`, `multipage_table.exe`, and `run-eui-smoke.cmd` from the delivery folder ([agents/README.md](agents/README.md#delivery-to-windows)).
-- [ ] Acceptance: Linux and Windows builds exist for the same commit, and both results are recorded with platform and SHA.
+- [x] [Windows] First delivery `crisprustgui-eui-smoke-7e4e89e.zip`: the owner ran `eui_demo.exe`, `multipage_table.exe`, and `run-eui-smoke.cmd`; no visual problems, 0 failures of 34 ([agents/README.md](agents/README.md#delivery-to-windows)).
+- [x] Acceptance: the Linux and Windows builds come from commit `7e4e89e`, and both results are recorded with platform and SHA.
 
 ## Phase 1 — Application skeleton
 

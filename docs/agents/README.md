@@ -20,11 +20,11 @@ The owner (the user) assigns identities, approves requirements and decisions, au
 
 ## Delivery to Windows
 
-Status: one delivery made, waiting for the owner's Windows run.
+Status: one delivery made and accepted.
 
 | Delivery | Commit | Archive SHA-256 | Contents | Windows result |
 | --- | --- | --- | --- | --- |
-| `crisprustgui-eui-smoke-7e4e89e.zip` (45,685,746 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `7e4e89eb7e021ea61bcb432aadcb3883c22e3479` | `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b` | Phase 0 smoke: `eui_demo.exe`, `multipage_table.exe`, 26 unit tests, 8 probes, `run-eui-smoke.cmd` | Pending |
+| `crisprustgui-eui-smoke-7e4e89e.zip` (45,685,746 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `7e4e89eb7e021ea61bcb432aadcb3883c22e3479` | `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b` | Phase 0 smoke: `eui_demo.exe`, `multipage_table.exe`, 26 unit tests, 8 probes, `run-eui-smoke.cmd` | Passed on 2026-10-12 (Windows 11 Pro for Workstations 10.0.22631): no visual problems; 33 passed, 1 skipped by design, 0 failed ([Phase 0 report](../devlog/phase-0.md#windows-results-owners-machine)) |
 
 Steps:
 
@@ -36,7 +36,9 @@ Steps:
 
 ## Standing authorizations
 
-None recorded. Git writes (commit, push, branch, remote changes), system package installation, and source imports each need a direct owner instruction or a task packet. One-time authorizations so far, none of which stands for later rounds:
+- Commits and pushes (owner, 2026-10-12, round 5): A003 may commit per phase and task and push to `origin/main` without asking each round. Force pushes, history rewrites, branch deletion, and remote changes still need a separate authorization that names the target.
+
+Everything else — other Git writes, system package installation, and source imports — needs a direct owner instruction or a task packet. One-time authorizations so far:
 
 - 2026-10-11, round 3: `git init`, and one commit and push at the end of the round.
 - 2026-10-11, round 4: commits and pushes during the round; downloading the EUI-NEO v0.6.1 tag archive into the Learn library; tidying the Learn library (moving the EUI-NEO snapshot, extracting and indexing the CrispASR archive, updating its `README.md`).

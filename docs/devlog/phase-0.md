@@ -1,6 +1,6 @@
 # Phase 0 Report — Build Environment
 
-Status: Linux and MinGW smoke builds pass; the Windows run of the first delivery is pending. Written by A003 on 2026-10-11 (round 4). The plan is [TASKS.md Phase 0](../TASKS.md#phase-0--build-environment-no-application-code); environment facts are in [ENVIRONMENT.md](../ENVIRONMENT.md).
+Status: complete. The Linux and MinGW smoke builds pass, and the owner's Windows run of the first delivery passed on 2026-10-12. Written by A003 on 2026-10-11 (round 4) and closed in round 5. The plan is [TASKS.md Phase 0](../TASKS.md#phase-0--build-environment-no-application-code); environment facts are in [ENVIRONMENT.md](../ENVIRONMENT.md).
 
 ## What was built
 
@@ -21,7 +21,7 @@ Both builds were rebuilt from a clean tree at commit `7e4e89eb7e021ea61bcb432aad
 | Learn snapshot untouched | `find <Learn> -newer <marker>` and `-cnewer <marker>` around the builds and test runs | no entries, except the `shadertoy_probe` incident below |
 | MinGW executables | `x86_64-w64-mingw32-objdump -p` on all 55 `.exe` files | Windows system DLLs only |
 
-`frame_presentation_probe` fails on every run with "window mapped before a frame at its current size was drawn" and "presented old-size frame after resize during update". The probe resizes a hidden window and expects the framebuffer to report the new size at once. Hypothesis: WSLg runs a window manager that applies the resize asynchronously, while upstream CI runs the probes under `xvfb-run` without a window manager. The Windows run of the same probe will show whether the behavior is WSLg-specific.
+`frame_presentation_probe` fails on every run with "window mapped before a frame at its current size was drawn" and "presented old-size frame after resize during update". The probe resizes a hidden window and expects the framebuffer to report the new size at once. The same probe passes on Windows (below), so the failure is specific to WSLg; the likely cause is WSLg's window manager applying the resize asynchronously, while upstream CI runs the probes under `xvfb-run` without a window manager (`hypothesis`).
 
 ## Deviations from the plan
 
@@ -34,7 +34,14 @@ Both builds were rebuilt from a clean tree at commit `7e4e89eb7e021ea61bcb432aad
 
 `tools/smoke/package-eui-smoke.sh` at `7e4e89e` produced `crisprustgui-eui-smoke-7e4e89e.zip` in `<HANDOFF_OUT>`: 45,685,746 bytes, SHA-256 `fd35436b51a35e714d497178156561ba7f6335c7eefe1d343a61f4f5ba91ad5b`, `unzip -tq` without errors. It holds 36 executables (130 MB unpacked), `assets/`, `BUILD-INFO.txt`, `smoke-tests.txt`, and the two run scripts.
 
-## Open items
+## Windows results (owner's machine)
 
-- [Windows] The owner runs `eui_demo.exe` and `multipage_table.exe` and `run-eui-smoke.cmd` from the first delivery and sends back `smoke-results.txt` and what the windows looked like.
-- Phase 0 acceptance follows from that run; then Phase 1 starts with the project's own `CMakeLists.txt`.
+The owner ran the first delivery on 2026-10-12 (`smoke-results.txt`, started 2026-10-12T02:34:09+08:00):
+
+- System: Windows 11 Pro for Workstations 10.0.22631. Display adapters: NVIDIA GeForce RTX 3080 and RTX 5080 (driver 32.0.16.1062), plus the virtual adapters of Oray, ToDesk, GameViewer, and MuMu.
+- Visual check: `eui_demo.exe` and `multipage_table.exe` showed no problems (owner's report).
+- `run-eui-smoke.cmd`: 25 unit tests passed and `platform_dialog` was skipped (exit 77, its designed result outside Linux); all 8 probes passed, `frame_presentation_probe` included. Failures: 0 of 34.
+
+## Acceptance
+
+Phase 0 is accepted: the Linux and the Windows builds come from the same commit, `7e4e89eb7e021ea61bcb432aadcb3883c22e3479`, and both results are recorded above with their platforms.
