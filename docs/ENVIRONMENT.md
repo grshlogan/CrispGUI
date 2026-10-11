@@ -57,7 +57,7 @@ tools/smoke/package-eui-smoke.sh       # Windows delivery; needs a clean tree on
 
 Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shadertoy/shadertoy/` under its compile-time source path ([§4.2](#42-eui-neo-build-facts)).
 
-Project builds (`verified` on 2026-10-12; results in the [Phase 1 report](devlog/phase-1.md)):
+Project builds (`verified` on 2026-10-11; results in the [Phase 1 report](devlog/phase-1.md)):
 
 ```bash
 # Linux development build (WSLg); the app is build/linux/crisprustgui

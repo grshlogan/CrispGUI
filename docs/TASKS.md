@@ -12,7 +12,7 @@
 
 ## Phase 0 — Build environment (no application code)
 
-Complete: accepted on 2026-10-12 after the owner's Windows run ([Phase 0 report](devlog/phase-0.md)).
+Complete: accepted on 2026-10-11 after the owner's Windows run ([Phase 0 report](devlog/phase-0.md)).
 
 - [x] EUI-NEO v0.6.1 source available: the owner placed it in the shared Learn library; location and provenance are in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot).
 - [x] Windows build path decided: MinGW-w64 cross-compilation in WSL2. The owner installed the toolchain, and a probe of EUI-NEO's static link mode passes ([ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain)).
@@ -25,7 +25,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows run ([Phase 0 report]
 
 ## Phase 1 — Application skeleton
 
-In progress: the Linux and MinGW builds pass; the Windows run is pending ([Phase 1 report](devlog/phase-1.md)).
+In progress: the Linux and MinGW builds pass; the delivery `crisprustgui-1817b8e.zip` waits for the owner's Windows run ([Phase 1 report](devlog/phase-1.md)).
 
 - [x] Top-level `CMakeLists.txt` that adds EUI-NEO from `CRISPGUI_EUI_NEO_DIR` with the options of [ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts), for both the Linux and the MinGW build.
 - [x] The directory layout of [ARCHITECTURE.md §2](ARCHITECTURE.md#2-component-model) for the modules Phase 1 needs, with Windows and Linux implementations under `src/platform/`; later modules get their directories when they are written.

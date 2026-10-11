@@ -1,6 +1,6 @@
 # Phase 1 Report — Application Skeleton
 
-Status: the Linux and MinGW builds pass; the owner's Windows run is pending. Written by A003 on 2026-10-12 (round 5). The plan is [TASKS.md Phase 1](../TASKS.md#phase-1--application-skeleton).
+Status: the Linux and MinGW builds pass; the owner's Windows run is pending. Written by A003 on 2026-10-11 (round 5). The plan is [TASKS.md Phase 1](../TASKS.md#phase-1--application-skeleton).
 
 ## What was built
 
@@ -24,6 +24,10 @@ Status: the Linux and MinGW builds pass; the owner's Windows run is pending. Wri
 | MinGW release build | the Windows commands of [ENVIRONMENT.md §2.2](../ENVIRONMENT.md#22-commands) | exit 0; no warnings; `crisprustgui.exe` (3.2 MB) imports only Windows system DLLs; both tests import only `KERNEL32.dll` and `msvcrt.dll` |
 
 Not checked on Linux: switching tabs and the language. Synthetic X11 clicks did not reach EUI-NEO, which presumably reads the real pointer position, and moving the real pointer under WSLg would disturb the owner's desktop. The Windows run covers both.
+
+## Delivery
+
+Both builds were rebuilt from a clean tree at commit `1817b8ee4cdf82244b30fca50a349ac9815e2a04` with the results above, and `tools/package-windows.sh` produced `crisprustgui-1817b8e.zip` in `<HANDOFF_OUT>`: 6,626,850 bytes, SHA-256 `dd5fe3845e9ec4f38ceb18f01dbe183c1c6cea6befbd7515c9289408addfd6a8`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, the two unit tests, `tests.txt`, `run-tests.cmd`/`.ps1`, and `BUILD-INFO.txt` (12 MB unpacked).
 
 ## Deviations from the plan
 

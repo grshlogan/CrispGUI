@@ -1,6 +1,6 @@
 # Phase 0 Report — Build Environment
 
-Status: complete. The Linux and MinGW smoke builds pass, and the owner's Windows run of the first delivery passed on 2026-10-12. Written by A003 on 2026-10-11 (round 4) and closed in round 5. The plan is [TASKS.md Phase 0](../TASKS.md#phase-0--build-environment-no-application-code); environment facts are in [ENVIRONMENT.md](../ENVIRONMENT.md).
+Status: complete. The Linux and MinGW smoke builds pass, and the owner's Windows run of the first delivery passed on 2026-10-11 (UTC). Written by A003 on 2026-10-11 (round 4) and closed in round 5. The plan is [TASKS.md Phase 0](../TASKS.md#phase-0--build-environment-no-application-code); environment facts are in [ENVIRONMENT.md](../ENVIRONMENT.md).
 
 ## What was built
 
@@ -36,7 +36,7 @@ Both builds were rebuilt from a clean tree at commit `7e4e89eb7e021ea61bcb432aad
 
 ## Windows results (owner's machine)
 
-The owner ran the first delivery on 2026-10-12 (`smoke-results.txt`, started 2026-10-12T02:34:09+08:00):
+The owner ran the first delivery on 2026-10-11 UTC (`smoke-results.txt`, started 2026-10-12T02:34:09+08:00 in the owner's time zone):
 
 - System: Windows 11 Pro for Workstations 10.0.22631. Display adapters: NVIDIA GeForce RTX 3080 and RTX 5080 (driver 32.0.16.1062), plus the virtual adapters of Oray, ToDesk, GameViewer, and MuMu.
 - Visual check: `eui_demo.exe` and `multipage_table.exe` showed no problems (owner's report).
