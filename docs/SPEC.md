@@ -47,7 +47,7 @@ The CrispASR engine is driven today through a PowerShell launcher and manual CLI
 - Show per-profile readiness: `[OK]` when the profile's `model` file exists (relative to `CrispASR\models\`), `[MISS]` otherwise, with the profile's `download` URL as a hint. Show the same for `aligner` when present.
 - The profile schema is the existing one: `comment, build, backend, model, aligner, language, host, port, device, api_keys, download, env, args[]`, plus optional tuning fields (`vad, force_aligner, chunk_seconds, beam_size, temperature, frequency_penalty, max_new_tokens, seed, no_punctuation, split_on_punct`). Unknown fields are preserved in memory. Known flags inside `args[]` (for example `--vad-threshold 0.3`) are parsed so the parameter panel can show their values (FR-4). Reference: `reference/crispasr/start-crispasr.ps1`.
 
-**Acceptance**: all four profiles under `profile\Japanese\` parse and show `[OK]` on the owner's machine; a profile with a missing model shows `[MISS]` and its download URL. (`verified` in WSL2 on 2026-10-11: the four profiles in `reference/crispasr/profiles-japanese/` parse with an independent implementation of the stripping rule; the Windows check is `not run`.)
+**Acceptance**: all four profiles under `profile\Japanese\` parse and show `[OK]` on the owner's machine; a profile with a missing model shows `[MISS]` and its download URL. (`verified` in WSL2 on 2026-10-11: the four profiles in `reference/crispasr/profiles-japanese/` parse with an independent implementation of the stripping rule. Windows, `observed` by the owner on 2026-10-12: the Phase 2 dashboard lists the deployed profiles with the same readiness as the launcher.)
 
 ### FR-3 Transcription (single file)
 

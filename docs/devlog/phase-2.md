@@ -1,6 +1,6 @@
 # Phase 2 Report — ProfileStore
 
-Status: built and tested on Linux; the owner's Windows run of the delivery is pending. Written by A003 on 2026-10-11 and 2026-10-12 (round 6; dates are UTC). The plan is [TASKS.md Phase 2](../TASKS.md#phase-2--profilestore); the design is [ARCHITECTURE.md §2.1](../ARCHITECTURE.md#21-profilestore).
+Status: complete. The Linux and MinGW builds pass, and the owner's Windows run of the delivery passed on 2026-10-12. Written by A003 on 2026-10-11 and 2026-10-12 (round 6; dates are UTC) and closed in round 7. The plan is [TASKS.md Phase 2](../TASKS.md#phase-2--profilestore); the design is [ARCHITECTURE.md §2.1](../ARCHITECTURE.md#21-profilestore).
 
 ## What was built
 
@@ -46,8 +46,15 @@ Both builds were rebuilt from a clean tree at commit `b397dcda97db2f227dccf51393
 - Text wrapping: EUI-NEO measures text with `maxWidth`, so wrapped lines now set it; this also fixes Phase 1's line helper, which had no long text then ([ENVIRONMENT.md §4.4](../ENVIRONMENT.md#44-eui-neo-runtime-facts)).
 - The CLI source corrected three statements of [API-CRISPASR.md](../API-CRISPASR.md): the API-key flag is `--api-keys`, `-falign` is an alias of `--force-aligner`, and in server mode the process returns the server's result, so a failed `listen()` exits with code 0.
 
+## Windows results (owner's machine)
+
+The owner ran the delivery `crisprustgui-b397dcd` and reported on 2026-10-12 UTC that the Windows test passed and that the dashboard's profile list agrees with the launcher `start-crispasr.ps1` (owner's statement in round 7). The check list sent with the delivery asked for `run-tests.cmd` (8 unit tests) and, in `crisprustgui.exe`, the profiles under `E:\AI\ASR\CrispASR\profile` with the launcher's `[OK]`/`[MISS]`, scrolling, Rescan, the Chinese texts, and the HarmonyOS Sans font; the report did not itemize these checks. `test-results.txt` was not sent back, so per-test exit codes are not recorded for this run.
+
+## Acceptance
+
+Phase 2 is accepted: the Linux results above and the owner's Windows run come from the same commit, `b397dcda97db2f227dccf51393635f85e93c0530`.
+
 ## Open items
 
-- [Windows] The owner runs the delivery: `run-tests.cmd` (8 unit tests; `test-results.txt` back to A003), then `crisprustgui.exe`: the dashboard lists the profiles under `E:\AI\ASR\CrispASR\profile` with the same `[OK]`/`[MISS]` as `start-crispasr.ps1 -ListOnly`; scrolling, Rescan, and the Chinese texts work; the HarmonyOS Sans font shows.
 - The license document of HarmonyOS Sans, if the owner has it.
 - The engine's capability names, for Phase 6 (OQ-4 item 2).
