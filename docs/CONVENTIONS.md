@@ -6,6 +6,8 @@ The hard rules and the language rule (English in the repository, Chinese with th
 
 - User-facing UI strings: English first, with a Chinese translation planned (EUI-NEO has full CJK and IME support). Do not hardcode strings in UI code; route them through a string table from day one.
 - Parameter labels and help texts come from the string table through the keys in the parameter catalog ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)).
+- Text styles: body text and components use the default font (HarmonyOS Sans SC Regular when present); section headings use `UiFonts::medium` and page titles `UiFonts::title` (`src/ui/fonts.h`). Wrapped text sets `maxWidth` as well as `width`, because EUI-NEO measures the height with `maxWidth` ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)).
+- Messages from `src/core/` (parse errors, readiness problems) are English technical detail; the UI shows them after a translated prefix from the string table.
 
 ## C++ conventions
 

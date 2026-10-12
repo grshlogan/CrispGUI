@@ -1,6 +1,6 @@
 # Build Environment
 
-> How CrispRustGUI is developed and built. Revised on 2026-10-11 (round 4) after the Phase 0 smoke builds. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
+> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
 
 ## 1. Target and toolchains
 
@@ -57,13 +57,14 @@ tools/smoke/package-eui-smoke.sh       # Windows delivery; needs a clean tree on
 
 Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shadertoy/shadertoy/` under its compile-time source path ([§4.2](#42-eui-neo-build-facts)).
 
-Project builds (`verified` on 2026-10-11; results in the [Phase 1 report](devlog/phase-1.md)):
+Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md) and [Phase 2](devlog/phase-2.md) reports):
 
 ```bash
 # Linux development build (WSLg); the app is build/linux/crisprustgui
 cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure
+CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crisprustgui   # reads <folder>/profile as the CrispASR root
 
 # Windows release build (MinGW-w64 cross-compilation) and its delivery
 cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -72,16 +73,18 @@ cmake --build build/mingw
 tools/package-windows.sh               # needs a clean tree on origin/main
 ```
 
-The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-build-facts) and links every MinGW executable with `-static`, so these commands need no extra flags; `-DCRISPGUI_EUI_NEO_DIR=<path>` points at another EUI-NEO snapshot. Build directory names must not contain the segments `vk`, `vulkan`, or `sdl2`, because EUI-NEO picks its backends from them.
+The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-build-facts) and links every MinGW executable with `-static`, so these commands need no extra flags; `-DCRISPGUI_EUI_NEO_DIR=<path>` points at another EUI-NEO snapshot, and `-DCRISPGUI_FONT_DIR=<path>` at another folder with the UI fonts ([§4.3](#43-ui-fonts)). Build directory names must not contain the segments `vk`, `vulkan`, or `sdl2`, because EUI-NEO picks its backends from them.
 
 ## 3. Repository layout policy
 
 - EUI-NEO is not copied into the repository. Builds read it from the path in `CRISPGUI_EUI_NEO_DIR` ([§4.1](#41-eui-neo-snapshot)) and write what they generate into the build tree.
 - `cmake/toolchains/mingw-w64-x86_64.cmake`: the MinGW-w64 toolchain file.
 - `CMakeLists.txt`, `src/`, `tests/`: the application, its two libraries (`crisp_core` without UI dependencies, `crisp_ui` on EUI-NEO), and the unit tests.
-- `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds the test runner that deliveries carry; `tools/smoke/` holds the Phase 0 smoke build and its packaging.
+- `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds the test runner that deliveries carry; `tools/smoke/` holds the Phase 0 smoke build and its packaging; `tools/extract-cli-flags.py` regenerates `src/core/cli_flags_table.inc` from a CrispASR source snapshot.
+- `tests/`: the build copies the reference profiles to `testdata/` next to the test executables, and deliveries carry that folder.
+- `fonts/`: the UI fonts the owner provides ([§4.3](#43-ui-fonts)); ignored by Git, so a fresh clone builds with EUI-NEO's default font.
 - `params/`: the parameter catalog and model packs ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)); data, committed.
-- `build*/`, `appdata/`, `CMakeUserPresets.json`, and `.cache/` are ignored by Git (`.gitignore`).
+- `build*/`, `appdata/`, `CMakeUserPresets.json`, `.cache/`, and `fonts/` are ignored by Git (`.gitignore`).
 - Line endings are LF (`.gitattributes`), except CRLF for `*.cmd` and `*.bat`, and except `reference/`, which Git stores byte for byte.
 - `reference/`: read-only learning material, never part of the build.
 - Deliveries are written outside the checkout, to `<HANDOFF_OUT>`.
@@ -93,6 +96,7 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 | EUI-NEO v0.6.1 | Shared Learn library ([§4.1](#41-eui-neo-snapshot)) | UI framework, Apache-2.0; bundles GLFW 3.4, glad, FreeType, zlib 1.3.1, libpng 1.6.43, md4c, miniaudio, nanosvg, stb_image, a tray library, and yyjson 0.12.0 |
 | WinHTTP | Windows system library | Windows HTTP transport (*proposed*) |
 | libcurl | Debian package, Linux builds only | Required by EUI-NEO on Linux; also the Linux HTTP transport |
+| HarmonyOS Sans SC | Owner-provided in `<WSL_ROOT>/fonts/` ([§4.3](#43-ui-fonts)) | UI font; not in Git; license `not verified` |
 | Compilers, CMake, Ninja | [§2.1](#21-wsl2-toolchain) | Installed |
 | CrispASR server | Deployed on Windows at `<CRISPASR_ROOT>\cuda13\crispasr.exe` | Runtime dependency only; never built here |
 | Models | `<CRISPASR_ROOT>\models\` on Windows | Runtime data only |
@@ -118,23 +122,40 @@ From EUI-NEO v0.6.1's `CMakeLists.txt`, `3rd/dependencies.cmake`, and `.github/w
 - Windows imports of `eui_demo.exe` (3.2 MB): `comdlg32`, `GDI32`, `IMM32`, `KERNEL32`, `msvcrt`, `pdh`, `SHELL32`, `urlmon`, `USER32`, `WINMM`. OpenGL is loaded at run time, not imported.
 - Compiler flags: `eui_neo_configure_app()` compiles the application target with `-Os -fno-exceptions -fno-rtti` in every configuration except Debug; [CONVENTIONS.md](CONVENTIONS.md#c-conventions) states the consequence for application code.
 
+### 4.3 UI fonts
+
+- The owner provided HarmonyOS Sans SC on 2026-10-11 (round 6) and chose to keep it out of Git. Six weights in `<WSL_ROOT>/fonts/`, version 1.0 per their `name` tables, which read "Copyright 2021 Huawei Device Co., Ltd. All Rights Reserved." and carry no license text. The license terms are `not verified`; the folder holds no license file.
+- SHA-256 (`sha256sum`, 2026-10-11): Black `5de9560908e88820df2e0a5ed9465bc44644ae2ce1cd6c194b76f2ed8e8f186e`, Bold `43a424b85e47fb53a17b3b32026a71801f86f8e022ca6798d186b47d39fa5f01`, Light `dd366290b40861bc6ced85801e850ab66d6fe4c5b33bc43095a9747fa29288d8`, Medium `6ed1553edccddc48eb27ff25d134a4a715cf54211238d4840b3038576cba1944`, Regular `297b088424be212207df2ce8b98e335468b782aa6b96832af0b8b773d711e2b1`, Thin `a88d9065dc144bf462e6553e308e9d5256bfe1a068abb47a3ee1081d636ea91a`.
+- The UI uses Regular for text and components, Medium for section headings, and Bold for page titles. The build copies those three files to `fonts/` next to the executable (`CRISPGUI_UI_FONTS` in `CMakeLists.txt`), and `tools/package-windows.sh` adds that folder and the files' SHA-256 to the delivery and its `BUILD-INFO.txt`. Without the folder, the build prints a note and the UI uses EUI-NEO's default font.
+
+### 4.4 EUI-NEO runtime facts
+
+Read in the v0.6.1 source and observed in the Phase 2 builds of 2026-10-12:
+
+- Fonts: `DslAppConfig::textFont` replaces the default UI font. EUI-NEO resolves a font path as given, then below `<executable folder>/assets/` by file name, then below the executable's folder (`core/render/text.cpp`, `resolveFontFilePath`), so the application passes paths relative to its folder. A `fontFamily` that contains a dot is taken as such a path. `fontWeight` only selects files for named families and never synthesizes bold, so each weight needs its own file. Missing glyphs fall back to system fonts; on Windows the list includes Segoe UI, Microsoft YaHei, and SimHei.
+- Text height: a text element is measured with the wrap width from `TextBuilder::maxWidth`, not its layout width, so wrapped text sets both, or the lines below it overlap (`verified` under WSLg).
+- Scroll view: `components::scrollView` composes its content twice per frame, first into a separate `Ui` to measure the height, and passes that `Ui` and the content width to the content function, which must use them. The caller keeps the scroll offset (`offset`, `onChange`).
+- JSON: `eui/json.h` reads values by key or index but cannot list an object's members, which profiles need (`env`, unknown keys); the project has its own parser in `src/util/json.{h,cpp}` ([ARCHITECTURE.md §3](ARCHITECTURE.md#3-key-decisions-and-rejected-alternatives)).
+- Async: `app::async::restart` runs work on a shared pool of `min(4, hardware threads − 1)` workers (at least one) and queues the completion for the UI thread, which runs it during the next update and recomposes (`core/platform/async.cpp`, `include/eui/detail/dsl_app_impl.h`). A newer task with the same key supersedes a running one, whose completion is dropped.
+
 ## 5. Runtime configuration defaults (Windows)
 
 | Setting | Default | Where configured |
 |---|---|---|
-| CrispASR root (`<CRISPASR_ROOT>`) | `E:\AI\ASR\CrispASR` | GUI settings |
+| CrispASR root (`<CRISPASR_ROOT>`) | `E:\AI\ASR\CrispASR`; the environment variable `CRISPGUI_CRISPASR_ROOT` overrides it, and Linux development runs have no default | GUI settings from Phase 8; until then `src/app/crispasr_location.cpp` |
 | Server port | 5114 | Profile and GUI settings |
 | API key | `default` | GUI settings |
 | Server executable | `<root>\<profile.build>\crispasr.exe` | Derived from the profile |
 | Profiles directory | `<root>\profile` | Derived from the root |
 | Models directory | `<root>\models` | Derived from the root |
+| UI fonts | `<folder of crisprustgui.exe>\fonts\HarmonyOS_Sans_SC_{Regular,Medium,Bold}.ttf` ([§4.3](#43-ui-fonts)) | Copied by the build; EUI-NEO's default font when absent |
 | App data directory | `<folder of crisprustgui.exe>\appdata`; for Linux development runs `build/linux/appdata` | Derived from the executable's folder (Phase 1); a setting from Phase 8. Never on `C:\`: the dashboard warns when it is |
 | Temporary files | `<appdata>\tmp` for the GUI, `<appdata>\tmp\server` as `TMP`/`TEMP` of the server process | Derived from the app data directory |
 | Transcription window | 300 s (*proposed*, OQ-6) | GUI settings and each job snapshot |
 
 ## 6. Verification entry points
 
-- Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit tests; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`.
+- Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit tests and their `testdata/`; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`.
 - Phase 0: the smoke commands of [§2.2](#22-commands).
 - Planned: HTTP tests against a stub server (Phase 4).
 

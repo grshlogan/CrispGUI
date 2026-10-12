@@ -7,3 +7,6 @@
 # Machine-local CMake presets and tool caches
 /CMakeUserPresets.json
 /.cache/
+
+# UI fonts the owner provides locally; not redistributed through Git (docs/ENVIRONMENT.md, section 4.3)
+/fonts/

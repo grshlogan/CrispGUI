@@ -1,9 +1,11 @@
 #include "app/application.h"
 
+#include "app/crispasr_location.h"
 #include "ui/pages.h"
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 namespace crisp::app {
 namespace {
@@ -13,12 +15,32 @@ constexpr float kGap = 20.0f;
 constexpr float kTabsHeight = 40.0f;
 constexpr float kTabsMaxWidth = 560.0f;
 
+constexpr const char* kProfileScanTask = "crisp.profiles.scan";
+
 enum Page { kDashboard, kTranscribe, kBatch, kSettings, kPageCount };
 
 }  // namespace
 
 void Application::Start() {
+    fonts_ = ui::FindUiFonts();
     appData_ = PrepareAppData(DefaultAppDataRoot());
+    crispAsrRoot_ = DefaultCrispAsrRoot();
+    StartProfileScan();
+}
+
+void Application::StartProfileScan() {
+    if (crispAsrRoot_.empty()) {
+        return;
+    }
+    profilesScanning_ = true;
+    const std::filesystem::path root = crispAsrRoot_;
+    ::app::async::restart(
+        kProfileScanTask, [root] { return core::ScanProfiles(root); },
+        [this](::app::async::Result<core::ProfileScan>& result) {
+            profiles_ = std::move(result.value);
+            profilesScanned_ = true;
+            profilesScanning_ = false;
+        });
 }
 
 void Application::Compose(eui::Ui& ui, const eui::Screen& screen) {
@@ -41,11 +63,20 @@ void Application::Compose(eui::Ui& ui, const eui::Screen& screen) {
                 .onChange([this](int index) { selectedPage_ = index; })
                 .build();
 
-            const ui::PageContext context{strings_, theme, contentWidth, pageHeight};
+            const ui::PageContext context{strings_, theme, fonts_, contentWidth, pageHeight};
             switch (selectedPage_) {
-            case kDashboard:
-                ui::ComposeDashboard(ui, context, appData_);
+            case kDashboard: {
+                const ui::DashboardState dashboard{appData_,
+                                                   crispAsrRoot_,
+                                                   profiles_,
+                                                   profilesScanned_,
+                                                   profilesScanning_,
+                                                   dashboardScroll_,
+                                                   [this] { StartProfileScan(); },
+                                                   [this](float offset) { dashboardScroll_ = offset; }};
+                ui::ComposeDashboard(ui, context, dashboard);
                 break;
+            }
             case kTranscribe:
                 ui::ComposePlaceholder(ui, context, "page.transcribe", "tab.transcribe", "page.transcribe.body");
                 break;

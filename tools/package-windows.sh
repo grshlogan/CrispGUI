@@ -30,6 +30,12 @@ mkdir -p "$stage"
 
 cp "$build/crisprustgui.exe" "$stage/"
 cp -r "$build/assets" "$stage/"
+# The owner-provided UI fonts (not in Git); without them the UI uses EUI-NEO's default font.
+if [ -d "$build/fonts" ]; then
+  cp -r "$build/fonts" "$stage/"
+fi
+# Test data that the unit tests read next to their executables.
+cp -r "$build/tests/testdata" "$stage/"
 : > "$stage/tests.txt"
 for test in $(ctest --test-dir "$build" -N -L '^unit$' | sed -n 's/^ *Test *#[0-9]*: *//p'); do
   cp "$build/tests/$test.exe" "$stage/"
@@ -47,6 +53,12 @@ headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
   echo "Packaged: $(date -u +%Y-%m-%dT%H:%M:%SZ) in WSL2 ($WSL_DISTRO_NAME)"
   echo "Toolchain: MinGW-w64 GCC $mingw_version, headers $headers_version, $(cmake --version | head -1), Ninja $(ninja --version)"
   echo "EUI-NEO: v0.6.1, commit 1647709068e36834ab26da5a97ef4ad98aa34c9d"
+  if [ -d "$stage/fonts" ]; then
+    echo "UI fonts (owner-provided, not in Git):"
+    (cd "$stage/fonts" && sha256sum -- *.ttf | sed 's/^/  /')
+  else
+    echo "UI fonts: none; EUI-NEO's default font"
+  fi
   echo "Run: crisprustgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit tests"
 } | sed 's/$/\r/' > "$stage/BUILD-INFO.txt"
 

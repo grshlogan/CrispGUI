@@ -1,6 +1,6 @@
 # Architecture — CrispRustGUI
 
-> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review. Nothing here is implemented yet; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
+> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4). Entries marked (P1) and (P2) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
 
 ## 1. Architectural style: thick client over a local service
 
@@ -24,15 +24,18 @@ Set by the owner on the dates shown; changing one needs the owner.
 
 ## 2. Component model
 
-Status: Phase 1 created the entries marked `(P1)`; the rest is `planned`.
+Status: Phase 1 created the entries marked `(P1)` and Phase 2 those marked `(P2)`; the rest is `planned`.
 
 ```
 crisprustgui/
 ├── src/
 │   ├── main.cpp                      // (P1) EUI-NEO entry points; owns the single Application
-│   ├── app/                          // (P1) application.{h,cpp}: state and page composition; app_data.{h,cpp}: app data folder and TMP/TEMP; later the UI inbox
+│   ├── app/                          // (P1) application.{h,cpp}: state and page composition; app_data.{h,cpp}: app data folder and TMP/TEMP; (P2) crispasr_location.{h,cpp}: the CrispASR root; later the UI inbox
 │   ├── core/
-│   │   ├── profile_store.{h,cpp}     // JSONC parsing, profile model, readiness, args[] parsing
+│   │   ├── profile_store.{h,cpp}     // (P2) profile model, scanning, readiness
+│   │   ├── jsonc.{h,cpp}             // (P2) JSONC comment stripping
+│   │   ├── cli_flags.{h,cpp}         // (P2) the CrispASR CLI flags (cli_flags_table.inc, generated) and the args[] reader
+│   │   ├── launch_command.{h,cpp}    // (P2) the launcher's tuning conditions; the full command line in Phase 3
 │   │   ├── server_manager.{h,cpp}    // pre-flight, process lifecycle, health polling, log buffer
 │   │   ├── api_client.{h,cpp}        // typed CrispASR calls over an HttpTransport
 │   │   ├── params/                   // parameter catalog, sources, resolver (§2.7)
@@ -43,14 +46,14 @@ crisprustgui/
 │   │   └── step_runners/
 │   │       ├── step_runner.h         // interface
 │   │       └── asr_step.cpp          // v1's only runner: the window loop (§2.5)
-│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; later HttpTransport (WinHTTP | libcurl), Process (Win32 | POSIX)
+│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; (P2) files.h; later HttpTransport (WinHTTP | libcurl), Process (Win32 | POSIX)
 │   ├── ui/
-│   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp} with placeholders)
+│   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp}; P2: the dashboard lists the profiles); (P2) fonts.{h,cpp}
 │   │   └── widgets: generated parameter panel, profile picker, job table
-│   └── util/                         // (P1) string_table.{h,cpp}; later the JSON writer and logging
+│   └── util/                         // (P1) string_table.{h,cpp}; (P2) json.{h,cpp}: JSON values and the parser, sha256.{h,cpp}; later the JSON writer and logging
 ├── params/                           // data: catalog/*.json, models/<folder>/<name>.json (§2.7)
 ├── cmake/toolchains/                 // MinGW-w64 cross-compilation toolchain file
-├── tools/                            // smoke builds, Windows packaging, the Windows test runner
+├── tools/                            // smoke builds, Windows packaging, the Windows test runner, the CLI flag extractor
 └── tests/                            // (P1) unit tests with check.h; later a stub server for HTTP tests
 ```
 
@@ -58,27 +61,20 @@ EUI-NEO is not part of the tree; the build adds it from the shared Learn library
 
 ### 2.1 ProfileStore
 
-- Owns JSONC parsing. Algorithm: iterate over characters; inside a string, `"` ends the string and a backslash escapes the next character; outside strings, `//` and `#` start a comment that runs to the end of the line. Never strip inside string literals; profile URLs contain `//`. The launcher's `Remove-JsonComments` compares a character with the PowerShell literal `'\\'`, which is two characters long (`start-crispasr.ps1:34`), so its escape branch probably never fires; it works today only because no profile string contains `\"`. Implement escapes correctly rather than copying it.
-- Model:
+Implemented in Phase 2 (`src/core/profile_store.h`, `jsonc.h`, `cli_flags.h`, `launch_command.h`; [Phase 2 report](devlog/phase-2.md)).
 
-```cpp
-struct Profile {
-  std::string path;          // absolute path of the .conf/.json file
-  std::string folder;        // parent folder name (e.g. "Japanese")
-  std::string name;          // file basename
-  std::string contentHash;   // SHA-256 of the file bytes, for job snapshots
-  std::string build, backend, model, aligner, language, download;
-  std::string host; int port; std::string device, apiKeys;
-  std::map<std::string, std::string> env;   // child environment additions
-  std::vector<std::string> args;            // passthrough CLI args, verbatim
-  Json raw;                                 // whole parsed object, unknown keys included
-  bool modelOk, alignerOk;                  // readiness under the models root
-};
-```
-
-- Readiness mirrors the launcher: the `model` path joined with the models root; `[MISS]` shows the `download` URL; the aligner is checked separately.
-- Profile values for the parameter panel: tuning keys come from `raw`, and known flags come from `args[]` through the catalog's CLI flag table (§2.7). The launcher's apply conditions (for example `temperature` only when > 0 and `max_new_tokens` only when non-zero; [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters)) decide whether a profile value actually reached the server. A value the launcher does not pass is shown as the server default.
+- JSONC: iterate over characters; inside a string, `"` ends the string and a backslash escapes the next character; outside strings, `//` and `#` start a comment that runs to the end of the line. Never strip inside string literals; profile URLs contain `//`. Like the launcher, which works line by line, a string ends at the end of its line. The launcher's `Remove-JsonComments` compares a character with the PowerShell literal `'\\'`, which is two characters long (`start-crispasr.ps1:34`), so its escape branch probably never fires; it works today only because no profile string contains `\"`. The GUI implements escapes correctly instead. The stripped text then goes to a strict JSON parser (`src/util/json.h`) that reports the line and column of an error.
+- Model: `Profile` holds the file's path, folder, name, and SHA-256 (for job snapshots); the known keys (`comment`, `build`, `backend`, `model`, `aligner`, `language`, `download`, `host`, `port`, `device`, `api_keys`, `env`, `args`); the whole parsed object as `raw`, tuning keys and unknown keys included; an `error` that makes it unusable and a list of `warnings`; and the readiness paths and flags.
+- Reading rules, chosen so that the GUI never silently differs from the launcher:
+  - Keys are compared without regard to case, as PowerShell's property access is. Keys that differ only in case make the profile unusable, as `ConvertFrom-Json` rejects them; an identical key twice keeps the last value with a warning.
+  - `build`, `backend`, and `model` are required. A known key with the wrong type makes the profile unusable instead of being coerced the PowerShell way (`"vad": "false"` would be true there): strings for the string keys, a string or whole number for `device`, a whole number up to 65535 for `port` (0 means 5114, as in the launcher), an object of strings or numbers for `env`, an array of strings or numbers for `args`, booleans and numbers for the tuning keys. `null` counts as absent.
+  - A UTF-8 byte order mark is skipped; UTF-16 files and files over 1 MiB are rejected with a message.
+  - Folders and files are listed as the launcher lists them: subfolders of `profile\` sorted by name without regard to case, `.json` and `.conf` files (any case) inside them, hidden and system entries skipped, files directly inside `profile\` ignored.
+- Readiness mirrors the launcher: paths join below the CrispASR root (`build`) or the models folder (`model`, `aligner`) as `Join-Path` joins them, with backslashes and slashes as separators and leading separators dropped. A path with a drive letter cannot lie below the folder and is reported. `[OK]` and `[MISS]` follow the model file, as in the launcher's menu; the dashboard also reports a missing server executable or aligner and shows the `download` URL for a missing model.
+- `args[]` is read with the CrispASR 0.8.42 CLI's rules from a flag table extracted from its source (`tools/extract-cli-flags.py`; OQ-4 item 2): a flag that takes a value takes the next argument, and a later flag overrides an earlier one for the same parameter. Unknown flags, missing values, unparsable numbers, values outside the accepted choices, and flags that make the CLI exit become warnings, because a newer engine may accept what 0.8.42 rejects.
+- The launcher's apply conditions decide which tuning keys reach the server (for example `temperature` only when > 0 and `max_new_tokens` only when non-zero; [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters)). `ReadProfileStartup` emits the tuning flags whose condition holds in the launcher's order, then `args[]`, and reads the result with the CLI rules, so each parameter's effective startup value and its source (tuning key or `args[]`) are known. A value the launcher does not pass is the server default. The parameter panel (§2.7) builds on this.
 - Unknown keys stay in `raw` (forward compatibility; the CrisperWeaver preset lesson: tolerate unknown and missing fields, and version the GUI's own files).
+- The scan runs on EUI-NEO's async pool, and the result replaces the previous one on the UI thread; a newer scan supersedes a running one.
 
 ### 2.2 ServerManager
 
@@ -97,7 +93,7 @@ struct Profile {
 - `HttpTransport` is the platform seam: `get(url, headers, timeout)` and `postMultipart(url, headers, fields, filePath, timeout, cancel)`, which streams the file from disk instead of loading it into memory. Implementations: WinHTTP on Windows, a system library that needs no third-party import, and libcurl on Linux development builds (*proposed*, depends on OQ-1 and OQ-3; the original plan used libcurl everywhere with WinHTTP as a fallback, eui-neo-audit §3.1).
 - Every request carries `Authorization: Bearer <key>` from the settings ([API-CRISPASR.md §2](API-CRISPASR.md#2-authentication)).
 - Errors are typed after [API-CRISPASR.md §5](API-CRISPASR.md#5-errors): `Unreachable`, `Timeout`, `Cancelled`, `BadRequest(message)`, `Unauthorized`, `PayloadTooLarge`, `ServerBusy` (503), `ServerError` (500), `Protocol` (unexpected body). The ASR runner decides which ones to retry (§2.5).
-- Responses are parsed with EUI-NEO's read-only JSON API (`eui/json.h`, built on yyjson); a small JSON writer in `util/` produces the GUI's own files.
+- Responses are parsed with the project's JSON parser (`src/util/json.h`, Phase 2), because EUI-NEO's `eui/json.h` cannot list an object's members ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)); a small JSON writer in `util/` will produce the GUI's own files.
 - The GUI does not use `eui::network`: it is GET-only, starts once per key, sends no headers, and on Windows without libcurl downloads through files in the system temp directory.
 - Timeouts: short for connecting (about 2 s); generous and configurable for responses, since one window on a slow backend can take minutes.
 
@@ -187,7 +183,7 @@ Cancellation aborts the transport. The server finishes the window anyway. The ch
 | Server log reader | Child stdout and stderr pipes | Ring buffer, then `app::requestUpdate()` |
 | Job store writer | Job files and checkpoint lines | Ordered per job |
 
-Rule: shared state is confined to the UI thread except for the explicitly guarded UI inbox and job store. Worker threads hand results to the UI through the mutex-protected inbox plus `app::requestUpdate()`, or through `app::async` completion callbacks (eui-neo-audit §3.3). Long transcription calls do not run on EUI-NEO's shared async pool: its size is not visible in the reference library (`core/platform/async.h` was not copied), and a call that lasts minutes could starve other async work. *Proposed*; confirm against the EUI-NEO source once it is imported (OQ-4).
+Rule: shared state is confined to the UI thread except for the explicitly guarded UI inbox and job store. Worker threads hand results to the UI through the mutex-protected inbox plus `app::requestUpdate()`, or through `app::async` completion callbacks (eui-neo-audit §3.3). Long transcription calls do not run on EUI-NEO's shared async pool: it has at most four workers ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)), and a call that lasts minutes could starve other async work. Short tasks such as the profile scan use the pool.
 
 ### 2.7 Parameter model (pluggable)
 
@@ -213,7 +209,7 @@ Owner invariant 1. Goals: each model shows exactly its own parameter set; adding
    }
    ```
 
-   `type` is `bool`, `int`, `float`, `enum` (with `options`), `string`, or `string_list`. `tier` is `request`, `startup`, or `gui`. `request_field` names the multipart field ([API-CRISPASR.md §3.1](API-CRISPASR.md#31-tier-a-per-request-parameters)); `profile_key` names the top-level profile key, and a descriptor may map an inverted key (`no_punctuation` ↔ `punctuation`); `cli` gives the startup flag and the launcher's apply condition (`always`, `truthy`, `gt0`, `present`) for reading `args[]` and building command lines; `requires_caps` lists engine capability names the backend must report; `widget` optionally names a custom widget. Request field names are confirmed from the server source. CLI flag names and capability names wait for [OQ-4](OPEN-QUESTIONS.md#oq-4-source-material-needed), item 2.
+   `type` is `bool`, `int`, `float`, `enum` (with `options`), `string`, or `string_list`. `tier` is `request`, `startup`, or `gui`. `request_field` names the multipart field ([API-CRISPASR.md §3.1](API-CRISPASR.md#31-tier-a-per-request-parameters)); `profile_key` names the top-level profile key, and a descriptor may map an inverted key (`no_punctuation` ↔ `punctuation`); `cli` gives the startup flag and the launcher's apply condition (`always`, `truthy`, `gt0`, `present`) for reading `args[]` and building command lines; `requires_caps` lists engine capability names the backend must report; `widget` optionally names a custom widget. Request field names are confirmed from the server source, and CLI flag names from the CLI source (`src/core/cli_flags_table.inc`, Phase 2). Capability names wait for [OQ-4](OPEN-QUESTIONS.md#oq-4-source-material-needed), item 2.
 2. **Sources**, pluggable providers that contribute to a model's parameter set:
    - `ProfileSource`: the profile's tuning keys and recognized `args[]` flags, with values as the launcher applies them.
    - `ManifestSource`: the model's explicit parameter description: which parameters to expose and in what order, with model-specific defaults, ranges, locks, and notes. Its location is [OQ-5](OPEN-QUESTIONS.md#oq-5-location-of-the-models-authoritative-parameter-description): a block inside the profile or `params/models/<folder>/<name>.json` in this repository.
@@ -246,6 +242,8 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | Parameter panel | Data-driven catalog plus the model's description plus a capability filter, rendered by a widget factory | One hardcoded page; per-model pages in code | Owner invariant 1: every model has its own parameter set, and new parameters or models must not need code changes |
 | Long jobs | Transcription windows with per-window retry and window-granular resume | One request per file with segment-level resume | Owner direction; the HTTP endpoint returns results only at the end of a request, so segment checkpoints are impossible without windows |
 | Response format | `verbose_json` plus a GUI-side SRT writer (*proposed*, OQ-7) | Saving the server's `srt` | The server's `srt` ignores `max_len`/`split_on_punct`, and windows need segment timings |
+| JSON parsing | An in-repo parser that keeps member order, duplicates, and number text, with line and column in errors | EUI-NEO's `eui/json.h`; yyjson directly | `eui/json.h` cannot list object members; EUI-NEO compiles yyjson into its own library, so a second copy of the same symbols would risk duplicate definitions at link time |
+| UI font | HarmonyOS Sans SC (Regular, Medium, Bold), provided by the owner and kept out of Git | EUI-NEO's bundled bold display font; Microsoft YaHei | Owner decision (2026-10-11, round 6): better legibility; the license is not verified, so the files are not redistributed through Git |
 | Development platform | Linux builds in WSL2 for development; Windows for acceptance | Development on Windows | Owner rule: Windows does no development, and WSL2 never mounts Windows drives |
 
 ## 4. Risk register
@@ -256,7 +254,7 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | EUI-NEO's MinGW-w64 path breaks | Low | Upstream CI builds Windows only with MSVC. Phase 0: the MinGW build passes after one header shim ([ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts)), and its tests and probes pass on the owner's Windows machine; fallback: an owner-side MSVC build or a CI build |
 | The build depends on the Learn library outside the repository | Low | `CRISPGUI_EUI_NEO_DIR` names the snapshot, and configuration stops with a clear message when it is missing |
 | Release builds run without exceptions or RTTI | Low | Convention: application code uses neither ([CONVENTIONS.md](CONVENTIONS.md#c-conventions)); tests run in both Debug and Release |
-| Engine CLI flags and capability names unverified | Low | Extract them from the CrispASR 0.8.42 CLI source in the Learn library in Phase 2 (OQ-4 item 2) |
+| The deployed engine differs from the 0.8.42 source | Low | The CLI flags come from the 0.8.42 source (Phase 2); `args[]` flags the table does not know are warnings, not errors. The deployed build's `--help` and `--list-backends-json` output would confirm the version (OQ-4 item 2), and capability names are still to be extracted for Phase 6 |
 | Window boundaries cut speech | Medium | Boundary guard re-transcribes cut segments; window length 0 sends short files in one request |
 | Repeated upload and decode per window | Medium | Window length setting, default 300 s (OQ-6) |
 | Long-file transcription timeouts | Medium | Configurable response timeout; per-window retry |

@@ -40,11 +40,19 @@ endfunction()
 # Platform-neutral core and the platform seam; no UI dependency, so tests link it directly.
 add_library(crisp_core STATIC
     src/app/app_data.cpp
+    src/app/crispasr_location.cpp
+    src/core/cli_flags.cpp
+    src/core/jsonc.cpp
+    src/core/launch_command.cpp
+    src/core/profile_store.cpp
+    src/platform/files.cpp
+    src/util/json.cpp
+    src/util/sha256.cpp
     src/util/string_table.cpp)
 if(WIN32)
-    target_sources(crisp_core PRIVATE src/platform/paths_win32.cpp)
+    target_sources(crisp_core PRIVATE src/platform/files_win32.cpp src/platform/paths_win32.cpp)
 else()
-    target_sources(crisp_core PRIVATE src/platform/paths_posix.cpp)
+    target_sources(crisp_core PRIVATE src/platform/files_posix.cpp src/platform/paths_posix.cpp)
 endif()
 target_include_directories(crisp_core PUBLIC src)
 crisp_apply_options(crisp_core)
@@ -52,6 +60,7 @@ crisp_apply_options(crisp_core)
 # Application state and pages, built on EUI-NEO.
 add_library(crisp_ui STATIC
     src/app/application.cpp
+    src/ui/fonts.cpp
     src/ui/pages.cpp)
 target_link_libraries(crisp_ui PUBLIC crisp_core eui::neo)
 crisp_apply_options(crisp_ui)
@@ -63,6 +72,28 @@ target_link_libraries(crisprustgui PRIVATE crisp_ui)
 eui_neo_configure_app(crisprustgui)
 set_source_files_properties(src/main.cpp PROPERTIES COMPILE_OPTIONS "-Wall;-Wextra")
 target_compile_options(crisprustgui PRIVATE -fno-exceptions -fno-rtti)
+
+# UI fonts: the HarmonyOS Sans SC weights the UI uses (src/ui/fonts.cpp), copied from the
+# owner-provided fonts/ folder, which is not in Git, to fonts/ next to the executable. Without
+# the folder the build still works and the UI uses EUI-NEO's default font.
+set(CRISPGUI_FONT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fonts" CACHE PATH "Folder with the HarmonyOS Sans SC fonts")
+set(CRISPGUI_UI_FONTS HarmonyOS_Sans_SC_Regular.ttf HarmonyOS_Sans_SC_Medium.ttf HarmonyOS_Sans_SC_Bold.ttf)
+set(crisp_font_outputs)
+foreach(font IN LISTS CRISPGUI_UI_FONTS)
+    if(EXISTS "${CRISPGUI_FONT_DIR}/${font}")
+        add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/fonts/${font}"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CRISPGUI_FONT_DIR}/${font}" "${CMAKE_BINARY_DIR}/fonts/${font}"
+            DEPENDS "${CRISPGUI_FONT_DIR}/${font}"
+            COMMENT "Copying ${font}")
+        list(APPEND crisp_font_outputs "${CMAKE_BINARY_DIR}/fonts/${font}")
+    else()
+        message(STATUS "UI font ${font} not found in ${CRISPGUI_FONT_DIR}; EUI-NEO's default font is used instead")
+    endif()
+endforeach()
+if(crisp_font_outputs)
+    add_custom_target(crisp_fonts DEPENDS ${crisp_font_outputs})
+    add_dependencies(crisprustgui crisp_fonts)
+endif()
 
 if(CRISPGUI_BUILD_TESTS)
     enable_testing()

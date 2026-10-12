@@ -37,12 +37,13 @@ Complete: accepted on 2026-10-11 after the owner's Windows run of `crisprustgui-
 
 ## Phase 2 — ProfileStore
 
-In progress since 2026-10-11 (round 6; [Phase 2 report](devlog/phase-2.md)).
+In progress since 2026-10-11 (round 6): built and tested on Linux on 2026-10-12; the Windows check of the dashboard waits for the delivery ([Phase 2 report](devlog/phase-2.md)).
 
-- [ ] Implement the JSONC parser with string-aware comment stripping and correct escape handling ([ARCHITECTURE.md §2.1](ARCHITECTURE.md#21-profilestore)). Unit-test it with the four profiles in `reference/crispasr/profiles-japanese/`, a string containing an escaped quote, and a corrupted file.
-- [ ] Implement `ProfileStore`: scan `<CrispASR root>/profile/*` subfolders, compute readiness (`model`/`aligner` existence under the models root), and hash each file.
-- [ ] Parse known `args[]` flags and apply the launcher's conditions, using a flag table extracted from the CrispASR 0.8.42 CLI source in the Learn library (`examples/cli/cli.cpp`; [OQ-4](OPEN-QUESTIONS.md#oq-4-source-material-needed) item 2).
-- [ ] Acceptance: [Linux] unit tests pass; the four Japanese profiles parse with the expected fields.
+- [x] Implement the JSONC parser with string-aware comment stripping and correct escape handling ([ARCHITECTURE.md §2.1](ARCHITECTURE.md#21-profilestore)). Unit-test it with the four profiles in `reference/crispasr/profiles-japanese/`, a string containing an escaped quote, and a corrupted file.
+- [x] Implement `ProfileStore`: scan `<CrispASR root>/profile/*` subfolders, compute readiness (`model`/`aligner` existence under the models root), and hash each file.
+- [x] Parse known `args[]` flags and apply the launcher's conditions, using a flag table extracted from the CrispASR 0.8.42 CLI source in the Learn library (`examples/cli/cli.cpp`; [OQ-4](OPEN-QUESTIONS.md#oq-4-source-material-needed) item 2).
+- [x] Added: the dashboard lists the profiles of the CrispASR folder with readiness, errors, and startup flags; the UI uses the owner's HarmonyOS Sans SC fonts.
+- [ ] Acceptance: [Linux] unit tests pass; the four Japanese profiles parse with the expected fields (done); [Windows] the owner's run of the delivery: the unit tests pass, and the dashboard lists the real profiles under `E:\AI\ASR\CrispASR\profile` with the readiness the launcher shows.
 
 ## Phase 3 — ServerManager
 

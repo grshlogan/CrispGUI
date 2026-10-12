@@ -1,6 +1,6 @@
 # CrispASR Server API Reference
 
-> The contract CrispRustGUI programs against. Checked on 2026-10-11 by reading `reference/crispasr/crispasr_server.cpp` and `reference/crispasr/crispasr_output.cpp` (CrispASR v0.8.42 snapshot) and the owner's launcher `reference/crispasr/start-crispasr.ps1`. Line numbers refer to `crispasr_server.cpp` unless another file is named. Behavior of the deployed build is `not verified` until observed on Windows. The Chinese audit `reference/audits/audit-reports/crispasr-audit.md` has more background; §10 lists where it is inaccurate.
+> The contract CrispRustGUI programs against. Checked on 2026-10-11 by reading `reference/crispasr/crispasr_server.cpp` and `reference/crispasr/crispasr_output.cpp` (CrispASR v0.8.42 snapshot) and the owner's launcher `reference/crispasr/start-crispasr.ps1`; the CLI flags were checked against `examples/cli/cli.cpp` of the same version in the Learn library in Phase 2. Line numbers refer to `crispasr_server.cpp` unless another file is named. Behavior of the deployed build is `not verified` until observed on Windows. The Chinese audit `reference/audits/audit-reports/crispasr-audit.md` has more background; §10 lists where it is inaccurate.
 
 ## 1. Endpoints
 
@@ -21,7 +21,7 @@ The v0.8.42 server has no `/v1/audio/translations` route; speech translation is 
 
 ## 2. Authentication
 
-- The server collects keys from its startup API-key option (`params.server_api_keys`; the CLI flag name is not in the reference library) and from the `CRISPASR_API_KEYS` environment variable, both comma-separated, and merges them (1332-1336). With no keys, every request is authorized (314-324).
+- The server collects keys from its startup option `--api-keys` (`params.server_api_keys`; `examples/cli/cli.cpp` of the CrispASR 0.8.42 snapshot in the Learn library) and from the `CRISPASR_API_KEYS` environment variable, both comma-separated, and merges them (1332-1336). With no keys, every request is authorized (314-324).
 - A client sends `Authorization: Bearer <key>` or `X-API-Key: <key>` (302-312). A missing or wrong key gets `401` with `{"error":{"message":"invalid or missing API key","type":"invalid_api_key"}}` and `WWW-Authenticate: Bearer` (438-443).
 - `/health` is public. Every other route requires a key when keys are configured.
 - The owner's launcher sets `CRISPASR_API_KEYS` to the profile's `api_keys`, or to `default` when that is empty (`start-crispasr.ps1:185`), so servers started by the launcher require a key. Owner direction (2026-10-11): everything runs locally and the key is `default`; it carries little importance. The GUI sends the configured key (default `default`) on every request and sets the same variable for servers it starts.
@@ -93,7 +93,7 @@ The owner's launcher is the authoritative profile-to-command mapping (`start-cri
   --host <host, default 127.0.0.1> --port <port, default 5114>
 ```
 
-The launcher refuses to start when the executable or the model file is missing. Child environment: `CRISPASR_MODELS_DIR=<root>\models`, `CRISPASR_CACHE_DIR=<root>\cache`, `CRISPASR_SCRATCH_DIR=<root>\scratch`, `CRISPASR_API_KEYS=<api_keys or default>`, `CUDA_VISIBLE_DEVICES=<device>` (removed when `device` is empty), and every entry of the profile's `env` object. The GUI adds `TMP` and `TEMP` (§6, item 8). The launcher uses `--force-aligner`; earlier versions of this document also listed `-falign`, which no reference file supports.
+The launcher refuses to start when the executable or the model file is missing. Child environment: `CRISPASR_MODELS_DIR=<root>\models`, `CRISPASR_CACHE_DIR=<root>\cache`, `CRISPASR_SCRATCH_DIR=<root>\scratch`, `CRISPASR_API_KEYS=<api_keys or default>`, `CUDA_VISIBLE_DEVICES=<device>` (removed when `device` is empty), and every entry of the profile's `env` object. The GUI adds `TMP` and `TEMP` (§6, item 8). The launcher uses `--force-aligner`; the 0.8.42 CLI also accepts `-falign` for it (`examples/cli/cli.cpp`). The CLI reads every flag with the same rules as `src/core/cli_flags.cpp`: a flag that takes a value takes the next argument, and the last occurrence of a flag wins, so a flag in `args[]` overrides the same setting from a tuning key.
 
 ## 4. Response formats
 
@@ -122,7 +122,7 @@ Rely on the status code; the body shape is not uniform.
 
 1. The server loads the model and runs warmup before it creates its HTTP listener (1357-1487, then 1537 and 4025). During startup, connections are refused; `/health` never answers "loading" at that time.
 2. `/health` answers `503 {"status":"loading"}` only while `/load` swaps the model (2331-2377).
-3. The result of `svr.listen()` is ignored (4025), and the "listening on" line is printed before it (3948). When the port is taken, the process loads the model, prints that line, fails to bind, and returns 0 from `crispasr_run_server`; the process exit code is presumably 0 as well (`hypothesis`: the CLI entry point is not in the reference library). Detect a failed start by the process exiting, not by the log or the exit code.
+3. The result of `svr.listen()` is ignored (4025), and the "listening on" line is printed before it (3948). When the port is taken, the process loads the model, prints that line, fails to bind, and returns 0 from `crispasr_run_server`, and `main` returns that value in server mode (`examples/cli/cli.cpp:2683-2685` of the 0.8.42 snapshot), so the process exits with code 0 (source reading; the deployed build is `not verified`). Detect a failed start by the process exiting, not by the log or the exit code.
 4. One process serves one ASR model. `/load` swaps only model and backend (2363-2365), so a profile switch means a restart.
 5. The server writes its log to stderr.
 6. There is no cancel endpoint. A client that disconnects does not stop the transcription in progress, and the next request waits for the model lock (756).

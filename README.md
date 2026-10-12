@@ -2,7 +2,7 @@
 
 A desktop GUI for driving the [CrispASR](https://github.com/CrispStrobe/CrispASR) speech engine, built with C++17 and the EUI-NEO UI framework.
 
-> **Status: Phases 0 (build environment) and 1 (application skeleton) complete; Phase 2 (ProfileStore) in progress.** This repository currently contains the specification, architecture plan, server contract, and reference material. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
+> **Status: Phases 0 (build environment) and 1 (application skeleton) complete; Phase 2 (ProfileStore) in progress.** This repository contains the specification, architecture plan, server contract, reference material, and the application as far as the completed phases go. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
 
 ## What this is
 
@@ -35,8 +35,9 @@ Version 1 covers the most valuable slice of a larger pipeline:
 | `docs/ENVIRONMENT.md` | Build environment (WSL2 development, Windows target, dependencies) |
 | `docs/agents/README.md` | Identities, delivery to Windows, authorizations |
 | `docs/identity/` | One context file per agent identity |
-| `CMakeLists.txt`, `src/`, `tests/` | The application (Phase 1 skeleton), its libraries, and the unit tests |
-| `cmake/`, `tools/` | The MinGW-w64 toolchain file, smoke builds, Windows packaging, and the Windows test runner |
+| `CMakeLists.txt`, `src/`, `tests/` | The application (skeleton and profile reading so far), its libraries, and the unit tests |
+| `cmake/`, `tools/` | The MinGW-w64 toolchain file, smoke builds, Windows packaging, the Windows test runner, and the CrispASR CLI flag extractor |
+| `fonts/` | The UI fonts (HarmonyOS Sans SC), provided by the owner and not in Git (`docs/ENVIRONMENT.md` §4.3) |
 | `reference/` | Curated source files from CrispASR / CrisperWeaver / EUI-NEO to learn from, plus the audit reports they came from |
 
 ## The three source projects behind this design
@@ -56,6 +57,6 @@ The non-negotiable rules for anyone changing this repository are the hard rules 
 - Target: Windows 10/11 x64, C++17, CMake ≥ 3.25. The Windows executable is cross-compiled in WSL2 with MinGW-w64 GCC 12 (`docs/ENVIRONMENT.md`).
 - Development happens only in WSL2, with Linux development builds; Windows-native behavior is accepted on the owner's machine using a build folder bound to an exact commit (`docs/agents/README.md`).
 - Repository: Git on `main`; the remote `origin` is the owner's private GitHub repository `grshlogan/CrispGUI`.
-- UI framework: EUI-NEO v0.6.1, built through `add_subdirectory` from the pinned snapshot in the shared Learn library; it is not copied into this repository.
+- UI framework: EUI-NEO v0.6.1, built through `add_subdirectory` from the pinned snapshot in the shared Learn library; it is not copied into this repository. UI font: HarmonyOS Sans SC from the owner's local `fonts/` folder.
 - HTTP: a thin in-repo transport (WinHTTP on Windows, libcurl on Linux).
 - The CrispASR server endpoint and profile paths are configured, not hardcoded; defaults match the existing deployment.
