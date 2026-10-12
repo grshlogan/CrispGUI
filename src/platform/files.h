@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <string>
@@ -12,6 +13,14 @@ namespace crisp::platform {
 // Opens |path| for binary reading: _wfopen on Windows, so any Unicode path works; fopen
 // elsewhere. Returns nullptr with errno set on failure.
 std::FILE* OpenFileForReading(const std::filesystem::path& path);
+
+// Creates or truncates |path| for binary writing, with the same path handling. Returns nullptr
+// with errno set on failure.
+std::FILE* OpenFileForWriting(const std::filesystem::path& path);
+
+// The size of the open |file| from its handle, so that it describes the same file that is read;
+// false when the handle is not a regular file, such as a folder.
+bool OpenFileSize(std::FILE* file, std::uint64_t& size);
 
 // True for an entry that a directory listing hides by default: the hidden or system attribute
 // on Windows, as PowerShell's Get-ChildItem without -Force; a leading dot elsewhere.

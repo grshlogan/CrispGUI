@@ -55,6 +55,8 @@ HealthReport ClassifyHealth(const platform::HttpResponse& response) {
         report.detail = "No answer in time: " + response.error;
         return report;
     case platform::HttpFailure::kCancelled:
+    case platform::HttpFailure::kTooLarge:
+    case platform::HttpFailure::kBody:
     case platform::HttpFailure::kOther:
         report.kind = HealthKind::kForeign;
         report.detail = response.error;

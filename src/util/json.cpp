@@ -1,6 +1,7 @@
 #include "util/json.h"
 
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <system_error>
@@ -42,6 +43,44 @@ void AppendUtf8(std::string& out, std::uint32_t codePoint) {
         out.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
         out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
     }
+}
+
+// The length of the valid UTF-8 sequence at text[pos], or 0 when it is invalid: a stray
+// continuation byte, an overlong form, a surrogate, or a code point above U+10FFFF.
+std::size_t Utf8SequenceLength(std::string_view text, std::size_t pos) {
+    const unsigned char lead = static_cast<unsigned char>(text[pos]);
+    std::size_t length = 0;
+    std::uint32_t codePoint = 0;
+    std::uint32_t minimum = 0;
+    if (lead >= 0xC2 && lead <= 0xDF) {
+        length = 2;
+        codePoint = lead & 0x1F;
+        minimum = 0x80;
+    } else if (lead >= 0xE0 && lead <= 0xEF) {
+        length = 3;
+        codePoint = lead & 0x0F;
+        minimum = 0x800;
+    } else if (lead >= 0xF0 && lead <= 0xF4) {
+        length = 4;
+        codePoint = lead & 0x07;
+        minimum = 0x10000;
+    } else {
+        return 0;
+    }
+    if (pos + length > text.size()) {
+        return 0;
+    }
+    for (std::size_t i = 1; i < length; ++i) {
+        const unsigned char next = static_cast<unsigned char>(text[pos + i]);
+        if ((next & 0xC0) != 0x80) {
+            return 0;
+        }
+        codePoint = (codePoint << 6) | (next & 0x3F);
+    }
+    if (codePoint < minimum || codePoint > 0x10FFFF || (codePoint >= 0xD800 && codePoint <= 0xDFFF)) {
+        return 0;
+    }
+    return length;
 }
 
 // Recursive-descent parser over the whole document. The first error stops it.
@@ -317,51 +356,13 @@ private:
                 ++pos_;
                 continue;
             }
-            const std::size_t length = Utf8SequenceLength();
+            const std::size_t length = Utf8SequenceLength(text_, pos_);
             if (length == 0) {
                 return Fail("The string is not valid UTF-8.");
             }
             out.append(text_.substr(pos_, length));
             pos_ += length;
         }
-    }
-
-    // The length of the valid UTF-8 sequence at pos_, or 0 when it is invalid: a stray
-    // continuation byte, an overlong form, a surrogate, or a code point above U+10FFFF.
-    std::size_t Utf8SequenceLength() const {
-        const unsigned char lead = static_cast<unsigned char>(text_[pos_]);
-        std::size_t length = 0;
-        std::uint32_t codePoint = 0;
-        std::uint32_t minimum = 0;
-        if (lead >= 0xC2 && lead <= 0xDF) {
-            length = 2;
-            codePoint = lead & 0x1F;
-            minimum = 0x80;
-        } else if (lead >= 0xE0 && lead <= 0xEF) {
-            length = 3;
-            codePoint = lead & 0x0F;
-            minimum = 0x800;
-        } else if (lead >= 0xF0 && lead <= 0xF4) {
-            length = 4;
-            codePoint = lead & 0x07;
-            minimum = 0x10000;
-        } else {
-            return 0;
-        }
-        if (pos_ + length > text_.size()) {
-            return 0;
-        }
-        for (std::size_t i = 1; i < length; ++i) {
-            const unsigned char next = static_cast<unsigned char>(text_[pos_ + i]);
-            if ((next & 0xC0) != 0x80) {
-                return 0;
-            }
-            codePoint = (codePoint << 6) | (next & 0x3F);
-        }
-        if (codePoint < minimum || codePoint > 0x10FFFF || (codePoint >= 0xD800 && codePoint <= 0xDFFF)) {
-            return 0;
-        }
-        return length;
     }
 
     bool ReadHex4(std::uint32_t& value) {
@@ -484,6 +485,14 @@ JsonValue JsonValue::MakeNumber(double value, std::string text) {
     return result;
 }
 
+JsonValue JsonValue::MakeNumber(double value) {
+    return MakeNumber(value, std::isfinite(value) ? FormatJsonNumber(value) : std::string());
+}
+
+JsonValue JsonValue::MakeInteger(std::int64_t value) {
+    return MakeNumber(static_cast<double>(value), std::to_string(value));
+}
+
 JsonValue JsonValue::MakeString(std::string value) {
     JsonValue result;
     result.type_ = JsonType::kString;
@@ -543,6 +552,119 @@ std::string FormatJsonNumber(double value) {
         return std::string();
     }
     return std::string(buffer, written.ptr);
+}
+
+namespace {
+
+void AppendQuoted(std::string& out, std::string_view text) {
+    static const char kHex[] = "0123456789abcdef";
+    out.push_back('"');
+    for (std::size_t i = 0; i < text.size();) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c >= 0x80) {
+            const std::size_t length = Utf8SequenceLength(text, i);
+            if (length == 0) {
+                out += "\xEF\xBF\xBD";  // U+FFFD for a byte that is not valid UTF-8
+                ++i;
+            } else {
+                out.append(text.substr(i, length));
+                i += length;
+            }
+            continue;
+        }
+        ++i;
+        switch (c) {
+        case '"':
+            out += "\\\"";
+            break;
+        case '\\':
+            out += "\\\\";
+            break;
+        case '\b':
+            out += "\\b";
+            break;
+        case '\f':
+            out += "\\f";
+            break;
+        case '\n':
+            out += "\\n";
+            break;
+        case '\r':
+            out += "\\r";
+            break;
+        case '\t':
+            out += "\\t";
+            break;
+        default:
+            if (c < 0x20 || c == 0x7F) {
+                out += "\\u00";
+                out.push_back(kHex[c >> 4]);
+                out.push_back(kHex[c & 0xF]);
+            } else {
+                out.push_back(static_cast<char>(c));
+            }
+            break;
+        }
+    }
+    out.push_back('"');
+}
+
+void AppendIndent(std::string& out, int depth) {
+    out.push_back('\n');
+    out.append(static_cast<std::size_t>(depth) * 2, ' ');
+}
+
+void AppendValue(std::string& out, const JsonValue& value, bool pretty, int depth) {
+    switch (value.Type()) {
+    case JsonType::kNull:
+        out += "null";
+        return;
+    case JsonType::kBoolean:
+        out += value.AsBoolean() ? "true" : "false";
+        return;
+    case JsonType::kNumber:
+        out += value.NumberText().empty() ? "null" : value.NumberText();
+        return;
+    case JsonType::kString:
+        AppendQuoted(out, value.AsString());
+        return;
+    case JsonType::kArray:
+    case JsonType::kObject:
+        break;
+    }
+    const bool object = value.IsObject();
+    out.push_back(object ? '{' : '[');
+    for (std::size_t i = 0; i < value.Size(); ++i) {
+        if (i > 0) {
+            out.push_back(',');
+        }
+        if (pretty) {
+            AppendIndent(out, depth + 1);
+        }
+        if (object) {
+            AppendQuoted(out, value.KeyAt(i));
+            out += pretty ? ": " : ":";
+        }
+        AppendValue(out, value.At(i), pretty, depth + 1);
+    }
+    if (pretty && value.Size() > 0) {
+        AppendIndent(out, depth);
+    }
+    out.push_back(object ? '}' : ']');
+}
+
+}  // namespace
+
+std::string WriteJson(const JsonValue& value, bool pretty) {
+    std::string out;
+    AppendValue(out, value, pretty, 0);
+    return out;
+}
+
+std::string QuoteJson(std::string_view text) {
+    std::string out;
+    AppendQuoted(out, text);
+    return out;
 }
 
 }  // namespace crisp::util

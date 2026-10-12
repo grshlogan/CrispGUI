@@ -1,6 +1,6 @@
 # Architecture — CrispRustGUI
 
-> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4) and the Phase 3 implementation (§2.2, §2.3, §2.6, §3, §4). Entries marked (P1), (P2), and (P3) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
+> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4) the Phase 3 implementation (§2.2, §2.3, §2.6, §3, §4), and the Phase 4 implementation (§2.3, §3, §4). Entries marked (P1) to (P4) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
 
 ## 1. Architectural style: thick client over a local service
 
@@ -24,7 +24,7 @@ Set by the owner on the dates shown; changing one needs the owner.
 
 ## 2. Component model
 
-Status: Phases 1 to 3 created the entries marked `(P1)`, `(P2)`, and `(P3)`; the rest is `planned`.
+Status: Phases 1 to 4 created the entries marked `(P1)` to `(P4)`; the rest is `planned`.
 
 ```
 crisprustgui/
@@ -37,7 +37,7 @@ crisprustgui/
 │   │   ├── cli_flags.{h,cpp}         // (P2) the CrispASR CLI flags (cli_flags_table.inc, generated) and the args[] reader
 │   │   ├── launch_command.{h,cpp}    // (P2) the launcher's tuning conditions; (P3) the full command line and environment
 │   │   ├── server_manager.{h,cpp}    // (P3) worker threads, inbox, and log of the server; server_state.{h,cpp}: the state machine; server_log.{h,cpp}: log lines
-│   │   ├── api_client.{h,cpp}        // typed CrispASR calls over an HttpTransport
+│   │   ├── api_client.{h,cpp}        // (P4) typed CrispASR calls: the upload and /progress; transcript.{h,cpp}: verbose_json
 │   │   ├── params/                   // parameter catalog, sources, resolver (§2.7)
 │   │   ├── job_model.{h,cpp}         // Job / StepSpec / states
 │   │   ├── job_queue.{h,cpp}         // queue execution, ordering, pause and resume
@@ -46,15 +46,15 @@ crisprustgui/
 │   │   └── step_runners/
 │   │       ├── step_runner.h         // interface
 │   │       └── asr_step.cpp          // v1's only runner: the window loop (§2.5)
-│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; (P2) files.h; (P3) process.h, http.h (WinHTTP | libcurl), command_line.h
+│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; (P2) files.h; (P3) process.h, http.h (WinHTTP | libcurl), command_line.h; (P4) multipart.h, POST in http.h
 │   ├── ui/
 │   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp}; P2: the dashboard lists the profiles; P3: the server panel, Start buttons, log pane, stop confirmation); (P2) fonts.{h,cpp}
 │   │   └── widgets: generated parameter panel, profile picker, job table
-│   └── util/                         // (P1) string_table.{h,cpp}; (P2) json.{h,cpp}: JSON values and the parser, sha256.{h,cpp}; later the JSON writer and logging
+│   └── util/                         // (P1) string_table.{h,cpp}; (P2) json.{h,cpp}: JSON values and the parser, sha256.{h,cpp}; (P4) the JSON writer in json.h; later logging
 ├── params/                           // data: catalog/*.json, models/<folder>/<name>.json (§2.7)
 ├── cmake/toolchains/                 // MinGW-w64 cross-compilation toolchain file
-├── tools/                            // smoke builds, Windows packaging, the Windows test runner, the CLI flag extractor
-└── tests/                            // (P1) unit tests with check.h; (P3) stub_crispasr.cpp, a stand-in server, and integration tests
+├── tools/                            // smoke builds, Windows packaging, what deliveries carry (test runner, checklist), the CLI flag extractor; (P4) api_probe/
+└── tests/                            // (P1) unit tests with check.h; (P3) stub_crispasr.cpp, a stand-in server, and integration tests; (P4) data/: server answers
 ```
 
 EUI-NEO is not part of the tree; the build adds it from the shared Learn library ([ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot)).
@@ -95,13 +95,19 @@ Implemented in Phase 3 (`src/core/server_manager.h`, `server_state.h`, `server_l
 
 ### 2.3 ApiClient and HTTP transport
 
-- `ApiClient` offers typed operations: `health()`, `progress()`, `models()`, and `transcribe(file, fields, window, cancel)`, which returns the parsed `verbose_json` transcript or an `ApiError`.
-- `HttpTransport` is the platform seam: `get(url, headers, timeout)` and `postMultipart(url, headers, fields, filePath, timeout, cancel)`, which streams the file from disk instead of loading it into memory. Implementations: WinHTTP on Windows, a system library that needs no third-party import, and libcurl on Linux development builds (the original plan used libcurl everywhere with WinHTTP as a fallback, eui-neo-audit §3.1). Phase 3 implemented the GET part as `HttpGet` (`src/platform/http.h`) for the server checks: never through a proxy, with a body limit, and with `HttpCancel`, which ends a request in progress from another thread. Phase 4 adds the upload.
+Implemented in Phase 4 (`src/core/api_client.h`, `transcript.h`; `src/platform/http.h`, `multipart.h`; [Phase 4 report](devlog/phase-4.md)).
+
+- `ApiClient` offers the calls the transcription needs: `TranscribeRaw` (the answer as sent, for any `response_format`), `Transcribe` (`verbose_json`, parsed into a `Transcript`), and `Progress` (`GET /progress`). `GET /health` and `GET /v1/models` stay with the ServerManager's poller (§2.2), which reads them with its own classification. The client holds only its options (endpoint, key, timeouts, limits), so threads can share it; each call takes the caller's `HttpCancel`.
+- A request carries `response_format`, then `offset_t_ms` and `duration_ms` when the window length is not 0, then the request-tier fields in the caller's order, then the file. The client owns those four names and refuses a request whose fields repeat one.
+- Transport (`src/platform/http.h`): `HttpGet` since Phase 3 and `HttpPost`, which pulls the body from an `HttpBody` in pieces, so a file is never held in memory whole. WinHTTP on Windows, a system library that needs no third-party import; libcurl on Linux development builds. Never through a proxy, with a limit on the answer's size, and with `HttpCancel`, which ends a request in progress from another thread. The transports' timeouts and cancellation latencies differ ([ENVIRONMENT.md §4.6](ENVIRONMENT.md#46-http-transport-facts)).
+- Upload (`MultipartBody`): `multipart/form-data` written by the project for both transports, so the bytes on the wire are the same on Windows and Linux and are unit-tested exactly. A random boundary, plain field names, and the file's own name with quotes, backslashes, control characters, and invalid UTF-8 replaced, because CrispASR takes the decoder's format hint from the name's extension ([API-CRISPASR.md §3.1](API-CRISPASR.md#31-tier-a-per-request-parameters)). The body's size is fixed when the file is opened; a file that shrinks or grows while it is sent fails the request instead of sending a body that disagrees with its `Content-Length`.
+- Before sending, the client compares the whole body with the server's 512 MiB limit and refuses a larger one, because the server may reset the connection instead of answering `413` ([API-CRISPASR.md §5](API-CRISPASR.md#5-errors)).
 - Every request carries `Authorization: Bearer <key>` from the settings ([API-CRISPASR.md §2](API-CRISPASR.md#2-authentication)).
-- Errors are typed after [API-CRISPASR.md §5](API-CRISPASR.md#5-errors): `Unreachable`, `Timeout`, `Cancelled`, `BadRequest(message)`, `Unauthorized`, `PayloadTooLarge`, `ServerBusy` (503), `ServerError` (500), `Protocol` (unexpected body). The ASR runner decides which ones to retry (§2.5).
-- Responses are parsed with the project's JSON parser (`src/util/json.h`, Phase 2), because EUI-NEO's `eui/json.h` cannot list an object's members ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)); a small JSON writer in `util/` will produce the GUI's own files.
+- Errors (`ApiErrorKind`) are typed after [API-CRISPASR.md §5](API-CRISPASR.md#5-errors): `Unreachable` (refused, reset, or closed without an answer), `Timeout`, `Cancelled`, `BadRequest` (400, with the server's message; also a request the client cannot send), `Unauthorized`, `PayloadTooLarge` (413, or refused before sending), `ServerBusy` (503), `ServerError` (500), `Protocol` (another status, an answer over the size limit, or a body that is not what the endpoint returns), and `File` (the file cannot be opened or read). The message is the server's `error.message` when the body has one, the start of the body otherwise, and the transport's description for a failure without an answer. The ASR runner decides which ones to retry (§2.5).
+- Responses are parsed with the project's JSON parser (`src/util/json.h`, Phase 2), because EUI-NEO's `eui/json.h` cannot list an object's members ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)). `Transcript` keeps times in whole milliseconds, read exactly from the decimal text the server writes; members the GUI does not use are ignored, so newer servers and the re-serialized form with `vad_segments` both read. `WriteJson` in the same module writes the GUI's own files from Phase 7.
 - The GUI does not use `eui::network`: it is GET-only, starts once per key, sends no headers, and on Windows without libcurl downloads through files in the system temp directory.
-- Timeouts: short for connecting (about 2 s); generous and configurable for responses, since one window on a slow backend can take minutes.
+- Timeouts: 5 s to connect (the poller's value, §2.2); 30 min for one transcription request, a setting from Phase 8, since one window on a slow backend can take minutes.
+- Tests and acceptance: the stand-in server `tests/stub_crispasr.cpp` reads uploads with its own strict multipart parser, so the GUI's encoding meets an independent reader; `api_probe` (`tools/api_probe/`) sends the same requests to a deployed server and keeps its answers, which become test data (`tests/data/`).
 
 ### 2.4 Job model (the step chain)
 
@@ -242,7 +248,9 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | Engine integration | HTTP client to a managed server process | In-process FFI (CrisperWeaver-style) | Crash containment, batch model residency, simpler v1, matches the user's "start/stop service" model. The C API path is documented for the future. |
 | UI framework | EUI-NEO v0.6.1, built from the pinned snapshot in the shared Learn library | Rust GUIs, Tauri | Same language as the engine (no FFI), Apache-2.0, component coverage verified in the audit; version pinned to control 0.x churn |
 | Windows build | MinGW-w64 GCC 12 cross-compilation in WSL2, static runtime | An owner-side MSVC build; a CI build on a Windows runner | Owner decision (2026-10-11): keeps the copy-a-folder workflow and needs no Windows toolchain; EUI-NEO's CMake files support MinGW |
-| HTTP stack | In-repo transport behind `HttpTransport`: WinHTTP on Windows, libcurl on Linux; GET since Phase 3 | EUI-NEO `requestText` (GET-only); libcurl everywhere | Multipart POST is required; no third-party HTTP library has to be imported for Windows |
+| HTTP stack | In-repo transport behind `src/platform/http.h`: WinHTTP on Windows, libcurl on Linux; GET since Phase 3, POST since Phase 4 | EUI-NEO `requestText` (GET-only); libcurl everywhere | Multipart POST is required; no third-party HTTP library has to be imported for Windows |
+| Upload encoding | The project's `MultipartBody`, streamed by both transports | libcurl's MIME API on Linux next to a separate encoder for WinHTTP | One encoder, so the bytes the Windows build sends are the ones the Linux tests check |
+| Oversized uploads | Refused by the client before sending, against the server's 512 MiB limit | Sending and mapping the server's 413 | The server stops reading at the limit, so a large upload may end in a reset connection rather than a 413 |
 | Server output | One pipe for standard output and standard error, read by a monitor thread | Two pipes; a log file written by the server | Keeps the order of the lines and needs one reader; the server logs to standard error anyway |
 | Stopping an adopted server | After a confirmation, end the process listening on the port, only when its executable is `crispasr.exe` | No Stop for adopted servers; ending whatever listens on the port | SPEC FR-1 keeps Stop available; the name check, made through the handle that ends the process, keeps other programs safe |
 | GUI exit | Leave the server running; the next launch adopts it | Stop the server on exit | [API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior) item 10; a crash and a normal exit behave alike |
@@ -273,5 +281,7 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | Server output floods the UI | Low | Ring buffer, capped log pane |
 | Port held by another program at startup | Low | Pre-flight through `/health`; the GUI reports "port busy" instead of starting (Phase 3, tested against the stub server) |
 | The Windows process and HTTP code runs only on the owner's machine | Low | Integration tests with the stub server travel in every delivery and run with `run-tests.cmd`; they passed on the owner's machine on 2026-10-12 (Phase 3) |
+| The stub server encodes only what the source reading says, so its tests pass against a misunderstanding | Medium | `api_probe` records the deployed server's answers (Windows check W4-3); recorded answers replace synthetic test data, and a difference becomes a fix of the client and the stub |
+| libcurl notices a cancellation up to about a second late while it waits for an answer | Low | Linux development builds only; WinHTTP ends the call at once |
 | A server started from a profile with another port is missed at launch | Low | The deployed profiles all use 5114; Settings (Phase 8) configure the port |
 | CJK rendering or IME issues | Low | The EUI-NEO audit verified CJK fonts and IME (msyh fallback chain) |

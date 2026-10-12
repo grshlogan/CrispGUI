@@ -10,7 +10,11 @@ set(CRISPGUI_UNIT_TESTS
     launch_command_test
     command_line_test
     server_log_test
-    server_state_test)
+    server_state_test
+    json_writer_test
+    multipart_test
+    transcript_test
+    api_response_test)
 foreach(name IN LISTS CRISPGUI_UNIT_TESTS)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE crisp_core)
@@ -33,7 +37,9 @@ endif()
 set(CRISPGUI_INTEGRATION_TESTS
     process_test
     http_test
-    server_manager_test)
+    server_manager_test
+    api_client_test
+    api_probe_test)
 foreach(name IN LISTS CRISPGUI_INTEGRATION_TESTS)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE crisp_core)
@@ -45,6 +51,7 @@ foreach(name IN LISTS CRISPGUI_INTEGRATION_TESTS)
     add_test(NAME ${name} COMMAND ${name})
     set_tests_properties(${name} PROPERTIES LABELS integration TIMEOUT 120)
 endforeach()
+add_dependencies(api_probe_test api_probe)
 
 # Test data next to the test executables (tests/test_support.h); tools/package-windows.sh
 # copies the folder into the delivery. The reference profiles are copied byte for byte.
@@ -57,3 +64,6 @@ foreach(profile IN LISTS CRISPGUI_REFERENCE_PROFILES)
     configure_file("${PROJECT_SOURCE_DIR}/reference/crispasr/profiles-japanese/${profile}"
         "${CMAKE_CURRENT_BINARY_DIR}/testdata/profiles-japanese/${profile}" COPYONLY)
 endforeach()
+# Server answers for the parser and the stub's replay (tests/data/README.md).
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/data/verbose-synthetic.json"
+    "${CMAKE_CURRENT_BINARY_DIR}/testdata/verbose-synthetic.json" COPYONLY)

@@ -43,10 +43,13 @@ for kind in unit integration; do
     printf '%s %s\r\n' "$kind" "$test" >> "$stage/tests.txt"
   done
 done
-# The stand-in CrispASR server that the integration tests start (tests/stub_crispasr.cpp).
+# The stand-in CrispASR server that the integration tests start (tests/stub_crispasr.cpp), and
+# the probe of a running server (tools/api_probe), which api_probe_test also runs.
 cp "$build/tests/stub_crispasr.exe" "$stage/"
-for script in run-tests.cmd run-tests.ps1; do
-  sed 's/\r*$/\r/' "$root/tools/windows/$script" > "$stage/$script"
+cp "$build/api_probe.exe" "$stage/"
+# The test runner, the probe's wrapper, and the checks of this delivery, with CRLF line ends.
+for file in run-tests.cmd run-tests.ps1 run-api-probe.cmd CHECKLIST.md; do
+  sed 's/\r*$/\r/' "$root/tools/windows/$file" > "$stage/$file"
 done
 
 mingw_version="$(dpkg-query -W -f='${Version}' g++-mingw-w64-x86-64-posix)"
@@ -64,6 +67,7 @@ headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
     echo "UI fonts: none; EUI-NEO's default font"
   fi
   echo "Run: crisprustgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit and $(grep -c '^integration ' "$stage/tests.txt") integration tests"
+  echo "Checks: CHECKLIST.md lists the Windows checks of this delivery and what to send back"
 } | sed 's/$/\r/' > "$stage/BUILD-INFO.txt"
 
 (cd "$out" && cmake -E tar cf "$name.zip" --format=zip "$name" && sha256sum "$name.zip" > "$name.zip.sha256")

@@ -41,6 +41,7 @@ endfunction()
 add_library(crisp_core STATIC
     src/app/app_data.cpp
     src/app/crispasr_location.cpp
+    src/core/api_client.cpp
     src/core/cli_flags.cpp
     src/core/jsonc.cpp
     src/core/launch_command.cpp
@@ -48,9 +49,11 @@ add_library(crisp_core STATIC
     src/core/server_log.cpp
     src/core/server_manager.cpp
     src/core/server_state.cpp
+    src/core/transcript.cpp
     src/platform/command_line.cpp
     src/platform/files.cpp
     src/platform/http.cpp
+    src/platform/multipart.cpp
     src/platform/process.cpp
     src/util/json.cpp
     src/util/sha256.cpp
@@ -77,6 +80,15 @@ else()
 endif()
 target_include_directories(crisp_core PUBLIC src)
 crisp_apply_options(crisp_core)
+
+# A console tool that checks the ApiClient against a running CrispASR server and keeps its
+# answers; Windows deliveries carry it for the acceptance checks (tools/windows/CHECKLIST.md).
+add_executable(api_probe tools/api_probe/api_probe.cpp)
+target_link_libraries(api_probe PRIVATE crisp_core)
+crisp_apply_options(api_probe)
+if(WIN32)
+    target_link_options(api_probe PRIVATE -municode)  # wmain: the arguments in UTF-16
+endif()
 
 # Application state and pages, built on EUI-NEO.
 add_library(crisp_ui STATIC

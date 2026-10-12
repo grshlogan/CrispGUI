@@ -23,13 +23,13 @@
 | Present state and open decisions | [STATUS.md](STATUS.md), [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) |
 | Reference material and its provenance | [reference/README.md](../reference/README.md) |
 | Shared upstream snapshots (EUI-NEO, the CrispASR source archive) | `/home/claude/projects/Learn`, read-only and indexed by its `README.md`; EUI-NEO in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
-| Verification entry points | Project builds and `ctest` (labels `unit` and `integration`); `run-tests.cmd` in Windows deliveries ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
-| Phase reports | [Phase 0](devlog/phase-0.md), [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), [Phase 3](devlog/phase-3.md) |
+| Verification entry points | Project builds and `ctest` (labels `unit` and `integration`); `run-tests.cmd`, `api_probe.exe`, and `CHECKLIST.md` in Windows deliveries ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
+| Phase reports | [Phase 0](devlog/phase-0.md), [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), [Phase 3](devlog/phase-3.md), [Phase 4](devlog/phase-4.md) |
 | Root aliases | `<WSL_ROOT>`, `<HANDOFF_OUT>` in [agents/README.md](agents/README.md); `<CRISPASR_ROOT>` in [ENVIRONMENT.md §5](ENVIRONMENT.md#5-runtime-configuration-defaults-windows) |
 
 ## Scope gate
 
-The specification is approved. Phases 0 to 3 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md)), and Phase 4, the ApiClient, is next. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
+The specification is approved. Phases 0 to 3 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md)). Phase 4, the ApiClient, is implemented and waits for its Windows checks ([Phase 4 report](devlog/phase-4.md)); Phase 5 starts on the owner's instruction. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
 
 ## Language
 

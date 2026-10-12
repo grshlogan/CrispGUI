@@ -2,7 +2,7 @@
 
 A desktop GUI for driving the [CrispASR](https://github.com/CrispStrobe/CrispASR) speech engine, built with C++17 and the EUI-NEO UI framework.
 
-> **Status: Phases 0 (build environment), 1 (application skeleton), 2 (ProfileStore), and 3 (ServerManager) complete; Phase 4 (ApiClient) next.** This repository contains the specification, architecture plan, server contract, reference material, and the application as far as the completed phases go. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
+> **Status: Phases 0 (build environment), 1 (application skeleton), 2 (ProfileStore), and 3 (ServerManager) complete; Phase 4 (ApiClient) implemented and waiting for its Windows checks.** This repository contains the specification, architecture plan, server contract, reference material, and the application as far as the completed phases go. Implementation is carried out by A003 (Claude Code in WSL2) following `docs/TASKS.md`; `docs/STATUS.md` records the current state.
 
 ## What this is
 
@@ -35,9 +35,9 @@ Version 1 covers the most valuable slice of a larger pipeline:
 | `docs/ENVIRONMENT.md` | Build environment (WSL2 development, Windows target, dependencies) |
 | `docs/agents/README.md` | Identities, delivery to Windows, authorizations |
 | `docs/identity/` | One context file per agent identity |
-| `CMakeLists.txt`, `src/` | The application (skeleton, profile reading, and server management so far) and its libraries |
-| `tests/` | Unit tests, and integration tests that run a stand-in CrispASR server (`tests/stub_crispasr.cpp`) |
-| `cmake/`, `tools/` | The MinGW-w64 toolchain file, smoke builds, Windows packaging, the Windows test runner, and the CrispASR CLI flag extractor |
+| `CMakeLists.txt`, `src/` | The application (skeleton, profile reading, server management, and the API client so far) and its libraries |
+| `tests/` | Unit tests, integration tests that run a stand-in CrispASR server (`tests/stub_crispasr.cpp`), and server answers as test data (`tests/data/`) |
+| `cmake/`, `tools/` | The MinGW-w64 toolchain file, smoke builds, Windows packaging, what Windows deliveries carry (test runner, `CHECKLIST.md`), `api_probe` (checks a running CrispASR server), and the CrispASR CLI flag extractor |
 | `fonts/` | The UI fonts (HarmonyOS Sans SC), provided by the owner and not in Git (`docs/ENVIRONMENT.md` §4.3) |
 | `reference/` | Curated source files from CrispASR / CrisperWeaver / EUI-NEO to learn from, plus the audit reports they came from |
 

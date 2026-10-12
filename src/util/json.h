@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -17,6 +18,11 @@ public:
 
     static JsonValue MakeBoolean(bool value);
     static JsonValue MakeNumber(double value, std::string text);
+    // A number written as FormatJsonNumber writes it; NaN and infinity have no text and are
+    // written as null.
+    static JsonValue MakeNumber(double value);
+    // A whole number, written exactly.
+    static JsonValue MakeInteger(std::int64_t value);
     static JsonValue MakeString(std::string value);
     static JsonValue MakeArray();
     static JsonValue MakeObject();
@@ -77,5 +83,14 @@ JsonParseResult ParseJson(std::string_view text);
 
 // The shortest text that reads back as |value|: "30", "0.3", "1e+21". Not for NaN or infinity.
 std::string FormatJsonNumber(double value);
+
+// JSON text for |value|: compact, or with |pretty| one member or item per line, indented by two
+// spaces, without a final line break. Numbers are written as their text, and a number without
+// text as null. Strings get the escapes RFC 8259 requires, and bytes that are not valid UTF-8
+// become U+FFFD, so the output always parses.
+std::string WriteJson(const JsonValue& value, bool pretty = false);
+
+// |text| as a JSON string literal, quotes included, escaped as WriteJson escapes strings.
+std::string QuoteJson(std::string_view text);
 
 }  // namespace crisp::util

@@ -8,8 +8,9 @@ This document registers CrispRustGUI's identities, checkouts, delivery to Window
 | --- | --- | --- | --- | --- |
 | `A002` | not recorded | not recorded | Author of the audit reports in `reference/audits/audit-reports/` (each report's header names A002, dated 2026-10-11). No write scope in this checkout | None in this repository |
 | `A003` | `A003[ClaudeCode]Dev Gui` | Claude Code CLI on WSL2 | GUI development: application source, build files, and tests once a task assigns them; project documentation under owner instruction; its own context | [docs/identity/A003.md](../identity/A003.md) |
+| Not assigned yet | not recorded | An agent on the owner's Windows machine | Windows-native checks at the owner's direction: runs deliveries, the checks of their `CHECKLIST.md`, and targeted tests that A003 writes down; reports through the owner. No development and no access to this repository; its write scope is the owner's to set, and the checks themselves write only inside the delivery folder | None in this repository |
 
-The owner (the user) assigns identities, approves requirements and decisions, authorizes Git, environment, and import operations, copies deliveries to Windows, and performs Windows-native acceptance. Coordinator, Coding, and Review roles are assigned per task once a workflow is selected.
+The owner (the user) assigns identities, approves requirements and decisions, authorizes Git, environment, and import operations, copies deliveries to Windows, and performs Windows-native acceptance. On 2026-10-12 (round 10) the owner agreed to register the Windows-side agent, which confirmed the `msvcrt.dll` behavior in round 9; its stable ID and display name wait for the owner. Results it produces are recorded as the Windows-side agent's, reported by the owner. Coordinator, Coding, and Review roles are assigned per task once a workflow is selected.
 
 ## Checkouts
 
@@ -35,8 +36,9 @@ Steps:
 1. A delivery is built from a clean tree at a commit that has been pushed to `origin`.
 2. Default form: the MinGW-w64 release build folder (the executable plus EUI-NEO's `assets/`), zipped as `crisprustgui-<short SHA>.zip` with its SHA-256 in `<name>.zip.sha256`. A `BUILD-INFO.txt` inside the folder names the commit, the build type, and the toolchain versions. The Windows side does no development and needs no source, so a Git bundle or a `git archive` snapshot is made only on request.
 3. Deliveries go to `<HANDOFF_OUT>`, a directory outside the checkout; the proposed location is `/home/claude/projects/CrispGUI-handoff/outgoing/`. The owner copies the folder to Windows by hand or with a copy script.
-4. Windows results come back through the owner (message, log excerpt, or screenshot). They are recorded against the delivered SHA and the platform.
-5. Nothing reads or writes across the system boundary, and WSL2 never mounts Windows drives.
+4. Each delivery carries `CHECKLIST.md`, the numbered Windows checks of its phase (`tools/windows/CHECKLIST.md`), each with its steps, the expected result, and what to send back; the owner or the Windows-side agent runs them.
+5. Windows results come back through the owner, per check and with the files the check names (message, log excerpt, screenshot, or files). They are recorded against the delivered SHA and the platform; a phase closes on Windows only with `test-results.txt` in hand.
+6. Nothing reads or writes across the system boundary, and WSL2 never mounts Windows drives.
 
 ## Standing authorizations
 

@@ -1,0 +1,50 @@
+# Windows checks for this delivery
+
+Phase 4: the ApiClient, which uploads files to the CrispASR server. The owner, or the Windows-side agent at the owner's direction, runs these checks on the owner's Windows machine and reports each one as `W4-n PASS`, `FAIL`, or `SKIP`, together with what the check asks to send back. `BUILD-INFO.txt` names the commit of this delivery.
+
+Rules for every check:
+
+- Run everything from this folder. The checks write only into this folder, apart from what the CrispASR server itself writes.
+- Do not edit or move anything in the CrispASR folder (`E:\AI\ASR\CrispASR`); the sample file is only read.
+- On a FAIL, stop and send back what the check names, plus any error text on the screen.
+
+## W4-1 Automated tests
+
+1. Double-click `run-tests.cmd`, or run `powershell -NoProfile -ExecutionPolicy Bypass -File .\run-tests.ps1` in this folder.
+2. Expected: the last line of `test-results.txt` reads `Failures: 0 of 20`.
+
+Send back: `test-results.txt`, the whole file.
+
+## W4-2 Start the server from the GUI
+
+1. Start `crisprustgui.exe`.
+2. On the Dashboard, press Start next to the Japanese cohere profile (`cohere-asr-ja-q8`), the profile of the Phase 3 check.
+3. Wait until the server panel shows Running.
+4. Expected: Running, and the log pane shows the server's lines.
+
+The server must come from the GUI: a server the GUI starts writes each upload into this folder's `appdata\tmp\server`, whereas a server from the launcher writes them into the user's TEMP folder, normally on `C:`. Keep the GUI and the server running for W4-3.
+
+Send back: PASS or FAIL; for a FAIL, a screenshot.
+
+## W4-3 Probe the running server
+
+1. In PowerShell, in this folder, run:
+
+   ```powershell
+   .\api_probe.exe --window 5000,10000 "E:\AI\ASR\CrispASR\samples\ja-demo.mp3"
+   $LASTEXITCODE
+   ```
+
+   Instead, the owner may drag the audio file onto `run-api-probe.cmd`, which runs the same command.
+2. Expected: checks `[1]` to `[10]` read PASS (INFO is acceptable for `[4]` and `[10]`), the report ends with `Failures: 0`, and the exit code is 0. The probe sends four transcriptions of the sample; with a long sample this takes a while.
+
+The probe writes a new folder `probe-results\<UTC time>\` next to `api_probe.exe`: `report.txt`, `report.json`, the server's answers as received (`transcript.verbose.json`, `transcript.srt`, `window.verbose.json`, `error-*.json`, `health.json`, `models.json`), and `not-audio.mp3`, the small text file it sends to see the server reject a file that is not audio.
+
+Send back: the whole `probe-results\<UTC time>\` folder; all its files are small text files. These answers become the test data that lets the WSL2 tests replay the real server.
+
+## W4-4 Stop the server
+
+1. In the GUI, press Stop, then close the GUI.
+2. Expected: the server panel shows Stopped before the GUI closes.
+
+Send back: PASS or FAIL.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <utility>
@@ -8,7 +9,7 @@
 
 // Platform seam for HTTP to the local CrispASR server: WinHTTP on Windows (http_win32.cpp) and
 // libcurl elsewhere (http_curl.cpp), both without proxies (docs/ARCHITECTURE.md, section 2.3).
-// Phase 3 needs GET for /health and /v1/models; Phase 4 adds the multipart upload.
+// GET serves /health, /v1/models, and /progress; POST streams the transcription upload.
 namespace crisp::platform {
 
 enum class HttpFailure {
@@ -16,7 +17,9 @@ enum class HttpFailure {
     kRefused,    // nothing accepts connections on the port
     kTimeout,    // no complete answer in time
     kCancelled,  // HttpCancel::Cancel() ended the request
-    kOther,      // a reset connection, an invalid response, or another transport error
+    kTooLarge,   // the answer is larger than HttpRequest::maxBodyBytes
+    kBody,       // the request body could not be produced, such as a file that changed
+    kOther,      // a reset or closed connection, an invalid response, or another transport error
 };
 
 struct HttpRequest {
@@ -25,8 +28,24 @@ struct HttpRequest {
     std::string path = "/";
     std::vector<std::pair<std::string, std::string>> headers;
     int connectTimeoutMs = 5000;
-    int timeoutMs = 5000;  // for sending the request and receiving the answer
+    // For sending the request and receiving the answer. WinHTTP applies it to each send and to
+    // the wait for the answer, so an upload can take this long and the wait as long again;
+    // libcurl limits the whole exchange, connecting included, to connectTimeoutMs + timeoutMs.
+    int timeoutMs = 5000;
     std::size_t maxBodyBytes = 1024 * 1024;
+};
+
+// A request body that the transport pulls in pieces, so that a large file is never held in
+// memory whole.
+class HttpBody {
+public:
+    virtual ~HttpBody() = default;
+
+    // The total size in bytes, sent as Content-Length.
+    virtual std::uint64_t Size() const = 0;
+    // Copies up to |capacity| of the next bytes into |buffer| and sets |count|, which is 0 only
+    // after the last byte. Returns false with |error| set when the bytes cannot be produced.
+    virtual bool Read(char* buffer, std::size_t capacity, std::size_t& count, std::string& error) = 0;
 };
 
 struct HttpResponse {
@@ -63,6 +82,10 @@ private:
 
 // Sends a GET request and reads the whole answer. Never throws; failures are in the response.
 HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel = nullptr);
+
+// Sends a POST request with |body|, whose type belongs in request.headers ("Content-Type"), and
+// reads the whole answer. No "Expect: 100-continue": the body follows the headers at once.
+HttpResponse HttpPost(const HttpRequest& request, HttpBody& body, HttpCancel* cancel = nullptr);
 
 // "http://host:port/path", with brackets around an IPv6 address.
 std::string HttpUrl(const std::string& host, int port, const std::string& path);

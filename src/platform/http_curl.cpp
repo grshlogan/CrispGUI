@@ -12,6 +12,9 @@ struct Transfer {
     std::size_t maxBodyBytes = 0;
     bool tooLarge = false;
     HttpCancel* cancel = nullptr;
+    HttpBody* upload = nullptr;
+    bool uploadFailed = false;
+    std::string uploadError;
 };
 
 std::size_t WriteBody(char* data, std::size_t size, std::size_t count, void* user) {
@@ -25,20 +28,30 @@ std::size_t WriteBody(char* data, std::size_t size, std::size_t count, void* use
     return bytes;
 }
 
+std::size_t ReadUpload(char* buffer, std::size_t size, std::size_t count, void* user) {
+    auto* transfer = static_cast<Transfer*>(user);
+    if (transfer->cancel != nullptr && transfer->cancel->Cancelled()) {
+        return CURL_READFUNC_ABORT;
+    }
+    std::size_t produced = 0;
+    if (!transfer->upload->Read(buffer, size * count, produced, transfer->uploadError)) {
+        transfer->uploadFailed = true;
+        if (transfer->uploadError.empty()) {
+            transfer->uploadError = "The request body could not be produced.";
+        }
+        return CURL_READFUNC_ABORT;
+    }
+    return produced;
+}
+
 // libcurl calls this regularly, also while connecting; a non-zero result aborts the transfer.
 int CheckCancel(void* user, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
     const auto* transfer = static_cast<const Transfer*>(user);
     return transfer->cancel != nullptr && transfer->cancel->Cancelled() ? 1 : 0;
 }
 
-}  // namespace
-
-void HttpCancel::Cancel() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    cancelled_ = true;
-}
-
-HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel) {
+// One request: GET without |upload|, POST with it.
+HttpResponse Perform(const HttpRequest& request, HttpBody* upload, HttpCancel* cancel) {
     static std::once_flag initialized;
     std::call_once(initialized, [] { curl_global_init(CURL_GLOBAL_DEFAULT); });
 
@@ -59,6 +72,7 @@ HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel) {
     transfer.body = &response.body;
     transfer.maxBodyBytes = request.maxBodyBytes;
     transfer.cancel = cancel;
+    transfer.upload = upload;
     curl_slist* headers = nullptr;
     for (const auto& header : request.headers) {
         headers = curl_slist_append(headers, (header.first + ": " + header.second).c_str());
@@ -71,6 +85,15 @@ HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(request.connectTimeoutMs));
     curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, static_cast<long>(request.connectTimeoutMs + request.timeoutMs));
+    if (upload != nullptr) {
+        // An empty "Expect:" keeps libcurl from waiting for "100 Continue" before large bodies,
+        // so both transports send the body the same way.
+        headers = curl_slist_append(headers, "Expect:");
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_READFUNCTION, ReadUpload);
+        curl_easy_setopt(curl, CURLOPT_READDATA, &transfer);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(upload->Size()));
+    }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteBody);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &transfer);
@@ -84,27 +107,42 @@ HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel) {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
         response.status = static_cast<int>(status);
     } else {
-        switch (result) {
-        case CURLE_COULDNT_CONNECT:
-            response.failure = HttpFailure::kRefused;
-            break;
-        case CURLE_OPERATION_TIMEDOUT:
-            response.failure = HttpFailure::kTimeout;
-            break;
-        case CURLE_ABORTED_BY_CALLBACK:
+        response.error = std::string(curl_easy_strerror(result)) + ".";
+        if (transfer.tooLarge) {
+            response.failure = HttpFailure::kTooLarge;
+            response.error = "The answer is larger than " + std::to_string(request.maxBodyBytes) + " bytes.";
+        } else if (transfer.uploadFailed) {
+            response.failure = HttpFailure::kBody;
+            response.error = transfer.uploadError;
+        } else if (cancel != nullptr && cancel->Cancelled()) {
             response.failure = HttpFailure::kCancelled;
-            break;
-        default:
+        } else if (result == CURLE_COULDNT_CONNECT) {
+            response.failure = HttpFailure::kRefused;
+        } else if (result == CURLE_OPERATION_TIMEDOUT) {
+            response.failure = HttpFailure::kTimeout;
+        } else {
             response.failure = HttpFailure::kOther;
-            break;
         }
-        response.error = transfer.tooLarge ? "The answer is larger than " + std::to_string(request.maxBodyBytes) + " bytes."
-                                           : std::string(curl_easy_strerror(result)) + ".";
         response.body.clear();
     }
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
     return response;
+}
+
+}  // namespace
+
+void HttpCancel::Cancel() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    cancelled_ = true;
+}
+
+HttpResponse HttpGet(const HttpRequest& request, HttpCancel* cancel) {
+    return Perform(request, nullptr, cancel);
+}
+
+HttpResponse HttpPost(const HttpRequest& request, HttpBody& body, HttpCancel* cancel) {
+    return Perform(request, &body, cancel);
 }
 
 }  // namespace crisp::platform

@@ -57,10 +57,13 @@ Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui
 
 ## Phase 4 — ApiClient
 
-- [ ] Implement `HttpTransport` with libcurl (Linux) and WinHTTP (Windows): streaming multipart upload, timeouts, cancellation, and the `Authorization` header.
-- [ ] Map errors to the typed set of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport); parse `verbose_json`; add a small JSON writer.
-- [ ] Write a local stub server for tests (no network beyond localhost).
-- [ ] Acceptance: [Linux] stub tests cover success, `400`, `401`, `413`, `500`, `503`, and refused connections; [Windows] a hand-rolled request to `/v1/audio/transcriptions` with a sample file returns `verbose_json`.
+Implemented on 2026-10-12; the Linux acceptance passes, and the Windows acceptance waits for the owner's run of the delivery ([Phase 4 report](devlog/phase-4.md)).
+
+- [x] Implement the transport with libcurl (Linux) and WinHTTP (Windows): streaming multipart upload, timeouts, cancellation, and the `Authorization` header (`HttpPost` and `MultipartBody` in `src/platform/`).
+- [x] Map errors to the typed set of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport); parse `verbose_json`; add a small JSON writer.
+- [x] Write a local stub server for tests (no network beyond localhost): `tests/stub_crispasr.cpp` gained the transcription route, `/progress`, and an echo route.
+- [x] Added (owner's agreement of 2026-10-12): `api_probe`, which sends the ApiClient's requests to a running server and keeps its answers as test data; `CHECKLIST.md`, the numbered Windows checks that each delivery carries; the Windows-side agent's entry in the identity register, with its ID still to be assigned by the owner.
+- [ ] Acceptance: [Linux] stub tests cover success, `400`, `401`, `413`, `500`, `503`, and refused connections (done); [Windows] a hand-rolled request to `/v1/audio/transcriptions` with a sample file returns `verbose_json`: checks W4-1 to W4-4 of the delivery's `CHECKLIST.md`.
 
 ## Phase 5 — Single-file transcription and SRT writer
 

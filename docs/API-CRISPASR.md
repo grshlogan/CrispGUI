@@ -1,6 +1,6 @@
 # CrispASR Server API Reference
 
-> The contract CrispRustGUI programs against. Checked on 2026-10-11 by reading `reference/crispasr/crispasr_server.cpp` and `reference/crispasr/crispasr_output.cpp` (CrispASR v0.8.42 snapshot) and the owner's launcher `reference/crispasr/start-crispasr.ps1`; the CLI flags were checked against `examples/cli/cli.cpp` of the same version in the Learn library in Phase 2. Line numbers refer to `crispasr_server.cpp` unless another file is named. Behavior of the deployed build is `not verified` until observed on Windows. The Chinese audit `reference/audits/audit-reports/crispasr-audit.md` has more background; §10 lists where it is inaccurate.
+> The contract CrispRustGUI programs against. Checked on 2026-10-11 by reading `reference/crispasr/crispasr_server.cpp` and `reference/crispasr/crispasr_output.cpp` (CrispASR v0.8.42 snapshot) and the owner's launcher `reference/crispasr/start-crispasr.ps1`; the CLI flags were checked against `examples/cli/cli.cpp` of the same version in the Learn library in Phase 2, and the upload against its HTTP library, cpp-httplib 0.57.1 (`examples/server/httplib.h`, cited as `httplib.h`), in Phase 4. Line numbers refer to `crispasr_server.cpp` unless another file is named. Behavior of the deployed build is `not verified` until observed on Windows. The Chinese audit `reference/audits/audit-reports/crispasr-audit.md` has more background; §10 lists where it is inaccurate.
 
 ## 1. Endpoints
 
@@ -30,6 +30,7 @@ The v0.8.42 server has no `/v1/audio/translations` route; speech translation is 
 
 Parsing rules that apply to every field:
 
+- cpp-httplib parses the multipart body while it reads it, before the handler checks the key (`FormDataParser`, `httplib.h:9201`): the body starts with `--<boundary>` and CRLF, each part ends with CRLF and `--<boundary>`, and the last delimiter is followed by `--`. Part header values may contain UTF-8 bytes (`is_field_content`, `httplib.h:10149`). The file name is the text between the quotes of `filename="..."`, without escape processing, and `filename*=UTF-8''<percent-encoded>` (RFC 5987) replaces it (`httplib.h:9306`). A body it cannot parse gets `400` before the handler runs, with the error handler's generic body (§5). `Expect: 100-continue` is answered before the body is read (`httplib.h:13558`).
 - A field may arrive as a multipart part or as a query/form parameter. Values are trimmed of spaces and tabs, and an empty value counts as absent (`form_string`, 257-272).
 - Each request starts from a copy of the server's startup parameters (`whisper_params rp = params`, 2074) and overrides only the fields present. An absent field keeps the profile's startup value; a boolean can be switched off per request (`vad=false`).
 - Booleans accept `true`/`1`/`yes` and `false`/`0`/`no`, case-insensitive; any other value keeps the default (373-385).
@@ -42,7 +43,7 @@ Parsing rules that apply to every field:
 
 | Field | Type / default | Notes |
 |---|---|---|
-| `file` | file, required | Audio or video; the server decodes it. Per the CLI help, as recorded in the original specification, wav/mp3/flac/ogg decode natively and m4a/aac/opus/webm/wma through the engine's internal ffmpeg |
+| `file` | file, required | Audio or video; the server decodes it. Per the CLI help, as recorded in the original specification, wav/mp3/flac/ogg decode natively and m4a/aac/opus/webm/wma through the engine's internal ffmpeg. The part's file name matters: the server writes the upload to a temporary file that keeps the name's extension (1 to 8 letters or digits after the last dot), which steers the decoder's format detection (`write_temp_audio`, 172-189). The GUI sends the file's own name, with quotes, backslashes, and control characters replaced |
 | `response_format` | string, `json` | The GUI uses `verbose_json` (§4) |
 | `language` | string, startup `-l` | e.g. `ja`; `auto` triggers language identification |
 | `prompt` | string | Initial prompt; applied only when non-empty (2181-2182) |
@@ -103,14 +104,15 @@ The launcher refuses to start when the executable or the model file is missing. 
 - `json`: `{"text":"..."}`. `text`: plain text.
 - `diarized_json`: like `verbose_json`, with `speaker` always present (default `A`) and `chunk_id` on multi-chunk runs; speaker labels are local to a chunk (1279-1337 of `crispasr_output.cpp`).
 - A window that starts past the end of the audio returns `200` with no segments and `duration` 0 (597-601).
+- With `vad_export`, the server adds `vad_segments` to a JSON answer by re-serializing it with nlohmann::json: compact, keys sorted, numbers in their shortest form (488-498). The GUI's parser accepts both layouts and ignores members it does not use (`src/core/transcript.h`).
 
 ## 5. Errors
 
 | Status | When | Body | GUI handling |
 |---|---|---|---|
-| `400` | Missing `file`, invalid `language` or `response_format`, and every transcription failure: undecodable or empty audio, strict-pipeline failures, malformed `vad_import` (2034-2064, 2259-2261) | `{"error":{"message":"...","type":"invalid_request_error"}}`, optionally with `code` and `param` (425-436) | Show `message`; not retried |
+| `400` | Missing `file`, invalid `language` or `response_format`, and every transcription failure: undecodable or empty audio, strict-pipeline failures, malformed `vad_import` (2034-2064, 2259-2261); also a multipart body cpp-httplib cannot parse | `{"error":{"message":"...","type":"invalid_request_error"}}`, optionally with `code` and `param` (425-436); for an unparsable body the generic "not found" body | Show `message`; not retried |
 | `401` | Missing or wrong API key | see §2 | Point to the API-key setting |
-| `413` | Request body over 512 MB (1547-1548) | Probably the generic "not found" body, because the error handler fills every empty error body (3919-3925; `hypothesis`) | Check file size before upload; not retried |
+| `413` | Request body over 512 MiB (1547-1548). cpp-httplib stops reading once the body passes the limit (`httplib.h:11767-11770`) | The generic "not found" body: the 413 has an empty body, which the error handler fills (3919-3925; source reading). Because the rest of the body stays unread, a client that is still sending may see a reset connection instead of the answer (`hypothesis`) | The client checks the size of the whole body before sending and does not send one over the limit; not retried |
 | `500` | Exception inside a handler (3931-3943) | `{"error":{"message":"internal error: ..."}}` | Retry once |
 | `503` | Model swap through `/load` in progress (2030-2033) | `{"error":{"message":"model is still loading"}}` | Wait until `/health` is `ok`, then retry |
 | `404` | Unknown route | `{"error":"not found. Use POST /v1/audio/transcriptions"}` (a different shape) | Treat as a client bug |
@@ -125,7 +127,7 @@ Rely on the status code; the body shape is not uniform.
 3. The result of `svr.listen()` is ignored (4025), and the "listening on" line is printed before it (3948). When the port is taken, the process loads the model, prints that line, fails to bind, and returns 0 from `crispasr_run_server`, and `main` returns that value in server mode (`examples/cli/cli.cpp:2683-2685` of the 0.8.42 snapshot), so the process exits with code 0 (source reading; the deployed build is `not verified`). Detect a failed start by the process exiting, not by the log or the exit code.
 4. One process serves one ASR model. `/load` swaps only model and backend (2363-2365), so a profile switch means a restart.
 5. The server writes its log to stderr.
-6. There is no cancel endpoint. A client that disconnects does not stop the transcription in progress, and the next request waits for the model lock (756).
+6. There is no cancel endpoint. A client that disconnects does not stop the transcription in progress, and the next request waits for the model lock (756). Check 10 of `api_probe` measures how long the deployed server stays busy after a cancelled request.
 7. The multipart body is buffered in memory; the limit is 512 MB per request (1547).
 8. On Windows, each upload is written to the directory returned by `GetTempPathA` (`TMP`, then `TEMP`, then the user profile) and deleted after decoding (190-207, 555-569). `CRISPASR_SCRATCH_DIR` applies only to the non-Windows branch (124-149, 209). The GUI therefore points `TMP` and `TEMP` of the child process at its app data directory ([AGENTS.md](../AGENTS.md#hard-rules) rule 4).
 9. Every request decodes the whole upload before applying `offset_t_ms`/`duration_ms` (561-607), and timestamps are shifted back by `offset_t_ms` afterwards (1041-1057). A window request therefore re-uploads and re-decodes the full file.

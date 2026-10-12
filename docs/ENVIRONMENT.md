@@ -1,6 +1,6 @@
 # Build Environment
 
-> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2, and on 2026-10-12 (round 7) with the system libraries, test entry points, and runtime facts of Phase 3. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
+> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2, on 2026-10-12 (round 7) with the system libraries, test entry points, and runtime facts of Phase 3, and on 2026-10-12 (round 10) with the upload, the probe, and the Windows checklist of Phase 4. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
 
 ## 1. Target and toolchains
 
@@ -8,7 +8,7 @@
 - **Windows executable**: cross-compiled in WSL2 with MinGW-w64 GCC 12 and the POSIX thread model (owner decision of 2026-10-11, formerly OQ-1). The result is a statically linked executable plus EUI-NEO's `assets/` folder, so a delivery is one folder ([§4.2](#42-eui-neo-build-facts)).
 - **Development builds**: Linux, in the WSL2 distribution `claude-debian12`, rendering through WSLg with GLFW's X11 backend. EUI-NEO's `eui_demo` renders correctly under WSLg ([Phase 0 report](devlog/phase-0.md)).
 - **UI framework**: EUI-NEO v0.6.1 from the shared Learn library ([§4.1](#41-eui-neo-snapshot)), built into this project's build tree.
-- **HTTP**: the in-repo transport of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport): WinHTTP on Windows and libcurl on Linux; GET since Phase 3. EUI-NEO itself requires libcurl on Linux.
+- **HTTP**: the in-repo transport of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport): WinHTTP on Windows and libcurl on Linux; GET since Phase 3, POST with a streamed multipart upload since Phase 4. EUI-NEO itself requires libcurl on Linux.
 
 ## 2. Development loop
 
@@ -57,7 +57,7 @@ tools/smoke/package-eui-smoke.sh       # Windows delivery; needs a clean tree on
 
 Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shadertoy/shadertoy/` under its compile-time source path ([§4.2](#42-eui-neo-build-facts)).
 
-Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), and [Phase 3](devlog/phase-3.md) reports):
+Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), [Phase 3](devlog/phase-3.md), and [Phase 4](devlog/phase-4.md) reports):
 
 ```bash
 # Linux development build (WSLg); the app is build/linux/crisprustgui
@@ -66,6 +66,7 @@ cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure      # -L unit or -L integration for one group
 CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crisprustgui   # reads <folder>/profile as the CrispASR root
 CRISPGUI_DEV_AUTOSTART=<folder>/<profile> ...              # starts that profile once the first checks are done
+build/linux/api_probe --port <port> --key <key> <audio file>  # probes a running server (tools/api_probe)
 
 # Windows release build (MinGW-w64 cross-compilation) and its delivery
 cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -81,8 +82,8 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 - EUI-NEO is not copied into the repository. Builds read it from the path in `CRISPGUI_EUI_NEO_DIR` ([§4.1](#41-eui-neo-snapshot)) and write what they generate into the build tree.
 - `cmake/toolchains/mingw-w64-x86_64.cmake`: the MinGW-w64 toolchain file.
 - `CMakeLists.txt`, `src/`, `tests/`: the application, its two libraries (`crisp_core` without UI dependencies, `crisp_ui` on EUI-NEO), and the unit tests.
-- `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds the test runner that deliveries carry; `tools/smoke/` holds the Phase 0 smoke build and its packaging; `tools/extract-cli-flags.py` regenerates `src/core/cli_flags_table.inc` from a CrispASR source snapshot.
-- `tests/`: unit tests (CTest label `unit`), and integration tests (label `integration`) that start `stub_crispasr`, a stand-in for the CrispASR server built from `tests/stub_crispasr.cpp`, and talk to it over 127.0.0.1. The build copies the reference profiles to `testdata/` next to the test executables; deliveries carry that folder and the stub.
+- `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds what deliveries carry besides the build: the test runner, the probe's wrapper `run-api-probe.cmd`, and `CHECKLIST.md`, the Windows checks of the current phase; `tools/api_probe/` is a console tool that checks the ApiClient against a running server ([§6](#6-verification-entry-points)); `tools/smoke/` holds the Phase 0 smoke build and its packaging; `tools/extract-cli-flags.py` regenerates `src/core/cli_flags_table.inc` from a CrispASR source snapshot.
+- `tests/`: unit tests (CTest label `unit`), and integration tests (label `integration`) that start `stub_crispasr`, a stand-in for the CrispASR server built from `tests/stub_crispasr.cpp`, and talk to it over 127.0.0.1. The build copies the reference profiles and the server answers of `tests/data/` (provenance in `tests/data/README.md`) to `testdata/` next to the test executables; deliveries carry that folder and the stub.
 - `fonts/`: the UI fonts the owner provides ([§4.3](#43-ui-fonts)); ignored by Git, so a fresh clone builds with EUI-NEO's default font.
 - `params/`: the parameter catalog and model packs ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)); data, committed.
 - `build*/`, `appdata/`, `CMakeUserPresets.json`, `.cache/`, and `fonts/` are ignored by Git (`.gitignore`).
@@ -95,10 +96,10 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 | Dependency | Source | Notes |
 |---|---|---|
 | EUI-NEO v0.6.1 | Shared Learn library ([§4.1](#41-eui-neo-snapshot)) | UI framework, Apache-2.0; bundles GLFW 3.4, glad, FreeType, zlib 1.3.1, libpng 1.6.43, md4c, miniaudio, nanosvg, stb_image, a tray library, and yyjson 0.12.0 |
-| WinHTTP | Windows system library | Windows HTTP transport; GET since Phase 3 |
+| WinHTTP | Windows system library | Windows HTTP transport; GET since Phase 3, POST since Phase 4 |
 | IP Helper (`iphlpapi`) | Windows system library | Finds the process listening on a port, to stop an adopted server (Phase 3) |
 | Winsock (`ws2_32`) | Windows system library | The stub server and the integration tests only |
-| libcurl | Debian package, Linux builds only | Required by EUI-NEO on Linux; the Linux HTTP transport since Phase 3 |
+| libcurl | Debian package, Linux builds only | Required by EUI-NEO on Linux; the Linux HTTP transport since Phase 3, POST since Phase 4 |
 | HarmonyOS Sans SC | Owner-provided in `<WSL_ROOT>/fonts/` ([§4.3](#43-ui-fonts)) | UI font; not in Git; license `not verified` |
 | Compilers, CMake, Ninja | [§2.1](#21-wsl2-toolchain) | Installed |
 | CrispASR server | Deployed on Windows at `<CRISPASR_ROOT>\cuda13\crispasr.exe` | Runtime dependency only; never built here |
@@ -153,6 +154,14 @@ From the toolchain's libraries and the Phase 3 Windows run of 2026-10-12 ([Phase
 - GCC 12's libstdc++ removes a trailing separator in `std::filesystem::status` (GCC PR 88881), so `exists`, `is_directory`, and `is_regular_file` are safe, but `equivalent` and `file_size` call `_wstat64` with the path as given, and `temp_directory_path` returns `GetTempPathW`'s result, which always ends with a separator (`objdump -dr` of `fs_ops.o` in `libstdc++.a`, `verified`).
 - Consequence: paths given to `std::filesystem` carry no trailing separator ([CONVENTIONS.md](CONVENTIONS.md#c-conventions)).
 
+### 4.6 HTTP transport facts
+
+From the Phase 4 code and its Linux runs of 2026-10-12 ([Phase 4 report](devlog/phase-4.md)):
+
+- Timeouts differ by transport (`src/platform/http.h`): WinHTTP applies the request timeout to each send and to the wait for the answer, and the transport sets `WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT` to the same value, so that the wait for the headers of a long transcription has no separate default limit; libcurl limits the whole exchange, connecting included, to the connect timeout plus the request timeout.
+- Cancellation: WinHTTP ends a call in progress when another thread closes the request handle. libcurl notices `HttpCancel` in its read callback during an upload and otherwise in its progress callback, which it calls about once per second while it waits for an answer: a cancel issued 300 ms into a request returned after 1202 ms (`api_client_test`, Linux, `observed`). The Windows figure is printed by the same test in a delivery.
+- Uploads: both transports send `Content-Length` and the body of `platform::MultipartBody`, so the bytes on the wire are the same on Windows and Linux. libcurl is told not to send `Expect: 100-continue`; WinHTTP does not send it.
+
 ## 5. Runtime configuration defaults (Windows)
 
 | Setting | Default | Where configured |
@@ -168,12 +177,14 @@ From the toolchain's libraries and the Phase 3 Windows run of 2026-10-12 ([Phase
 | Temporary files | `<appdata>\tmp` for the GUI, `<appdata>\tmp\server` as `TMP`/`TEMP` of the server process | Derived from the app data directory |
 | Server working directory | `<CRISPASR_ROOT>` | Derived from the root (Phase 3) |
 | Health check | `GET /health` every 1.5 s; connect timeout 5 s, request timeout 5 s | `ServerManagerOptions` (Phase 3) |
+| Transcription request | 30 min for one request, upload and answer; at most 512 MiB per upload, the server's limit, checked before sending; answers up to 64 MiB | `ApiClientOptions` (Phase 4); the timeout becomes a setting in Phase 8 |
 | Transcription window | 300 s (*proposed*, OQ-6) | GUI settings and each job snapshot |
 
 ## 6. Verification entry points
 
 - Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit and integration tests, the stub server, and `testdata/`; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`. The integration tests start the stub on free ports of 127.0.0.1 and write their scratch folders next to the tests.
 - Phase 0: the smoke commands of [§2.2](#22-commands).
-- Integration tests with the stub server since Phase 3 (`process_test`, `http_test`, `server_manager_test`); Phase 4 adds the upload.
+- Integration tests with the stub server since Phase 3 (`process_test`, `http_test`, `server_manager_test`) and Phase 4 (`api_client_test`, `api_probe_test`).
+- The real server: `api_probe` sends the ApiClient's requests to a running CrispASR server, checks the answers, and keeps them with a report in `probe-results/<UTC time>/` next to the executable, or in `--out`. Deliveries carry `api_probe.exe`, its drag-and-drop wrapper `run-api-probe.cmd`, and `CHECKLIST.md`, the numbered Windows checks of the phase with what to send back ([agents/README.md](agents/README.md#delivery-to-windows)).
 
 Each result records its command, working-directory alias, platform, commit, and exit code.

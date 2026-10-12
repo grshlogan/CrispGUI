@@ -1,0 +1,42 @@
+{
+  "task": "transcribe",
+  "language": "ja",
+  "duration": 12.345,
+  "text": "今日はいい天気ですね。 \"引用\"と\\記号 最後の文。",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.00,
+      "end": 3.48,
+      "text": "今日はいい天気ですね。",
+      "temperature": 0.000000,
+      "avg_logprob": -0.251314,
+      "no_speech_prob": 0.0,
+      "words": [
+        {"word": "今日は", "start": 0.00, "end": 0.92},
+        {"word": "いい", "start": 0.92, "end": 1.50},
+        {"word": "天気ですね。", "start": 1.50, "end": 3.48}
+      ],
+      "tokens": [50364, 6135, 15567]
+    },
+    {
+      "id": 1,
+      "start": 3.48,
+      "end": 7.10,
+      "text": "\"引用\"と\\記号",
+      "temperature": 0.000000,
+      "avg_logprob": 0.000000,
+      "no_speech_prob": 0.0,
+      "speaker": "A"
+    },
+    {
+      "id": 2,
+      "start": 7.10,
+      "end": 12.34,
+      "text": "最後の文。",
+      "temperature": 0.000000,
+      "avg_logprob": 0.000000,
+      "no_speech_prob": 0.0
+    }
+  ]
+}
