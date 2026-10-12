@@ -1,12 +1,6 @@
 #include "platform/paths.h"
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
+#include "platform/win32_text.h"
 
 #include <cstdlib>
 #include <cwctype>
@@ -16,26 +10,8 @@
 namespace crisp::platform {
 namespace {
 
-std::wstring Widen(const char* text) {
-    const int size = MultiByteToWideChar(CP_UTF8, 0, text, -1, nullptr, 0);
-    if (size <= 1) {
-        return {};
-    }
-    std::wstring result(static_cast<std::size_t>(size - 1), L'\0');
-    MultiByteToWideChar(CP_UTF8, 0, text, -1, result.data(), size);
-    return result;
-}
-
-std::string Narrow(const std::wstring& text) {
-    if (text.empty()) {
-        return {};
-    }
-    const int length = static_cast<int>(text.size());
-    const int size = WideCharToMultiByte(CP_UTF8, 0, text.c_str(), length, nullptr, 0, nullptr, nullptr);
-    std::string result(static_cast<std::size_t>(size), '\0');
-    WideCharToMultiByte(CP_UTF8, 0, text.c_str(), length, result.data(), size, nullptr, nullptr);
-    return result;
-}
+using win32::Narrow;
+using win32::Widen;
 
 std::wstring GetEnvironmentWide(const wchar_t* name) {
     const DWORD size = GetEnvironmentVariableW(name, nullptr, 0);
@@ -74,6 +50,10 @@ bool SetProcessTempDirectory(const std::filesystem::path& directory) {
         ok = _wputenv(assignment.c_str()) == 0 && ok;
     }
     return ok;
+}
+
+std::vector<std::string> TempVariableNames() {
+    return {"TMP", "TEMP"};
 }
 
 std::string GetEnvironmentUtf8(const char* name) {

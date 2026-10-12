@@ -37,10 +37,14 @@ fi
 # Test data that the unit tests read next to their executables.
 cp -r "$build/tests/testdata" "$stage/"
 : > "$stage/tests.txt"
-for test in $(ctest --test-dir "$build" -N -L '^unit$' | sed -n 's/^ *Test *#[0-9]*: *//p'); do
-  cp "$build/tests/$test.exe" "$stage/"
-  printf 'unit %s\r\n' "$test" >> "$stage/tests.txt"
+for kind in unit integration; do
+  for test in $(ctest --test-dir "$build" -N -L "^$kind\$" | sed -n 's/^ *Test *#[0-9]*: *//p'); do
+    cp "$build/tests/$test.exe" "$stage/"
+    printf '%s %s\r\n' "$kind" "$test" >> "$stage/tests.txt"
+  done
 done
+# The stand-in CrispASR server that the integration tests start (tests/stub_crispasr.cpp).
+cp "$build/tests/stub_crispasr.exe" "$stage/"
 for script in run-tests.cmd run-tests.ps1; do
   sed 's/\r*$/\r/' "$root/tools/windows/$script" > "$stage/$script"
 done
@@ -59,7 +63,7 @@ headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
   else
     echo "UI fonts: none; EUI-NEO's default font"
   fi
-  echo "Run: crisprustgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit tests"
+  echo "Run: crisprustgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit and $(grep -c '^integration ' "$stage/tests.txt") integration tests"
 } | sed 's/$/\r/' > "$stage/BUILD-INFO.txt"
 
 (cd "$out" && cmake -E tar cf "$name.zip" --format=zip "$name" && sha256sum "$name.zip" > "$name.zip.sha256")

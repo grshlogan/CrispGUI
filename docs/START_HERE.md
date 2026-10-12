@@ -23,8 +23,8 @@
 | Present state and open decisions | [STATUS.md](STATUS.md), [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) |
 | Reference material and its provenance | [reference/README.md](../reference/README.md) |
 | Shared upstream snapshots (EUI-NEO, the CrispASR source archive) | `/home/claude/projects/Learn`, read-only and indexed by its `README.md`; EUI-NEO in [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
-| Verification entry points | Project builds and `ctest`; `run-tests.cmd` in Windows deliveries ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
-| Phase reports | [Phase 0](devlog/phase-0.md), [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md) |
+| Verification entry points | Project builds and `ctest` (labels `unit` and `integration`); `run-tests.cmd` in Windows deliveries ([ENVIRONMENT.md §6](ENVIRONMENT.md#6-verification-entry-points)) |
+| Phase reports | [Phase 0](devlog/phase-0.md), [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), [Phase 3](devlog/phase-3.md) |
 | Root aliases | `<WSL_ROOT>`, `<HANDOFF_OUT>` in [agents/README.md](agents/README.md); `<CRISPASR_ROOT>` in [ENVIRONMENT.md §5](ENVIRONMENT.md#5-runtime-configuration-defaults-windows) |
 
 ## Scope gate

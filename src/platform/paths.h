@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 // Platform seam for process paths and environment variables, with Windows (paths_win32.cpp)
 // and POSIX (paths_posix.cpp) implementations.
@@ -14,6 +15,10 @@ std::filesystem::path ExecutableDirectory();
 // TMPDIR, TMP, and TEMP elsewhere. Child processes inherit them. Returns false when any of
 // them could not be set.
 bool SetProcessTempDirectory(const std::filesystem::path& directory);
+
+// The variables that name the temporary-file directory, as SetProcessTempDirectory sets them; a
+// child process gets the same ones (docs/ARCHITECTURE.md, section 2.2).
+std::vector<std::string> TempVariableNames();
 
 // The value of environment variable |name| as UTF-8; empty when it is not set.
 std::string GetEnvironmentUtf8(const char* name);

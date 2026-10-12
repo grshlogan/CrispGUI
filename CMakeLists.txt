@@ -45,14 +45,35 @@ add_library(crisp_core STATIC
     src/core/jsonc.cpp
     src/core/launch_command.cpp
     src/core/profile_store.cpp
+    src/core/server_log.cpp
+    src/core/server_manager.cpp
+    src/core/server_state.cpp
+    src/platform/command_line.cpp
     src/platform/files.cpp
+    src/platform/http.cpp
+    src/platform/process.cpp
     src/util/json.cpp
     src/util/sha256.cpp
     src/util/string_table.cpp)
+find_package(Threads REQUIRED)
+target_link_libraries(crisp_core PUBLIC Threads::Threads)
 if(WIN32)
-    target_sources(crisp_core PRIVATE src/platform/files_win32.cpp src/platform/paths_win32.cpp)
+    # WinHTTP and the IP helper are Windows system libraries (docs/ENVIRONMENT.md, section 4).
+    target_sources(crisp_core PRIVATE
+        src/platform/files_win32.cpp
+        src/platform/http_win32.cpp
+        src/platform/paths_win32.cpp
+        src/platform/process_win32.cpp
+        src/platform/win32_text.cpp)
+    target_link_libraries(crisp_core PUBLIC winhttp iphlpapi)
 else()
-    target_sources(crisp_core PRIVATE src/platform/files_posix.cpp src/platform/paths_posix.cpp)
+    find_package(CURL REQUIRED)
+    target_sources(crisp_core PRIVATE
+        src/platform/files_posix.cpp
+        src/platform/http_curl.cpp
+        src/platform/paths_posix.cpp
+        src/platform/process_posix.cpp)
+    target_link_libraries(crisp_core PUBLIC CURL::libcurl)
 endif()
 target_include_directories(crisp_core PUBLIC src)
 crisp_apply_options(crisp_core)

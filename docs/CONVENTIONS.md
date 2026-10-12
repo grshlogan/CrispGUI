@@ -7,7 +7,8 @@ The hard rules and the language rule (English in the repository, Chinese with th
 - User-facing UI strings: English first, with a Chinese translation planned (EUI-NEO has full CJK and IME support). Do not hardcode strings in UI code; route them through a string table from day one.
 - Parameter labels and help texts come from the string table through the keys in the parameter catalog ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)).
 - Text styles: body text and components use the default font (HarmonyOS Sans SC Regular when present); section headings use `UiFonts::medium` and page titles `UiFonts::title` (`src/ui/fonts.h`). Wrapped text sets `maxWidth` as well as `width`, because EUI-NEO measures the height with `maxWidth` ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)).
-- Messages from `src/core/` (parse errors, readiness problems) are English technical detail; the UI shows them after a translated prefix from the string table.
+- Messages from `src/core/` (parse errors, readiness problems) are English technical detail; the UI shows them after a translated prefix from the string table. Server states and status messages are enums that the UI maps to translated sentences, with the English detail on a separate line.
+- Disabled buttons are dimmed (opacity 0.4), because EUI-NEO draws a disabled `components::button` like an enabled one ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)).
 
 ## C++ conventions
 
@@ -33,7 +34,7 @@ Commits and pushes need the owner's authorization ([AGENTS.md](../AGENTS.md#repo
 
 ## Testing expectations
 
-- Unit tests are plain executables built on `tests/check.h`, one per test, registered with CTest under the `unit` label; no third-party test framework. Windows deliveries carry them, and `run-tests.cmd` runs them on the owner's machine.
+- Unit tests are plain executables built on `tests/check.h`, one per test, registered with CTest under the `unit` label; no third-party test framework. Tests that start processes or open sockets carry the `integration` label instead; they use the stand-in server `tests/stub_crispasr.cpp` on free ports of 127.0.0.1 and must finish within the minute that `run-tests.ps1` allows each test. Windows deliveries carry both groups, and `run-tests.cmd` runs them on the owner's machine.
 - Unit tests for: the JSONC parser (including escaped quotes inside strings), profile readiness, `args[]` parsing and the launcher's apply conditions, the parameter resolver (profile, manifest, and capability sources), the request builder, job state transitions, the persistence round trip (including a torn last line), the window loop (boundary guard, retry classification, resume), and SRT writer equivalence with the server's format.
-- HTTP tests run against a local stub server, with no real engine. Integration tests with the real server run only on Windows and are gated behind a profile selection.
+- HTTP tests run against the local stub server, with no real engine. Tests with the real server run only on Windows and are gated behind a profile selection.
 - Every bug fix gets a regression test.

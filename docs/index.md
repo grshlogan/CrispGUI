@@ -19,4 +19,4 @@ The owner (the user) approves requirements and decisions and is the acceptance a
 | [agents/README.md](agents/README.md) | Identity registry, checkout, delivery to Windows, authorizations, workflow, source imports | Current |
 | [identity/](identity/) | Identity contexts: one file per identity, written only by that identity; [TEMPLATE.md](identity/TEMPLATE.md) is the layout | Current |
 | [reference/README.md](../reference/README.md) | Provenance, licenses, and reading order of the read-only reference library | Current |
-| [devlog/phase-0.md](devlog/phase-0.md), [devlog/phase-1.md](devlog/phase-1.md), [devlog/phase-2.md](devlog/phase-2.md) | Phase reports, one `devlog/phase-N.md` per phase ([TASKS.md](TASKS.md)) | Phases 0 to 2 complete |
+| [devlog/phase-0.md](devlog/phase-0.md), [devlog/phase-1.md](devlog/phase-1.md), [devlog/phase-2.md](devlog/phase-2.md), [devlog/phase-3.md](devlog/phase-3.md) | Phase reports, one `devlog/phase-N.md` per phase ([TASKS.md](TASKS.md)) | Phases 0 to 2 complete; Phase 3 in progress |

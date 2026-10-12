@@ -26,6 +26,10 @@ bool SetProcessTempDirectory(const std::filesystem::path& directory) {
     return ok;
 }
 
+std::vector<std::string> TempVariableNames() {
+    return {"TMPDIR", "TMP", "TEMP"};
+}
+
 std::string GetEnvironmentUtf8(const char* name) {
     const char* value = std::getenv(name);
     return value != nullptr ? value : "";

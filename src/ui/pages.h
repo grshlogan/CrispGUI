@@ -2,6 +2,8 @@
 
 #include "app/app_data.h"
 #include "core/profile_store.h"
+#include "core/server_log.h"
+#include "core/server_state.h"
 #include "ui/fonts.h"
 #include "util/string_table.h"
 
@@ -28,20 +30,40 @@ struct DashboardState {
     const app::AppDataResult& appData;
     const std::filesystem::path& crispAsrRoot;
     const core::ProfileScan& profiles;
+    const core::ServerStatus& server;
+    const core::LogBuffer& log;
     bool scanned = false;   // a scan has finished at least once
     bool scanning = false;  // a scan is running
     float scrollOffset = 0.0f;
+    float logOffset = 0.0f;
+    bool logFollow = true;  // the log view stays at its newest line
     std::function<void()> onRescan;
     std::function<void(float)> onScroll;
+    std::function<void(const std::filesystem::path&)> onStartProfile;
+    std::function<void()> onStopServer;
+    std::function<void(float offset, bool follow)> onLogScroll;
+    std::function<void()> onClearLog;
+};
+
+// The confirmation before stopping a server the GUI did not start (SPEC FR-1).
+struct StopConfirmation {
+    bool open = false;
+    float screenWidth = 0.0f;
+    float screenHeight = 0.0f;
+    std::function<void()> onConfirm;
+    std::function<void()> onCancel;
 };
 
 // A page that shows its title and the phase that fills it.
 void ComposePlaceholder(eui::Ui& ui, const PageContext& context, const char* id, std::string_view titleKey,
                         std::string_view bodyKey);
 
-// The dashboard: the app data folders and the profiles of the CrispASR folder with their
-// readiness, as the launcher would show them.
+// The dashboard: the server with its controls, the app data folders, the profiles of the
+// CrispASR folder with their readiness as the launcher would show them, and the server log.
 void ComposeDashboard(eui::Ui& ui, const PageContext& context, const DashboardState& state);
+
+// The stop confirmation as an overlay over the whole window.
+void ComposeStopConfirmation(eui::Ui& ui, const PageContext& context, const StopConfirmation& confirmation);
 
 // The settings page: for now the UI language, which is not persisted yet.
 void ComposeSettings(eui::Ui& ui, const PageContext& context, std::function<void(util::Language)> onLanguageChange);

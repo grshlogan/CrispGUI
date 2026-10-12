@@ -1,5 +1,5 @@
-# Runs the tests listed in tests.txt ("unit <name>" or "probe <name>") and records each exit
-# code in test-results.txt. Start it with run-tests.cmd from the delivery folder.
+# Runs the tests listed in tests.txt ("unit <name>", "integration <name>", or "probe <name>") and
+# records each exit code in test-results.txt. Start it with run-tests.cmd from the delivery folder.
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $here
@@ -51,13 +51,13 @@ foreach ($entry in $tests) {
     }
     if ("$code" -eq '0') {
         $status = 'PASS'
-    } elseif ($kind -eq 'unit' -and "$code" -eq '77') {
+    } elseif ($kind -ne 'probe' -and "$code" -eq '77') {
         $status = 'SKIP'
     } else {
         $status = 'FAIL'
         $failures++
     }
-    $lines.Add(('{0,-4} {1,-5} {2,-32} exit={3}' -f $status, $kind, $name, $code))
+    $lines.Add(('{0,-4} {1,-11} {2,-32} exit={3}' -f $status, $kind, $name, $code))
     foreach ($file in @($out, $err)) {
         if ((Test-Path -LiteralPath $file) -and (Get-Item -LiteralPath $file).Length -gt 0) {
             foreach ($text in Get-Content -LiteralPath $file -TotalCount 20) { $lines.Add("     | $text") }

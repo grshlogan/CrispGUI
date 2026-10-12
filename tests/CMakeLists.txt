@@ -7,13 +7,43 @@ set(CRISPGUI_UNIT_TESTS
     sha256_test
     cli_flags_test
     profile_store_test
-    launch_command_test)
+    launch_command_test
+    command_line_test
+    server_log_test
+    server_state_test)
 foreach(name IN LISTS CRISPGUI_UNIT_TESTS)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE crisp_core)
     crisp_apply_options(${name})
     add_test(NAME ${name} COMMAND ${name})
     set_tests_properties(${name} PROPERTIES LABELS unit)
+endforeach()
+
+# A stand-in for the CrispASR server (stub_crispasr.cpp) that the integration tests start as a
+# child process; tools/package-windows.sh copies it into the delivery.
+add_executable(stub_crispasr stub_crispasr.cpp)
+crisp_apply_options(stub_crispasr)
+if(WIN32)
+    target_link_libraries(stub_crispasr PRIVATE ws2_32)
+    target_link_options(stub_crispasr PRIVATE -municode)  # wmain: the arguments in UTF-16
+endif()
+
+# Integration tests: real processes, sockets, and HTTP on 127.0.0.1 with the stub, under the
+# "integration" label. Each must finish within the minute run-tests.ps1 allows.
+set(CRISPGUI_INTEGRATION_TESTS
+    process_test
+    http_test
+    server_manager_test)
+foreach(name IN LISTS CRISPGUI_INTEGRATION_TESTS)
+    add_executable(${name} ${name}.cpp)
+    target_link_libraries(${name} PRIVATE crisp_core)
+    if(WIN32)
+        target_link_libraries(${name} PRIVATE ws2_32)
+    endif()
+    crisp_apply_options(${name})
+    add_dependencies(${name} stub_crispasr)
+    add_test(NAME ${name} COMMAND ${name})
+    set_tests_properties(${name} PROPERTIES LABELS integration TIMEOUT 120)
 endforeach()
 
 # Test data next to the test executables (tests/test_support.h); tools/package-windows.sh

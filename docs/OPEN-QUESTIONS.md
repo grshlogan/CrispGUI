@@ -40,7 +40,7 @@ OQ-1 (Windows build path), OQ-2 (Git repository), and OQ-3 (WSL2 toolchain) are 
 - Context: When the aligner file is missing, the launcher warns and starts without it (`reference/crispasr/start-crispasr.ps1:191-199`). SPEC only asks for a readiness display. With `force_aligner`, the aligner also refines segment start and end times (`reference/crispasr/crispasr_server.cpp:838-851`), so SRT timing may degrade without it.
 - Options: (a) behave like the launcher, with a visible warning; (b) refuse to start until the aligner exists.
 - Recommendation: (a), mirroring the proven launcher, with the warning shown on the dashboard and stored in each job's log.
-- Status: open.
+- Status: open. Phase 3 implements the recommendation: the server starts without `-am`, the dashboard and the server log show the warning, and job logs follow in Phase 7 ([ARCHITECTURE.md §2.2](ARCHITECTURE.md#22-servermanager)). Choosing (b) changes one check in `BuildLaunchCommand`.
 
 ## OQ-9: Formal workflow and review policy
 

@@ -1,6 +1,6 @@
 # Architecture — CrispRustGUI
 
-> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4). Entries marked (P1) and (P2) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
+> Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4) and the Phase 3 implementation (§2.2, §2.3, §2.6, §3, §4). Entries marked (P1), (P2), and (P3) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
 
 ## 1. Architectural style: thick client over a local service
 
@@ -24,7 +24,7 @@ Set by the owner on the dates shown; changing one needs the owner.
 
 ## 2. Component model
 
-Status: Phase 1 created the entries marked `(P1)` and Phase 2 those marked `(P2)`; the rest is `planned`.
+Status: Phases 1 to 3 created the entries marked `(P1)`, `(P2)`, and `(P3)`; the rest is `planned`.
 
 ```
 crisprustgui/
@@ -35,8 +35,8 @@ crisprustgui/
 │   │   ├── profile_store.{h,cpp}     // (P2) profile model, scanning, readiness
 │   │   ├── jsonc.{h,cpp}             // (P2) JSONC comment stripping
 │   │   ├── cli_flags.{h,cpp}         // (P2) the CrispASR CLI flags (cli_flags_table.inc, generated) and the args[] reader
-│   │   ├── launch_command.{h,cpp}    // (P2) the launcher's tuning conditions; the full command line in Phase 3
-│   │   ├── server_manager.{h,cpp}    // pre-flight, process lifecycle, health polling, log buffer
+│   │   ├── launch_command.{h,cpp}    // (P2) the launcher's tuning conditions; (P3) the full command line and environment
+│   │   ├── server_manager.{h,cpp}    // (P3) worker threads, inbox, and log of the server; server_state.{h,cpp}: the state machine; server_log.{h,cpp}: log lines
 │   │   ├── api_client.{h,cpp}        // typed CrispASR calls over an HttpTransport
 │   │   ├── params/                   // parameter catalog, sources, resolver (§2.7)
 │   │   ├── job_model.{h,cpp}         // Job / StepSpec / states
@@ -46,15 +46,15 @@ crisprustgui/
 │   │   └── step_runners/
 │   │       ├── step_runner.h         // interface
 │   │       └── asr_step.cpp          // v1's only runner: the window loop (§2.5)
-│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; (P2) files.h; later HttpTransport (WinHTTP | libcurl), Process (Win32 | POSIX)
+│   ├── platform/                     // (P1) paths.h with paths_win32.cpp and paths_posix.cpp; (P2) files.h; (P3) process.h, http.h (WinHTTP | libcurl), command_line.h
 │   ├── ui/
-│   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp}; P2: the dashboard lists the profiles); (P2) fonts.{h,cpp}
+│   │   ├── pages: dashboard / transcribe / batch / settings / log  (P1: pages.{h,cpp}; P2: the dashboard lists the profiles; P3: the server panel, Start buttons, log pane, stop confirmation); (P2) fonts.{h,cpp}
 │   │   └── widgets: generated parameter panel, profile picker, job table
 │   └── util/                         // (P1) string_table.{h,cpp}; (P2) json.{h,cpp}: JSON values and the parser, sha256.{h,cpp}; later the JSON writer and logging
 ├── params/                           // data: catalog/*.json, models/<folder>/<name>.json (§2.7)
 ├── cmake/toolchains/                 // MinGW-w64 cross-compilation toolchain file
 ├── tools/                            // smoke builds, Windows packaging, the Windows test runner, the CLI flag extractor
-└── tests/                            // (P1) unit tests with check.h; later a stub server for HTTP tests
+└── tests/                            // (P1) unit tests with check.h; (P3) stub_crispasr.cpp, a stand-in server, and integration tests
 ```
 
 EUI-NEO is not part of the tree; the build adds it from the shared Learn library ([ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot)).
@@ -78,19 +78,25 @@ Implemented in Phase 2 (`src/core/profile_store.h`, `jsonc.h`, `cli_flags.h`, `l
 
 ### 2.2 ServerManager
 
-- Builds the command line and environment exactly as [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters) describes, and adds `TMP` and `TEMP` pointing at `<appdata>/tmp/server`, because on Windows the server writes each upload to the system temp directory ([API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior), item 8).
-- Pre-flight through `/health` before spawning (SPEC FR-1).
-- Spawns the child: on Windows, `CreateProcessW` with an explicit environment block, redirected stdout and stderr, and no console window; on Linux development builds, `posix_spawn`. The child is not placed in a kill-on-close job object, so it survives a GUI crash and can be adopted afterwards.
-- A reader thread drains stdout and stderr continuously into a ring buffer for the log pane and a log file. The server logs to stderr, and an undrained pipe would block it.
-- State machine `stopped → starting → running → stopping`, plus `failed`. `starting` lasts while the process is alive and `/health` refuses connections, because the server loads its model before it listens. `failed` is entered when the process exits; an exit code of 0 is not success, since a failed `listen()` also returns 0 ([API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior), item 3).
-- Polls `/health` every 1–2 s on a background thread and reads `/v1/models` after reaching `running`.
-- Adoption: when `/health` answers `200` at GUI start, the server shows as adopted; Stop warns that it may belong to someone else.
-- Stop: `TerminateProcess` on Windows, SIGTERM then SIGKILL on Linux; reap the process; state `stopped`.
+Implemented in Phase 3 (`src/core/server_manager.h`, `server_state.h`, `server_log.h`, `launch_command.h`; `src/platform/process.h`, `http.h`, `command_line.h`; [Phase 3 report](devlog/phase-3.md)).
+
+- Command line (`BuildLaunchCommand`), in the launcher's order (`start-crispasr.ps1:162-221`; [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters)): `--server --backend <backend> -m <model>`; `-am <aligner>` only when the file exists, otherwise a warning, as the launcher does ([OQ-8](OPEN-QUESTIONS.md#oq-8-missing-aligner-at-server-start), recommendation (a)); `-l <language>`; the tuning flags; `args[]`; then `--host` and `--port`, which therefore override the same flags in `args[]`. The executable and the model are checked again at start, as the files may have changed since the scan.
+- Environment: `CRISPASR_MODELS_DIR`, `CRISPASR_CACHE_DIR`, `CRISPASR_SCRATCH_DIR`, `CRISPASR_API_KEYS` (the profile's `api_keys`, or `default`), and `CUDA_VISIBLE_DEVICES` (removed without `device`); then the profile's `env` entries, where an empty value removes a variable as PowerShell's `Set-Item` does; last `TMP` and `TEMP` (and `TMPDIR` on Linux) pointed at `<appdata>/tmp/server`, because on Windows the server writes each upload to the system temp directory ([API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior), item 8). A profile's own `TMP` or `TEMP` is overridden with a warning, and without the app data folder no server starts. The working directory is the CrispASR folder; the launcher inherits its console's directory instead.
+- API key for the GUI's requests: the first key of `CRISPASR_API_KEYS` as the server will see it, else the first of `--api-keys`; for an adopted server the configured key (`default` until Settings in Phase 8).
+- Process (`ChildProcess`): on Windows `CreateProcessW` with `CREATE_NO_WINDOW`, a Unicode environment block sorted without regard to case, standard input on `NUL`, standard output and standard error on one pipe, and `PROC_THREAD_ATTRIBUTE_HANDLE_LIST`, so that the child inherits only those two handles; arguments are quoted after the C runtime's rules (`QuoteWindowsArgument`). On Linux `posix_spawn` with its own process group and a clean signal state. No kill-on-close job object: the server outlives the GUI, and the next launch adopts it.
+- Output: one monitor thread per process reads the pipe in 100 ms slices (anonymous pipes on Windows have no overlapped reads, so it peeks), turns the bytes into lines (`LogSplitter`: carriage-return redraws, terminal escape sequences, control characters, invalid UTF-8, lines over 2000 bytes), posts them in batches, and reports the exit. The log pane keeps the newest 5000 lines; the GUI's own lines (command line, working directory, environment changes with keys hidden, exit status) start with `[CrispRustGUI]`. A log file follows in Phase 8.
+- State machine (`ServerStateMachine`, without threads or I/O, so every transition is unit-tested): `stopped`, `checking` (at launch, or the pre-flight of a start), `starting`, `running`, `unreachable` (an adopted server that stopped answering), `stopping`, and `failed`. `starting` lasts while the process lives and `/health` refuses connections. Any exit of the GUI's process that Stop did not request ends in `failed`, exit code 0 included ([API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior), item 3). A changed endpoint and the end of a server start a new epoch, and reports of an older epoch are dropped, so a late answer from a stopped server is never adopted.
+- Health: a poller thread checks `GET /health` of the current endpoint every 1.5 s, with a 5 s connect timeout because a refused connection takes about 2 s on Windows (`hypothesis`). `200 {"status":"ok"}` and `503 {"status":"loading"}` count as CrispASR, a refused connection as a free port, and anything else (another status or body, a timeout, a reset) as another program. Unchanged results are not posted, so an idle server does not keep the UI busy; a forced check (the pre-flight, and once the process exists) always reports. On reaching `running` the poller reads `/v1/models` for the backend and the model path.
+- Pre-flight (SPEC FR-1): Start checks the profile's endpoint first. CrispASR answers: the server is adopted instead of starting a second one; the port is free: the process starts; another program answers: `failed`, and nothing starts.
+- Adoption: a CrispASR answer at launch, or while stopped or failed, shows the server as adopted. Stop on an adopted server asks for confirmation, finds the process listening on the port (`GetExtendedTcpTable`; `/proc/net/tcp` on Linux), refuses unless its executable is named `crispasr.exe`, ends it through a handle opened before that check (Windows; SIGTERM, then SIGKILL on Linux), and waits up to 5 s.
+- Stop of the GUI's server: `TerminateProcess` on Windows; SIGTERM, then SIGKILL after 3 s on Linux; the exit report ends in `stopped`.
+- Threads: the UI thread owns the manager and applies the inbox at the start of each `Compose`; the poller, the controller (start, stop, stop of an adopted server), and the monitor are the worker threads, and they wake the UI with `app::requestUpdate()`. At `onShutdown` the request in progress is cancelled (WinHTTP: closing its handle), the threads end, and a running server keeps running.
+- Limit: until Settings (Phase 8), the check at launch looks at the default port 5114, so a server that a profile started on another port is not found at launch.
 
 ### 2.3 ApiClient and HTTP transport
 
 - `ApiClient` offers typed operations: `health()`, `progress()`, `models()`, and `transcribe(file, fields, window, cancel)`, which returns the parsed `verbose_json` transcript or an `ApiError`.
-- `HttpTransport` is the platform seam: `get(url, headers, timeout)` and `postMultipart(url, headers, fields, filePath, timeout, cancel)`, which streams the file from disk instead of loading it into memory. Implementations: WinHTTP on Windows, a system library that needs no third-party import, and libcurl on Linux development builds (*proposed*, depends on OQ-1 and OQ-3; the original plan used libcurl everywhere with WinHTTP as a fallback, eui-neo-audit §3.1).
+- `HttpTransport` is the platform seam: `get(url, headers, timeout)` and `postMultipart(url, headers, fields, filePath, timeout, cancel)`, which streams the file from disk instead of loading it into memory. Implementations: WinHTTP on Windows, a system library that needs no third-party import, and libcurl on Linux development builds (the original plan used libcurl everywhere with WinHTTP as a fallback, eui-neo-audit §3.1). Phase 3 implemented the GET part as `HttpGet` (`src/platform/http.h`) for the server checks: never through a proxy, with a body limit, and with `HttpCancel`, which ends a request in progress from another thread. Phase 4 adds the upload.
 - Every request carries `Authorization: Bearer <key>` from the settings ([API-CRISPASR.md §2](API-CRISPASR.md#2-authentication)).
 - Errors are typed after [API-CRISPASR.md §5](API-CRISPASR.md#5-errors): `Unreachable`, `Timeout`, `Cancelled`, `BadRequest(message)`, `Unauthorized`, `PayloadTooLarge`, `ServerBusy` (503), `ServerError` (500), `Protocol` (unexpected body). The ASR runner decides which ones to retry (§2.5).
 - Responses are parsed with the project's JSON parser (`src/util/json.h`, Phase 2), because EUI-NEO's `eui/json.h` cannot list an object's members ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)); a small JSON writer in `util/` will produce the GUI's own files.
@@ -179,11 +185,12 @@ Cancellation aborts the transport. The server finishes the window anyway. The ch
 |---|---|---|
 | UI thread | EUI-NEO compose loop and all UI state | Never blocks: no HTTP, no process waits, no file writes |
 | Queue worker | Job execution, the ASR window loop, the current job's blocking HTTP calls | One dedicated `std::thread`; posts results to the UI inbox |
-| Health and progress poller | `/health` and `/progress` | Short calls; a dedicated thread or `app::async` |
-| Server log reader | Child stdout and stderr pipes | Ring buffer, then `app::requestUpdate()` |
+| Health and progress poller | `/health`, `/v1/models`, later `/progress` | A dedicated thread of the ServerManager (Phase 3) |
+| Process controller | Starting and ending server processes, the stop of an adopted server | A dedicated thread of the ServerManager (Phase 3) |
+| Server monitor | One server process: its output pipe and its exit | One thread per process; batches of lines to the UI inbox (Phase 3) |
 | Job store writer | Job files and checkpoint lines | Ordered per job |
 
-Rule: shared state is confined to the UI thread except for the explicitly guarded UI inbox and job store. Worker threads hand results to the UI through the mutex-protected inbox plus `app::requestUpdate()`, or through `app::async` completion callbacks (eui-neo-audit §3.3). Long transcription calls do not run on EUI-NEO's shared async pool: it has at most four workers ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)), and a call that lasts minutes could starve other async work. Short tasks such as the profile scan use the pool.
+Rule: shared state is confined to the UI thread except for the explicitly guarded UI inbox and job store; the ServerManager's inbox is the first such inbox (Phase 3). Worker threads hand results to the UI through the mutex-protected inbox plus `app::requestUpdate()`, or through `app::async` completion callbacks (eui-neo-audit §3.3). Long transcription calls do not run on EUI-NEO's shared async pool: it has at most four workers ([ENVIRONMENT.md §4.4](ENVIRONMENT.md#44-eui-neo-runtime-facts)), and a call that lasts minutes could starve other async work. Short tasks such as the profile scan use the pool.
 
 ### 2.7 Parameter model (pluggable)
 
@@ -235,7 +242,10 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | Engine integration | HTTP client to a managed server process | In-process FFI (CrisperWeaver-style) | Crash containment, batch model residency, simpler v1, matches the user's "start/stop service" model. The C API path is documented for the future. |
 | UI framework | EUI-NEO v0.6.1, built from the pinned snapshot in the shared Learn library | Rust GUIs, Tauri | Same language as the engine (no FFI), Apache-2.0, component coverage verified in the audit; version pinned to control 0.x churn |
 | Windows build | MinGW-w64 GCC 12 cross-compilation in WSL2, static runtime | An owner-side MSVC build; a CI build on a Windows runner | Owner decision (2026-10-11): keeps the copy-a-folder workflow and needs no Windows toolchain; EUI-NEO's CMake files support MinGW |
-| HTTP stack | In-repo transport behind `HttpTransport`: WinHTTP on Windows, libcurl on Linux (*proposed*) | EUI-NEO `requestText` (GET-only); libcurl everywhere | Multipart POST is required; no third-party HTTP library has to be imported for Windows |
+| HTTP stack | In-repo transport behind `HttpTransport`: WinHTTP on Windows, libcurl on Linux; GET since Phase 3 | EUI-NEO `requestText` (GET-only); libcurl everywhere | Multipart POST is required; no third-party HTTP library has to be imported for Windows |
+| Server output | One pipe for standard output and standard error, read by a monitor thread | Two pipes; a log file written by the server | Keeps the order of the lines and needs one reader; the server logs to standard error anyway |
+| Stopping an adopted server | After a confirmation, end the process listening on the port, only when its executable is `crispasr.exe` | No Stop for adopted servers; ending whatever listens on the port | SPEC FR-1 keeps Stop available; the name check, made through the handle that ends the process, keeps other programs safe |
+| GUI exit | Leave the server running; the next launch adopts it | Stop the server on exit | [API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior) item 10; a crash and a normal exit behave alike |
 | Profiles | Read the existing JSONC files; no GUI editing in v1 | A new GUI-side preset store | Profiles are already the project's single source of truth with proven content (4 Japanese profiles, tested) |
 | Model switching | Restart the server with the new profile | Hot-swap through `/load` | The server holds one model per process, and `/load` keeps the old aligner (crispasr-audit §5.3–5.4) |
 | Language | C++17 end to end | Rust glue | User decision: one language across engine and GUI, no glue layer |
@@ -261,5 +271,7 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | EUI-NEO async pool too small for long calls | Medium | Dedicated queue worker thread for blocking calls (§2.6) |
 | `/progress` is global | Low | One request at a time; an adopted server may show foreign work |
 | Server output floods the UI | Low | Ring buffer, capped log pane |
-| Port held by another program at startup | Low | Pre-flight through `/health`; the GUI reports "port busy" instead of starting |
+| Port held by another program at startup | Low | Pre-flight through `/health`; the GUI reports "port busy" instead of starting (Phase 3, tested against the stub server) |
+| The Windows process and HTTP code runs only on the owner's machine | Medium | Integration tests with the stub server travel in every delivery and run with `run-tests.cmd` (Phase 3) |
+| A server started from a profile with another port is missed at launch | Low | The deployed profiles all use 5114; Settings (Phase 8) configure the port |
 | CJK rendering or IME issues | Low | The EUI-NEO audit verified CJK fonts and IME (msyh fallback chain) |

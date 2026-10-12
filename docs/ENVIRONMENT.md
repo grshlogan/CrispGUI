@@ -1,6 +1,6 @@
 # Build Environment
 
-> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
+> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2, and on 2026-10-12 (round 7) with the system libraries, test entry points, and runtime facts of Phase 3. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
 
 ## 1. Target and toolchains
 
@@ -8,7 +8,7 @@
 - **Windows executable**: cross-compiled in WSL2 with MinGW-w64 GCC 12 and the POSIX thread model (owner decision of 2026-10-11, formerly OQ-1). The result is a statically linked executable plus EUI-NEO's `assets/` folder, so a delivery is one folder ([§4.2](#42-eui-neo-build-facts)).
 - **Development builds**: Linux, in the WSL2 distribution `claude-debian12`, rendering through WSLg with GLFW's X11 backend. EUI-NEO's `eui_demo` renders correctly under WSLg ([Phase 0 report](devlog/phase-0.md)).
 - **UI framework**: EUI-NEO v0.6.1 from the shared Learn library ([§4.1](#41-eui-neo-snapshot)), built into this project's build tree.
-- **HTTP**: the in-repo transport of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport): WinHTTP on Windows and libcurl on Linux (*proposed*). EUI-NEO itself requires libcurl on Linux.
+- **HTTP**: the in-repo transport of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport): WinHTTP on Windows and libcurl on Linux; GET since Phase 3. EUI-NEO itself requires libcurl on Linux.
 
 ## 2. Development loop
 
@@ -57,14 +57,15 @@ tools/smoke/package-eui-smoke.sh       # Windows delivery; needs a clean tree on
 
 Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shadertoy/shadertoy/` under its compile-time source path ([§4.2](#42-eui-neo-build-facts)).
 
-Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md) and [Phase 2](devlog/phase-2.md) reports):
+Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), and [Phase 3](devlog/phase-3.md) reports):
 
 ```bash
 # Linux development build (WSLg); the app is build/linux/crisprustgui
 cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/linux
-ctest --test-dir build/linux --output-on-failure
+ctest --test-dir build/linux --output-on-failure      # -L unit or -L integration for one group
 CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crisprustgui   # reads <folder>/profile as the CrispASR root
+CRISPGUI_DEV_AUTOSTART=<folder>/<profile> ...              # starts that profile once the first checks are done
 
 # Windows release build (MinGW-w64 cross-compilation) and its delivery
 cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release \
@@ -81,7 +82,7 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 - `cmake/toolchains/mingw-w64-x86_64.cmake`: the MinGW-w64 toolchain file.
 - `CMakeLists.txt`, `src/`, `tests/`: the application, its two libraries (`crisp_core` without UI dependencies, `crisp_ui` on EUI-NEO), and the unit tests.
 - `tools/package-windows.sh` packages a Windows delivery of the application; `tools/windows/` holds the test runner that deliveries carry; `tools/smoke/` holds the Phase 0 smoke build and its packaging; `tools/extract-cli-flags.py` regenerates `src/core/cli_flags_table.inc` from a CrispASR source snapshot.
-- `tests/`: the build copies the reference profiles to `testdata/` next to the test executables, and deliveries carry that folder.
+- `tests/`: unit tests (CTest label `unit`), and integration tests (label `integration`) that start `stub_crispasr`, a stand-in for the CrispASR server built from `tests/stub_crispasr.cpp`, and talk to it over 127.0.0.1. The build copies the reference profiles to `testdata/` next to the test executables; deliveries carry that folder and the stub.
 - `fonts/`: the UI fonts the owner provides ([§4.3](#43-ui-fonts)); ignored by Git, so a fresh clone builds with EUI-NEO's default font.
 - `params/`: the parameter catalog and model packs ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)); data, committed.
 - `build*/`, `appdata/`, `CMakeUserPresets.json`, `.cache/`, and `fonts/` are ignored by Git (`.gitignore`).
@@ -94,8 +95,10 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 | Dependency | Source | Notes |
 |---|---|---|
 | EUI-NEO v0.6.1 | Shared Learn library ([§4.1](#41-eui-neo-snapshot)) | UI framework, Apache-2.0; bundles GLFW 3.4, glad, FreeType, zlib 1.3.1, libpng 1.6.43, md4c, miniaudio, nanosvg, stb_image, a tray library, and yyjson 0.12.0 |
-| WinHTTP | Windows system library | Windows HTTP transport (*proposed*) |
-| libcurl | Debian package, Linux builds only | Required by EUI-NEO on Linux; also the Linux HTTP transport |
+| WinHTTP | Windows system library | Windows HTTP transport; GET since Phase 3 |
+| IP Helper (`iphlpapi`) | Windows system library | Finds the process listening on a port, to stop an adopted server (Phase 3) |
+| Winsock (`ws2_32`) | Windows system library | The stub server and the integration tests only |
+| libcurl | Debian package, Linux builds only | Required by EUI-NEO on Linux; the Linux HTTP transport since Phase 3 |
 | HarmonyOS Sans SC | Owner-provided in `<WSL_ROOT>/fonts/` ([§4.3](#43-ui-fonts)) | UI font; not in Git; license `not verified` |
 | Compilers, CMake, Ninja | [§2.1](#21-wsl2-toolchain) | Installed |
 | CrispASR server | Deployed on Windows at `<CRISPASR_ROOT>\cuda13\crispasr.exe` | Runtime dependency only; never built here |
@@ -137,6 +140,9 @@ Read in the v0.6.1 source and observed in the Phase 2 builds of 2026-10-12:
 - Scroll view: `components::scrollView` composes its content twice per frame, first into a separate `Ui` to measure the height, and passes that `Ui` and the content width to the content function, which must use them. The caller keeps the scroll offset (`offset`, `onChange`).
 - JSON: `eui/json.h` reads values by key or index but cannot list an object's members, which profiles need (`env`, unknown keys); the project has its own parser in `src/util/json.{h,cpp}` ([ARCHITECTURE.md §3](ARCHITECTURE.md#3-key-decisions-and-rejected-alternatives)).
 - Async: `app::async::restart` runs work on a shared pool of `min(4, hardware threads − 1)` workers (at least one) and queues the completion for the UI thread, which runs it during the next update and recomposes (`core/platform/async.cpp`, `include/eui/detail/dsl_app_impl.h`). A newer task with the same key supersedes a running one, whose completion is dropped.
+- Waking the UI: `app::requestUpdate()` sets an atomic flag and posts an empty GLFW event (`core/platform/platform.cpp`), so worker threads may call it; the next update recomposes.
+- Shutdown: `DslAppConfig::onShutdown` runs inside `app::shutdown()` while the window still exists (`core/app/glfw_app_main.cpp`), so work done there keeps the last frame on screen.
+- Components (Phase 3): a disabled `components::button` looks like an enabled one, so the pages dim disabled buttons; `components::dropdown` reserves the height of its popup in the layout even while closed (`components/dropdown.h`), which is why the profile list carries Start buttons instead; `components::virtualList` composes only the visible rows of a fixed row height (the log pane); `components::dialog` covers the given screen size and is composed as an overlay above the page.
 
 ## 5. Runtime configuration defaults (Windows)
 
@@ -151,12 +157,14 @@ Read in the v0.6.1 source and observed in the Phase 2 builds of 2026-10-12:
 | UI fonts | `<folder of crisprustgui.exe>\fonts\HarmonyOS_Sans_SC_{Regular,Medium,Bold}.ttf` ([§4.3](#43-ui-fonts)) | Copied by the build; EUI-NEO's default font when absent |
 | App data directory | `<folder of crisprustgui.exe>\appdata`; for Linux development runs `build/linux/appdata` | Derived from the executable's folder (Phase 1); a setting from Phase 8. Never on `C:\`: the dashboard warns when it is |
 | Temporary files | `<appdata>\tmp` for the GUI, `<appdata>\tmp\server` as `TMP`/`TEMP` of the server process | Derived from the app data directory |
+| Server working directory | `<CRISPASR_ROOT>` | Derived from the root (Phase 3) |
+| Health check | `GET /health` every 1.5 s; connect timeout 5 s, request timeout 5 s | `ServerManagerOptions` (Phase 3) |
 | Transcription window | 300 s (*proposed*, OQ-6) | GUI settings and each job snapshot |
 
 ## 6. Verification entry points
 
-- Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit tests and their `testdata/`; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`.
+- Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit and integration tests, the stub server, and `testdata/`; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`. The integration tests start the stub on free ports of 127.0.0.1 and write their scratch folders next to the tests.
 - Phase 0: the smoke commands of [§2.2](#22-commands).
-- Planned: HTTP tests against a stub server (Phase 4).
+- Integration tests with the stub server since Phase 3 (`process_test`, `http_test`, `server_manager_test`); Phase 4 adds the upload.
 
 Each result records its command, working-directory alias, platform, commit, and exit code.

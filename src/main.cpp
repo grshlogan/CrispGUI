@@ -29,7 +29,8 @@ const DslAppConfig& dslAppConfig() {
                                   .fps(60.0)
                                   .clearColor(components::theme::dark().background)
                                   .showDebugOverlay(false)
-                                  .onStart([] { TheApplication().Start(); });
+                                  .onStart([] { TheApplication().Start(); })
+                                  .onShutdown([] { TheApplication().Shutdown(); });
         // HarmonyOS Sans SC when the build found it; otherwise EUI-NEO's default font.
         const crisp::ui::UiFonts fonts = crisp::ui::FindUiFonts();
         if (!fonts.text.empty()) {

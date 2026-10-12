@@ -35,7 +35,8 @@ Version 1 covers the most valuable slice of a larger pipeline:
 | `docs/ENVIRONMENT.md` | Build environment (WSL2 development, Windows target, dependencies) |
 | `docs/agents/README.md` | Identities, delivery to Windows, authorizations |
 | `docs/identity/` | One context file per agent identity |
-| `CMakeLists.txt`, `src/`, `tests/` | The application (skeleton and profile reading so far), its libraries, and the unit tests |
+| `CMakeLists.txt`, `src/` | The application (skeleton, profile reading, and server management so far) and its libraries |
+| `tests/` | Unit tests, and integration tests that run a stand-in CrispASR server (`tests/stub_crispasr.cpp`) |
 | `cmake/`, `tools/` | The MinGW-w64 toolchain file, smoke builds, Windows packaging, the Windows test runner, and the CrispASR CLI flag extractor |
 | `fonts/` | The UI fonts (HarmonyOS Sans SC), provided by the owner and not in Git (`docs/ENVIRONMENT.md` §4.3) |
 | `reference/` | Curated source files from CrispASR / CrisperWeaver / EUI-NEO to learn from, plus the audit reports they came from |
