@@ -32,7 +32,7 @@ Process note: the first round of mutation checks restored each file with its old
 
 ## Delivery
 
-Packaged after the Phase 4 commit and recorded in the delivery record that follows it.
+Both builds were rebuilt from a clean tree at commit `c296f239748f65db24077a17820ea33b5df5e353` (223 and 224 steps, no warnings, `ctest` 20 of 20), and `tools/package-windows.sh` produced `crisprustgui-c296f23.zip` in `<HANDOFF_OUT>`: 37,060,506 bytes, SHA-256 `005bbfbc3255a16710423d01825d086cbefb881eed17485acd96e60b4f04259d`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, `fonts/`, the 15 unit and 5 integration tests, `stub_crispasr.exe`, `api_probe.exe`, `testdata/` (with `verbose-synthetic.json`), `tests.txt`, `run-tests.cmd`/`.ps1`, `run-api-probe.cmd`, `CHECKLIST.md`, and `BUILD-INFO.txt` (79 MB unpacked).
 
 ## Windows results (owner's machine)
 
