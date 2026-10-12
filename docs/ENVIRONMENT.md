@@ -144,6 +144,15 @@ Read in the v0.6.1 source and observed in the Phase 2 builds of 2026-10-12:
 - Shutdown: `DslAppConfig::onShutdown` runs inside `app::shutdown()` while the window still exists (`core/app/glfw_app_main.cpp`), so work done there keeps the last frame on screen.
 - Components (Phase 3): a disabled `components::button` looks like an enabled one, so the pages dim disabled buttons; `components::dropdown` reserves the height of its popup in the layout even while closed (`components/dropdown.h`), which is why the profile list carries Start buttons instead; `components::virtualList` composes only the visible rows of a fixed row height (the log pane); `components::dialog` covers the given screen size and is composed as an overlay above the page.
 
+### 4.5 MinGW-w64 runtime facts
+
+From the toolchain's libraries and the Phase 3 Windows run of 2026-10-12 ([Phase 3 report](devlog/phase-3.md#windows-results-owners-machine)):
+
+- The Windows build runs on `msvcrt.dll`. Its `_wstat64` reports a folder path that ends with a separator as missing (`hypothesis`, from the run's failure; `app_data_test` prints the evidence since round 8).
+- MinGW-w64 10 works around that only in `wstat` and `_wstat64i32` (`libmingwex.a`); `_wstat64` is the plain `msvcrt.dll` import (`x86_64-w64-mingw32-nm`, `verified`).
+- GCC 12's libstdc++ removes a trailing separator in `std::filesystem::status` (GCC PR 88881), so `exists`, `is_directory`, and `is_regular_file` are safe, but `equivalent` and `file_size` call `_wstat64` with the path as given, and `temp_directory_path` returns `GetTempPathW`'s result, which always ends with a separator (`objdump -dr` of `fs_ops.o` in `libstdc++.a`, `verified`).
+- Consequence: paths given to `std::filesystem` carry no trailing separator ([CONVENTIONS.md](CONVENTIONS.md#c-conventions)).
+
 ## 5. Runtime configuration defaults (Windows)
 
 | Setting | Default | Where configured |

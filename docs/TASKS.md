@@ -47,7 +47,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows run of `crisprustgui-
 
 ## Phase 3 — ServerManager
 
-In progress since 2026-10-12 (round 7): built and tested on Linux; the Windows run waits for the delivery ([Phase 3 report](devlog/phase-3.md)).
+In progress since 2026-10-12 (round 7): built and tested on Linux; on Windows the GUI works and 13 of 14 tests pass; the failure was a defect of `app_data_test` since Phase 1, corrected in round 8, and the rerun waits for the delivery ([Phase 3 report](devlog/phase-3.md)).
 
 - [x] Build the command line and environment per [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters), including `CRISPASR_API_KEYS`, `CRISPASR_SCRATCH_DIR`, the profile's `env`, and `TMP`/`TEMP`.
 - [x] Implement process start and stop through `src/platform/` (Win32 and POSIX), with stdout and stderr drained into a ring buffer.

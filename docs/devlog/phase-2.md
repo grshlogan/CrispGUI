@@ -50,6 +50,8 @@ Both builds were rebuilt from a clean tree at commit `b397dcda97db2f227dccf51393
 
 The owner ran the delivery `crisprustgui-b397dcd` and reported on 2026-10-12 UTC that the Windows test passed and that the dashboard's profile list agrees with the launcher `start-crispasr.ps1` (owner's statement in round 7). The check list sent with the delivery asked for `run-tests.cmd` (8 unit tests) and, in `crisprustgui.exe`, the profiles under `E:\AI\ASR\CrispASR\profile` with the launcher's `[OK]`/`[MISS]`, scrolling, Rescan, the Chinese texts, and the HarmonyOS Sans font; the report did not itemize these checks. `test-results.txt` was not sent back, so per-test exit codes are not recorded for this run.
 
+Note added in round 8: the Phase 3 run showed that `app_data_test` fails on every Windows run because of a defect in the test since Phase 1 ([Phase 3 report](phase-3.md#windows-results-owners-machine)), so it most likely failed in this run too; without `test-results.txt` the run's record cannot show it. The application code was not affected.
+
 ## Acceptance
 
 Phase 2 is accepted: the Linux results above and the owner's Windows run come from the same commit, `b397dcda97db2f227dccf51393635f85e93c0530`.

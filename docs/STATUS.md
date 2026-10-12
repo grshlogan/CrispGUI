@@ -1,10 +1,10 @@
 # Current Status
 
-Updated 2026-10-12 (round 7) by A003. The owner (the user) is the acceptance authority.
+Updated 2026-10-12 (round 8) by A003. The owner (the user) is the acceptance authority.
 
 ## Baseline
 
-The repository holds the specification, the architecture plan, the server contract, the phased plan, the agent entry points, a read-only reference library, the MinGW-w64 toolchain file, the Phase 0 smoke scripts, the Phase 1 application skeleton, the Phase 2 profile reading, and the Phase 3 server management. Phases 0 (build environment), 1 (application skeleton), and 2 (ProfileStore) are complete; Phase 3 (ServerManager) is built and tested on Linux and waits for the owner's Windows run.
+The repository holds the specification, the architecture plan, the server contract, the phased plan, the agent entry points, a read-only reference library, the MinGW-w64 toolchain file, the Phase 0 smoke scripts, the Phase 1 application skeleton, the Phase 2 profile reading, and the Phase 3 server management. Phases 0 (build environment), 1 (application skeleton), and 2 (ProfileStore) are complete; Phase 3 (ServerManager) works on the owner's Windows machine, where 13 of 14 tests pass; the failing test had a defect since Phase 1, and its corrected version waits for a rerun.
 
 ## Present facts
 
@@ -12,7 +12,7 @@ The repository holds the specification, the architecture plan, the server contra
 | --- | --- | --- |
 | Specification and design | SPEC approved; revised on 2026-10-11 with the owner's directions and source-review corrections. The parameter model and window loop details are proposed | [SPEC.md](SPEC.md), [ARCHITECTURE.md](ARCHITECTURE.md), [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md) |
 | Server contract | Checked against the v0.8.42 server source, which is byte-identical to the same file in the CrispASR v0.8.42 snapshot in the Learn library; deployed-build behavior `not verified` | [API-CRISPASR.md](API-CRISPASR.md), [reference/README.md](../reference/README.md) |
-| Implementation | Phase 1 skeleton accepted on 2026-10-11. Phase 2 accepted on 2026-10-12: JSON and JSONC parsing, SHA-256, the CrispASR 0.8.42 CLI flag table, profile scanning and readiness, the launcher's tuning conditions, and a dashboard that lists the profiles. Phase 3: the launcher's command line and environment, process start and stop, `/health` polling, pre-flight, adoption, the stop of adopted servers, the server panel, and the log pane. Linux: clean builds without warnings, 14 of 14 tests pass (11 unit, 3 integration against a stand-in server); the Windows run waits for the delivery | [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md) |
+| Implementation | Phase 1 skeleton accepted on 2026-10-11. Phase 2 accepted on 2026-10-12: JSON and JSONC parsing, SHA-256, the CrispASR 0.8.42 CLI flag table, profile scanning and readiness, the launcher's tuning conditions, and a dashboard that lists the profiles. Phase 3: the launcher's command line and environment, process start and stop, `/health` polling, pre-flight, adoption, the stop of adopted servers, the server panel, and the log pane. Linux: clean builds without warnings, 14 of 14 tests pass (11 unit, 3 integration against a stand-in server). Windows (owner, 2026-10-12): the GUI works, 13 of 14 tests pass with all integration tests; `app_data_test` failed through a test defect, corrected in round 8 | [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md) |
 | Phase 0 | Accepted on 2026-10-11. The EUI-NEO smoke builds from commit `7e4e89e` pass: under WSLg, 26 of 26 unit tests and 7 of 8 probes (`frame_presentation_probe` fails only under WSLg); on the owner's Windows 11 machine, 0 failures of 34 and no visual problems | [Phase 0 report](devlog/phase-0.md) |
 | Repository | Git, branch `main`; the remote `origin` is the owner's private GitHub repository `grshlogan/CrispGUI` | [agents/README.md](agents/README.md#checkouts) |
 | Profiles | The four Japanese reference profiles parse with the expected fields and launcher arguments in the project's own reader; on the owner's machine the dashboard lists the deployed profiles under `E:\AI\ASR\CrispASR\profile` with the launcher's readiness (`observed` by the owner, 2026-10-12) | `profile_store_test`, `launch_command_test` (`ctest`, exit 0, 2026-10-12); [Phase 2 report](devlog/phase-2.md#windows-results-owners-machine) |
@@ -29,8 +29,8 @@ None for Phase 3. OQ-8 (missing aligner at start) is implemented as its recommen
 
 ## Verification boundary
 
-Evidence comes from reading the documents and sources, environment probes in WSL2, the Phase 0 to 3 builds and tests in WSL2, and the owner's Phase 0 to 2 runs on Windows. The GUI has read the deployed profiles on the owner's machine. The Windows code paths of Phase 3 (process, pipe, WinHTTP, port owner) and the real server under the GUI's control are `not run`.
+Evidence comes from reading the documents and sources, environment probes in WSL2, the Phase 0 to 3 builds and tests in WSL2, and the owner's Phase 0 to 2 runs on Windows. The GUI has read the deployed profiles on the owner's machine. The Windows code paths of Phase 3 (process, pipe, WinHTTP, port owner) passed the integration tests on the owner's machine; the owner reports that the GUI works normally.
 
 ## Next event
 
-The owner runs the Phase 3 delivery on Windows: the unit and integration tests, then a start and stop of the server from the Japanese cohere profile; A003 then closes Phase 3 and starts Phase 4 (ApiClient).
+The owner reruns the tests of the corrected Phase 3 delivery; when all 14 pass, A003 closes Phase 3 and starts Phase 4 (ApiClient) on the owner's instruction.
