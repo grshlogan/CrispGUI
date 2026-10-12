@@ -24,15 +24,21 @@ Status: built and tested on Linux; the owner's Windows run of the delivery is pe
 | A start through the UI path | `CRISPGUI_CRISPASR_ROOT=<scratch>/p3-root CRISPGUI_DEV_AUTOSTART=Japanese/cohere-asr-ja-q8 build/linux/crisprustgui`, with the stub as `cuda13/crispasr`, the reference profiles on port 51141, and 4 s of model load; captures after 2 s and 8 s | after 2 s "Starting: loading the model…" with the profile, `http://127.0.0.1:51141`, and the process ID; after 8 s "Running" with backend `cohere` and the model path from `/v1/models`, read with the key `default`; the log pane follows the stub's output to its "listening" line |
 | The server outlives the GUI | the same run, closed with `WM_DELETE_WINDOW` | the GUI exits with code 0; the stub still runs and answers `/health` with `{"status": "ok", "backend": "cohere"}`; ended by hand |
 | A failed start | `CRISPGUI_DEV_AUTOSTART=Japanese/exits-early` (a cohere copy whose `env` makes the stub exit with code 0 after 0.5 s), window resized to 1100x1040 | "Failed", "The server exited before it answered. …", "Details: exit code 0", Stop dimmed; the broken profile's Start dimmed; the log shows what the server received: `TMP`, `TEMP`, and `TMPDIR` at `build/linux/appdata/tmp/server`, the `CRISPASR_*` folders below the root, `CRISPASR_API_KEYS=default`, `CUDA_VISIBLE_DEVICES=1`, the root as working directory, and the GUI's note "The server process exited with exit code 0." |
-| Clean MinGW release build | the Windows commands of [ENVIRONMENT.md §2.2](../ENVIRONMENT.md#22-commands) after `rm -rf build/mingw` | exit 0; 207 steps; no warnings; `crisprustgui.exe` (3,970,048 bytes) imports only Windows system DLLs, now including `WINHTTP.dll` and `IPHLPAPI.DLL`; unit tests import `KERNEL32.dll` and `msvcrt.dll`, the integration tests also `WS2_32.dll`, `WINHTTP.dll`, and `IPHLPAPI.DLL`, the stub `KERNEL32.dll`, `msvcrt.dll`, and `WS2_32.dll` |
+| Clean MinGW release build | the Windows commands of [ENVIRONMENT.md §2.2](../ENVIRONMENT.md#22-commands) after `rm -rf build/mingw` | exit 0; 207 steps; no warnings; `crisprustgui.exe` (3,969,536 bytes at commit `5046d3e`) imports only Windows system DLLs, now including `WINHTTP.dll` and `IPHLPAPI.DLL`; unit tests import `KERNEL32.dll` and `msvcrt.dll`, the integration tests also `WS2_32.dll`, `WINHTTP.dll`, and `IPHLPAPI.DLL`, the stub `KERNEL32.dll`, `msvcrt.dll`, and `WS2_32.dll` |
 | Learn snapshot untouched | `find <Learn> -newer <marker>` and `-cnewer <marker>` around the clean builds | no entries |
 | No contact with the Windows side | `wslinfo --networking-mode` | `nat`: 127.0.0.1 in WSL2 is not the Windows loopback; the GUI runs used port 51141 and the tests free ports, never the deployed 5114 with a server behind it |
+
+Both clean builds and `ctest` were repeated from a clean tree at commit `5046d3e` with the same results.
 
 Not checked on Linux:
 
 - Clicks: Start and Stop buttons, the stop confirmation, scrolling the log, and the Chinese texts of the new section (the string table test checks that every key has both texts). Adoption and the stop of an adopted server are covered by `server_manager_test`, not by a capture.
 - Every Win32 path is compiled and linked but has not run: `CreateProcessW` with the handle list, the pipe reader, the environment block, WinHTTP, `GetExtendedTcpTable`, and `TerminateProcess`. The delivery's integration tests run them against the stub on the owner's machine.
 - The real CrispASR server.
+
+## Delivery
+
+Both builds were rebuilt from a clean tree at commit `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd` (206 and 207 steps, no warnings, `ctest` 14 of 14), and `tools/package-windows.sh` produced `crisprustgui-5046d3e.zip` in `<HANDOFF_OUT>`: 31,598,175 bytes, SHA-256 `8c7b04d2074587bcc916654ef429d2e0168d03f2d89955cc337f973a63a4728a`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, `fonts/`, the 11 unit and 3 integration tests, `stub_crispasr.exe`, `testdata/`, `tests.txt`, `run-tests.cmd`/`.ps1`, and `BUILD-INFO.txt` (62 MB unpacked; the test executables are statically linked and not stripped).
 
 ## Decisions and deviations
 
