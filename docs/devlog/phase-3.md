@@ -40,6 +40,8 @@ Not checked on Linux:
 
 Both builds were rebuilt from a clean tree at commit `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd` (206 and 207 steps, no warnings, `ctest` 14 of 14), and `tools/package-windows.sh` produced `crisprustgui-5046d3e.zip` in `<HANDOFF_OUT>`: 31,598,175 bytes, SHA-256 `8c7b04d2074587bcc916654ef429d2e0168d03f2d89955cc337f973a63a4728a`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, `fonts/`, the 11 unit and 3 integration tests, `stub_crispasr.exe`, `testdata/`, `tests.txt`, `run-tests.cmd`/`.ps1`, and `BUILD-INFO.txt` (62 MB unpacked; the test executables are statically linked and not stripped).
 
+With the corrected `app_data_test`, both builds were rebuilt from a clean tree at commit `eda8e33fb4382eae9501a5d9776ed55633863d34` (206 and 207 steps, no warnings, `ctest` 14 of 14), and `crisprustgui-eda8e33.zip` followed: 31,598,488 bytes, SHA-256 `ccf922a1f04ed5533e9251553ca5d3d32045e02479b2efde764ab380dfca5774`, `unzip -tq` without errors. Its `crisprustgui.exe` differs from the one in `crisprustgui-5046d3e` in 4 bytes, the PE time stamp and checksum (`cmp -l`, `objdump -p`), so the owner's GUI check carries over and only the tests need a rerun.
+
 ## Windows results (owner's machine)
 
 The owner ran `crisprustgui-5046d3e` on 2026-10-12 (the run started at 22:40 UTC+8) on Windows 11 Pro for Workstations 10.0.22631 and sent `test-results.txt` (round 8): 13 of 14 tests passed, among them all three integration tests, so the Win32 code for processes, the pipe, the environment block, WinHTTP, and the port owner works against the stub server. The owner reports that the GUI works normally (owner's statement in round 8).
