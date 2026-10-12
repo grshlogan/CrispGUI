@@ -21,7 +21,7 @@ The owner (the user) assigns identities, approves requirements and decisions, au
 
 ## Delivery to Windows
 
-Status: six deliveries made. The first five are accepted; the fourth found a test defect, which the fifth corrects. The sixth, Phase 4, waits for its Windows checks.
+Status: seven deliveries made. The first five are accepted; the fourth found a test defect, which the fifth corrects. The sixth, Phase 4, waits for its Windows checks; the seventh is a diagnostic for a result of the sixth.
 
 | Delivery | Commit | Archive SHA-256 | Contents | Windows result |
 | --- | --- | --- | --- | --- |
@@ -31,6 +31,7 @@ Status: six deliveries made. The first five are accepted; the fourth found a tes
 | `crisprustgui-5046d3e.zip` (31,598,175 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd` | `8c7b04d2074587bcc916654ef429d2e0168d03f2d89955cc337f973a63a4728a` | Phase 3: `crisprustgui.exe`, `assets/`, `fonts/`, 11 unit and 3 integration tests, `stub_crispasr.exe`, `testdata/`, `run-tests.cmd` | 2026-10-12 UTC: 13 of 14 tests passed, all integration tests among them; `app_data_test` failed through a test defect present since Phase 1; the owner reports that the GUI works normally, without starting a server (round 11) ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
 | `crisprustgui-eda8e33.zip` (31,598,488 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `eda8e33fb4382eae9501a5d9776ed55633863d34` | `ccf922a1f04ed5533e9251553ca5d3d32045e02479b2efde764ab380dfca5774` | Phase 3 with the corrected `app_data_test`; `crisprustgui.exe` differs from the previous delivery only in its PE time stamp and checksum | Passed on 2026-10-12 UTC: 0 failures of 14; `app_data_test` printed the evidence of the `msvcrt.dll` behavior ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
 | `crisprustgui-c296f23.zip` (37,060,506 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `c296f239748f65db24077a17820ea33b5df5e353` | `005bbfbc3255a16710423d01825d086cbefb881eed17485acd96e60b4f04259d` | Phase 4: `crisprustgui.exe`, `assets/`, `fonts/`, 15 unit and 5 integration tests, `stub_crispasr.exe`, `api_probe.exe`, `testdata/`, `run-tests.cmd`/`.ps1`, `run-api-probe.cmd`, `CHECKLIST.md` | W4-1 on 2026-10-12 UTC: 19 of 20 tests passed; `api_client_test` failed because a WinHTTP timeout did not apply. W4-2 to W4-4 not run: the Start buttons were not found ([Phase 4 report](../devlog/phase-4.md#windows-results-owners-machine)) |
+| `crisprustgui-diag-winhttp_timeouts-1907626.zip` (307,640 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1907626aecc659c0cd80b06a86984d9398dae057` | `e27f43eea253b1828fc0d5bc9d4511af9e14c872f76656fcf9d9559e914199d8` | Diagnostic: `winhttp_timeouts.exe` and `BUILD-INFO.txt`; run `winhttp_timeouts.exe --long` and send the output back | Not run yet |
 
 Steps:
 
