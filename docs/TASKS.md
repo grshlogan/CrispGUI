@@ -47,13 +47,13 @@ Complete: accepted on 2026-10-12 after the owner's Windows run of `crisprustgui-
 
 ## Phase 3 — ServerManager
 
-In progress since 2026-10-12 (round 7): built and tested on Linux; on Windows the GUI works and 13 of 14 tests pass; the failure was a defect of `app_data_test` since Phase 1, corrected in round 8, and the rerun waits for the delivery ([Phase 3 report](devlog/phase-3.md)).
+Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui-5046d3e.zip` (the GUI) and `crisprustgui-eda8e33.zip` (14 of 14 tests, with `app_data_test` corrected) ([Phase 3 report](devlog/phase-3.md)).
 
 - [x] Build the command line and environment per [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters), including `CRISPASR_API_KEYS`, `CRISPASR_SCRATCH_DIR`, the profile's `env`, and `TMP`/`TEMP`.
 - [x] Implement process start and stop through `src/platform/` (Win32 and POSIX), with stdout and stderr drained into a ring buffer.
 - [x] Implement the pre-flight, the state machine, health polling, and adoption ([ARCHITECTURE.md §2.2](ARCHITECTURE.md#22-servermanager)).
 - [x] Added: the dashboard's server panel with Start buttons in the profile list, Stop with a confirmation for adopted servers, and the log pane; HTTP GET through WinHTTP and libcurl; a stand-in server and integration tests that also run in Windows deliveries.
-- [ ] Acceptance: [Linux] against a stub server executable: start, health, stop, a busy port, and a process that exits with code 0 (done); [Windows] the delivery's unit and integration tests pass, and with the app, the Japanese cohere profile starts the server, `/health` turns ok, Stop terminates the process, and the log pane shows the server's output.
+- [x] Acceptance: [Linux] against a stub server executable: start, health, stop, a busy port, and a process that exits with code 0; [Windows] the delivery's unit and integration tests pass, and with the app, the Japanese cohere profile starts the server, `/health` turns ok, Stop terminates the process, and the log pane shows the server's output.
 
 ## Phase 4 — ApiClient
 

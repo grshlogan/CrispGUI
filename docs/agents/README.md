@@ -20,7 +20,7 @@ The owner (the user) assigns identities, approves requirements and decisions, au
 
 ## Delivery to Windows
 
-Status: five deliveries made; the first three are accepted, the fourth found a test defect, and the fifth corrects it.
+Status: five deliveries made. All are accepted; the fourth found a test defect, which the fifth corrects.
 
 | Delivery | Commit | Archive SHA-256 | Contents | Windows result |
 | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ Status: five deliveries made; the first three are accepted, the fourth found a t
 | `crisprustgui-1817b8e.zip` (6,626,850 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1817b8ee4cdf82244b30fca50a349ac9815e2a04` | `dd5fe3845e9ec4f38ceb18f01dbe183c1c6cea6befbd7515c9289408addfd6a8` | Phase 1: `crisprustgui.exe`, `assets/`, 2 unit tests, `run-tests.cmd` | Passed on 2026-10-11 UTC: the owner reports that the tests passed with no problems; `test-results.txt` was not sent ([Phase 1 report](../devlog/phase-1.md#windows-results-owners-machine)) |
 | `crisprustgui-b397dcd.zip` (26,739,068 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `b397dcda97db2f227dccf51393635f85e93c0530` | `12bc0217ac604a3bdeb4d0f275c05d83bcfcb05b7e2171faee955d875f85d3f2` | Phase 2: `crisprustgui.exe`, `assets/`, `fonts/`, 8 unit tests with `testdata/`, `run-tests.cmd` | Passed on 2026-10-12 UTC: the owner reports that the Windows test passed and that the dashboard's profile list agrees with the launcher; `test-results.txt` was not sent ([Phase 2 report](../devlog/phase-2.md#windows-results-owners-machine)) |
 | `crisprustgui-5046d3e.zip` (31,598,175 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd` | `8c7b04d2074587bcc916654ef429d2e0168d03f2d89955cc337f973a63a4728a` | Phase 3: `crisprustgui.exe`, `assets/`, `fonts/`, 11 unit and 3 integration tests, `stub_crispasr.exe`, `testdata/`, `run-tests.cmd` | 2026-10-12 UTC: 13 of 14 tests passed, all integration tests among them; `app_data_test` failed through a test defect present since Phase 1; the owner reports that the GUI works normally ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
-| `crisprustgui-eda8e33.zip` (31,598,488 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `eda8e33fb4382eae9501a5d9776ed55633863d34` | `ccf922a1f04ed5533e9251553ca5d3d32045e02479b2efde764ab380dfca5774` | Phase 3 with the corrected `app_data_test`; `crisprustgui.exe` differs from the previous delivery only in its PE time stamp and checksum | Pending: rerun of `run-tests.cmd` |
+| `crisprustgui-eda8e33.zip` (31,598,488 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `eda8e33fb4382eae9501a5d9776ed55633863d34` | `ccf922a1f04ed5533e9251553ca5d3d32045e02479b2efde764ab380dfca5774` | Phase 3 with the corrected `app_data_test`; `crisprustgui.exe` differs from the previous delivery only in its PE time stamp and checksum | Passed on 2026-10-12 UTC: 0 failures of 14; `app_data_test` printed the evidence of the `msvcrt.dll` behavior ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
 
 Steps:
 

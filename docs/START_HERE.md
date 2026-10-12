@@ -29,7 +29,7 @@
 
 ## Scope gate
 
-The specification is approved. Phases 0 to 2 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md)), and Phase 3, the ServerManager, is in progress. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
+The specification is approved. Phases 0 to 3 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md)), and Phase 4, the ApiClient, is next. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
 
 ## Language
 

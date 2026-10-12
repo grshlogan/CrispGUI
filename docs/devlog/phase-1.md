@@ -41,7 +41,7 @@ Both builds were rebuilt from a clean tree at commit `1817b8ee4cdf82244b30fca50a
 
 The owner ran the delivery `crisprustgui-1817b8e` on 2026-10-11 UTC and reported that the Windows tests passed with no problems (owner's statement in round 6). `test-results.txt` was not sent back, so per-test exit codes are not recorded for this run.
 
-Note added in round 8: the Phase 3 run showed that `app_data_test` fails on every Windows run because of a defect in the test since Phase 1 ([Phase 3 report](phase-3.md#windows-results-owners-machine)), so it most likely failed in this run too; without `test-results.txt` the run's record cannot show it. The application code was not affected.
+Note added in rounds 8 and 9: the Phase 3 runs showed that `app_data_test` fails on every Windows run because of a defect in the test since Phase 1, whose cause was confirmed on the owner's machine ([Phase 3 report](phase-3.md#windows-results-owners-machine)), so it failed in this run too; without `test-results.txt` the run's record could not show it. The application code was not affected.
 
 ## Acceptance
 

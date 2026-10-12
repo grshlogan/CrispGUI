@@ -148,7 +148,7 @@ Read in the v0.6.1 source and observed in the Phase 2 builds of 2026-10-12:
 
 From the toolchain's libraries and the Phase 3 Windows run of 2026-10-12 ([Phase 3 report](devlog/phase-3.md#windows-results-owners-machine)):
 
-- The Windows build runs on `msvcrt.dll`. Its `_wstat64` reports a folder path that ends with a separator as missing (`hypothesis`, from the run's failure; `app_data_test` prints the evidence since round 8).
+- The Windows build runs on `msvcrt.dll`. Its `_wstat64` reports a folder path that ends with a separator as missing (`verified` on the owner's machine on 2026-10-12: called from PowerShell, it returns 0 for an existing folder and -1 for the same path with a trailing backslash; `app_data_test` shows the same through `fs::equivalent`).
 - MinGW-w64 10 works around that only in `wstat` and `_wstat64i32` (`libmingwex.a`); `_wstat64` is the plain `msvcrt.dll` import (`x86_64-w64-mingw32-nm`, `verified`).
 - GCC 12's libstdc++ removes a trailing separator in `std::filesystem::status` (GCC PR 88881), so `exists`, `is_directory`, and `is_regular_file` are safe, but `equivalent` and `file_size` call `_wstat64` with the path as given, and `temp_directory_path` returns `GetTempPathW`'s result, which always ends with a separator (`objdump -dr` of `fs_ops.o` in `libstdc++.a`, `verified`).
 - Consequence: paths given to `std::filesystem` carry no trailing separator ([CONVENTIONS.md](CONVENTIONS.md#c-conventions)).

@@ -1,6 +1,6 @@
 # Phase 3 Report — ServerManager
 
-Status: built and tested on Linux; on Windows the GUI works and 13 of 14 tests pass, and a rerun of the tests waits for the delivery with the corrected `app_data_test`. Written by A003 on 2026-10-12 (rounds 7 and 8; dates are UTC). The plan is [TASKS.md Phase 3](../TASKS.md#phase-3--servermanager); the design is [ARCHITECTURE.md §2.2](../ARCHITECTURE.md#22-servermanager).
+Status: complete. The Linux and MinGW builds pass; on the owner's Windows machine the GUI works, and the rerun of the corrected delivery passed 14 of 14 tests on 2026-10-12. Written by A003 on 2026-10-12 (rounds 7 to 9; dates are UTC). The plan is [TASKS.md Phase 3](../TASKS.md#phase-3--servermanager); the design is [ARCHITECTURE.md §2.2](../ARCHITECTURE.md#22-servermanager).
 
 ## What was built
 
@@ -46,13 +46,19 @@ With the corrected `app_data_test`, both builds were rebuilt from a clean tree a
 
 The owner ran `crisprustgui-5046d3e` on 2026-10-12 (the run started at 22:40 UTC+8) on Windows 11 Pro for Workstations 10.0.22631 and sent `test-results.txt` (round 8): 13 of 14 tests passed, among them all three integration tests, so the Win32 code for processes, the pipe, the environment block, WinHTTP, and the port owner works against the stub server. The owner reports that the GUI works normally (owner's statement in round 8).
 
-`app_data_test` failed with exit code 1 at `CHECK(fs::equivalent(fs::temp_directory_path(error), prepared.layout.temp, error))` (line 34). The checks before it passed, so `TMP` and `TEMP` pointed at the app data folder. Cause, a defect of the test since Phase 1 (`hypothesis`, resting on the following):
+`app_data_test` failed with exit code 1 at `CHECK(fs::equivalent(fs::temp_directory_path(error), prepared.layout.temp, error))` (line 34). The checks before it passed, so `TMP` and `TEMP` pointed at the app data folder. Cause, a defect of the test since Phase 1, confirmed in round 9:
 
 - `temp_directory_path` returns `GetTempPathW`'s result, which ends with a backslash (`...\appdata\tmp\`); the libstdc++ code keeps it (`objdump -dr` of `fs_ops.o`, `verified`).
 - libstdc++'s `equivalent` hands both paths to `msvcrt.dll`'s `_wstat64` as given, without the trailing-separator workaround that `status` has, and MinGW-w64 10's `_wstat64` is the plain `msvcrt.dll` import (`verified`; [ENVIRONMENT.md §4.5](../ENVIRONMENT.md#45-mingw-w64-runtime-facts)).
-- `msvcrt.dll`'s `_wstat64` reports a folder path with a trailing separator as missing, so `equivalent` returns false without an error (`hypothesis`).
+- `msvcrt.dll`'s `_wstat64` reports a folder path with a trailing separator as missing, so `equivalent` returns false without an error (`verified` on the owner's machine in round 9: called from PowerShell through P/Invoke, `_wstat64` returns 0 for `E:\AI\ASR\CrispGUI-handoff\outgoing`, an existing folder by `Test-Path` and `PSIsContainer`, and -1 for the same path with a trailing backslash).
 
-Nothing in it depends on the delivery or on Phase 3, so if this is the cause, the test failed in the Phase 1 and Phase 2 runs as well; their `test-results.txt` were not sent, and the owner's summaries did not show it. The application passes no such path to these functions (`grep` for `temp_directory_path`, `equivalent`, `file_size`, `last_write_time`, `symlink_status` in `src/`: no use). The fix compares the folder without the separator and prints the comparison with it, so the rerun's `test-results.txt` shows whether the cause holds: `equivalent with that path as given: false` on Windows.
+Nothing in it depends on the delivery or on Phase 3, so the test failed in the Phase 1 and Phase 2 runs as well; their `test-results.txt` were not sent, and the owner's summaries did not show it. The application passes no such path to these functions (`grep` for `temp_directory_path`, `equivalent`, `file_size`, `last_write_time`, `symlink_status` in `src/`: no use). The fix compares the folder without the separator and prints the comparison with it, so the rerun's `test-results.txt` shows whether the cause holds: `equivalent with that path as given: false` on Windows.
+
+Rerun (round 9): the owner ran `run-tests.cmd` of `crisprustgui-eda8e33` on 2026-10-12 (the run started at 23:50 UTC+8) and sent `test-results.txt`: 0 failures of 14. `app_data_test` printed `temp_directory_path` with the trailing backslash and `equivalent with that path as given: false (no error)`, as predicted. The GUI check of round 8 carries over, because the two deliveries' `crisprustgui.exe` differ only in the PE time stamp and checksum.
+
+## Acceptance
+
+Phase 3 is accepted: the Linux results, repeated from a clean tree at commit `eda8e33fb4382eae9501a5d9776ed55633863d34`, and the owner's test run come from that commit; the owner's GUI check ran on `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd`, whose executable is the same apart from its time stamp and checksum.
 
 ## Decisions and deviations
 
@@ -69,6 +75,5 @@ Nothing in it depends on the delivery or on Phase 3, so if this is the cause, th
 
 ## Open items
 
-- [Windows] The owner reruns `run-tests.cmd` from the delivery with the corrected `app_data_test` and sends `test-results.txt`; Phase 3 closes when all 14 tests pass.
-- The claim that Windows refuses a connection to a closed local port only after about 2 s is a `hypothesis` behind the 5 s connect timeout.
+- Windows reports a refused connection within the 5 s connect timeout (`verified`: `http_test` and `server_manager_test` pass on the owner's machine); how long it takes (about 2 s of SYN retries, a `hypothesis`) is not measured.
 - Until Settings (Phase 8), the check at launch uses port 5114.
