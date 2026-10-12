@@ -1,6 +1,6 @@
 # Phase 4 Report — ApiClient
 
-Status: implemented; the Linux acceptance passes, and the Windows acceptance waits for the owner's run of the delivery. Written by A003 on 2026-10-12 (round 10; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
+Status: implemented; the Linux acceptance passes. On Windows, check W4-1 passed 19 of 20 tests: a WinHTTP timeout did not apply, which `winhttp_timeouts` is to explain; W4-2 to W4-4 have not run. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
 
 ## What was built
 
@@ -36,12 +36,16 @@ Both builds were rebuilt from a clean tree at commit `c296f239748f65db24077a1782
 
 ## Windows results (owner's machine)
 
-Not run yet. The delivery's `CHECKLIST.md` asks for:
+The delivery's `CHECKLIST.md` asks for W4-1 (`run-tests.cmd`, 0 failures of 20), W4-2 (the cohere profile started from the GUI reaches Running), W4-3 (`api_probe.exe --window 5000,10000` with the sample, and the `probe-results` folder), and W4-4 (Stop ends the server).
 
-- W4-1: `run-tests.cmd` with 0 failures of 20, and `test-results.txt`.
-- W4-2: the cohere profile started from the GUI reaches Running.
-- W4-3: `api_probe.exe --window 5000,10000 "E:\AI\ASR\CrispASR\samples\ja-demo.mp3"` with ten checks PASS (INFO allowed for the wrong key and the cancellation), and the whole `probe-results\<UTC time>\` folder.
-- W4-4: Stop ends the server.
+W4-1 (round 11): the owner ran `run-tests.cmd` of `crisprustgui-c296f23` on 2026-10-12 (the run started at 01:17 on 2026-10-13, UTC+8) on Windows 11 Pro for Workstations 10.0.22631 and sent `test-results.txt`: 19 of 20 tests passed.
+
+- Passed: every unit test, among them `multipart_test` with its checks of a file that shrinks or grows while open; `process_test`; `http_test` with the POST cases (300,000 bytes echoed, a body that fails, an upload cancelled after 300 ms, a refused POST); `server_manager_test`; and `api_probe_test`, which runs `api_probe.exe` against the stub. So the WinHTTP upload works against the stub.
+- `api_client_test` failed at line 305: a request with a 1000 ms limit, which the stub answered after 3000 ms, returned after 3017 ms instead of failing with a timeout. Its other checks passed, among them the cancellation: a cancel issued after 300 ms returned after 313 ms.
+- What it shows (`verified` by this run): the transport's limit did not end the wait for the answer. The transport sets the session's timeouts with `WinHttpSetTimeouts` and the request handle's `WINHTTP_OPTION_RECEIVE_RESPONSE_TIMEOUT`, both to 1000 ms, and neither ended the wait.
+- What it does not show: which setting governs that wait, and whether WinHTTP applies a limit of its own to it. If it does, a transcription that takes longer than that limit fails on Windows whatever the transport sets (`hypothesis`). `winhttp_timeouts.exe` (`tools/diagnostics/winhttp_timeouts.cpp`) measures both: short cases with a 1000 ms limit set in each place, and with `--long` an answer after 95 s with WinHTTP's defaults and with limits of 120 s.
+
+W4-2 to W4-4 did not run: the owner did not find how to start the server from the GUI (round 11). At the default window size of 1100×720, the profile list with its Start buttons begins below the visible part of the dashboard's scrolling area; the page says "Start the server from a profile below", but the first screen shows no Start button (WSLg capture with the fake deployment, round 11). `CHECKLIST.md` now says where to scroll and what to do when a server started elsewhere holds the port, and the next delivery moves the profile list up.
 
 ## Decisions and deviations
 
@@ -56,7 +60,9 @@ Not run yet. The delivery's `CHECKLIST.md` asks for:
 
 ## Open items
 
-- The Windows checks W4-1 to W4-4.
+- The cause of the WinHTTP timeout result (`winhttp_timeouts.exe`), the fix, and a new delivery whose `api_client_test` passes on Windows.
+- The Windows checks W4-2 to W4-4, and W4-1 again with the new delivery.
+- The dashboard shows no Start button on its first screen at the default window size.
 - The probe's recorded answers become test data in `tests/data/` and replace the synthetic answer where they cover the same case ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - That a client still sending an oversized body sees a reset rather than the `413` is a `hypothesis` from the source; the client never sends one.
 - libcurl's cancellation latency of up to about a second affects only Linux development builds.

@@ -60,6 +60,8 @@ Rerun (round 9): the owner ran `run-tests.cmd` of `crisprustgui-eda8e33` on 2026
 
 Phase 3 is accepted: the Linux results, repeated from a clean tree at commit `eda8e33fb4382eae9501a5d9776ed55633863d34`, and the owner's test run come from that commit; the owner's GUI check ran on `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd`, whose executable is the same apart from its time stamp and checksum.
 
+Correction (2026-10-12, round 11): the owner's GUI check did not start a server. In round 11 the owner said that they had not found how to start the server from the GUI, so the GUI part of the Windows acceptance — the cohere profile starts the server, `/health` turns ok, Stop ends the process, the log pane shows the output — was not exercised on Windows. "界面正常" covered what the dashboard showed. That part moves to the Phase 4 checks W4-2 to W4-4 ([Phase 4 report](phase-4.md#windows-results-owners-machine)); the Win32 process and HTTP code passed its integration tests against the stub.
+
 ## Decisions and deviations
 
 - States: SPEC FR-1's `stopped`, `starting`, `running`, `stopping`, and `failed`, plus `checking` (the check at launch and the pre-flight) and `unreachable` (an adopted server that stopped answering, as SPEC FR-1 describes it).

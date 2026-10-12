@@ -90,6 +90,14 @@ if(WIN32)
     target_link_options(api_probe PRIVATE -municode)  # wmain: the arguments in UTF-16
 endif()
 
+# Windows only: measures which WinHTTP settings end a request whose answer comes late
+# (tools/diagnostics/winhttp_timeouts.cpp).
+if(WIN32)
+    add_executable(winhttp_timeouts tools/diagnostics/winhttp_timeouts.cpp)
+    target_link_libraries(winhttp_timeouts PRIVATE crisp_core ws2_32 version)
+    crisp_apply_options(winhttp_timeouts)
+endif()
+
 # Application state and pages, built on EUI-NEO.
 add_library(crisp_ui STATIC
     src/app/application.cpp

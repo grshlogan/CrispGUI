@@ -47,7 +47,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows run of `crisprustgui-
 
 ## Phase 3 — ServerManager
 
-Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui-5046d3e.zip` (the GUI) and `crisprustgui-eda8e33.zip` (14 of 14 tests, with `app_data_test` corrected) ([Phase 3 report](devlog/phase-3.md)).
+Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui-5046d3e.zip` (the GUI) and `crisprustgui-eda8e33.zip` (14 of 14 tests, with `app_data_test` corrected) ([Phase 3 report](devlog/phase-3.md)). Correction of round 11: the GUI check did not start a server, so starting, checking, and stopping the deployed server from the GUI moved to the Phase 4 checks W4-2 to W4-4.
 
 - [x] Build the command line and environment per [API-CRISPASR.md §3.2](API-CRISPASR.md#32-tier-b-startup-only-parameters), including `CRISPASR_API_KEYS`, `CRISPASR_SCRATCH_DIR`, the profile's `env`, and `TMP`/`TEMP`.
 - [x] Implement process start and stop through `src/platform/` (Win32 and POSIX), with stdout and stderr drained into a ring buffer.
@@ -57,7 +57,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui
 
 ## Phase 4 — ApiClient
 
-Implemented on 2026-10-12; the Linux acceptance passes, and the Windows acceptance waits for the owner's run of the delivery ([Phase 4 report](devlog/phase-4.md)).
+Implemented on 2026-10-12; the Linux acceptance passes. On Windows, `api_client_test` showed that a WinHTTP timeout did not apply; the cause is being measured, and W4-2 to W4-4 have not run ([Phase 4 report](devlog/phase-4.md)).
 
 - [x] Implement the transport with libcurl (Linux) and WinHTTP (Windows): streaming multipart upload, timeouts, cancellation, and the `Authorization` header (`HttpPost` and `MultipartBody` in `src/platform/`).
 - [x] Map errors to the typed set of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport); parse `verbose_json`; add a small JSON writer.

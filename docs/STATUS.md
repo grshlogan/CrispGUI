@@ -1,6 +1,6 @@
 # Current Status
 
-Updated 2026-10-12 (round 10) by A003. The owner (the user) is the acceptance authority.
+Updated 2026-10-12 (round 11) by A003. The owner (the user) is the acceptance authority.
 
 ## Baseline
 
@@ -19,18 +19,18 @@ The repository holds the specification, the architecture plan, the server contra
 | UI fonts | HarmonyOS Sans SC, provided by the owner and kept out of Git; license `not verified` | [ENVIRONMENT.md §4.3](ENVIRONMENT.md#43-ui-fonts) |
 | WSL2 toolchain | Complete: MinGW-w64 GCC 12 (POSIX threads), GCC 12, CMake 3.25.1, Ninja 1.11.1, and EUI-NEO's Linux development packages | [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain) |
 | EUI-NEO source | v0.6.1 in the shared Learn library, verified identical to its tag archive; not copied into this repository | [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
-| Windows side | Runtime and acceptance only. The five deliveries up to Phase 3 are accepted. From Phase 4 each delivery carries `CHECKLIST.md`, numbered checks with what to send back, run by the owner or the Windows-side agent | [agents/README.md](agents/README.md#delivery-to-windows) |
+| Windows side | Runtime and acceptance only. The five deliveries up to Phase 3 are accepted; their GUI check did not start a server (correction of round 11). From Phase 4 each delivery carries `CHECKLIST.md`, numbered checks with what to send back, run by the owner or the Windows-side agent. Phase 4 delivery: 19 of 20 tests pass; `api_client_test` fails because a WinHTTP timeout did not apply | [agents/README.md](agents/README.md#delivery-to-windows), [Phase 4 report](devlog/phase-4.md#windows-results-owners-machine) |
 | Identities | A003 established; A002 authored the audit reports; the Windows-side agent is registered, its stable ID and display name to be assigned by the owner | [agents/README.md](agents/README.md) |
 | Workflow | None selected | [OQ-9](OPEN-QUESTIONS.md#oq-9-formal-workflow-and-review-policy) |
 
 ## Blockers
 
-None. Phase 4's acceptance needs the owner's Windows run of its delivery. OQ-7 (local SRT generation) is the decision Phase 5 needs; OQ-8 (missing aligner at start) is implemented as its recommendation, which mirrors the launcher, and stays open for the owner; OQ-4 item 2 (capability names), OQ-5, OQ-6, OQ-9, and OQ-10 affect later phases.
+Phase 4 on Windows: the transport's timeout did not end a late answer under WinHTTP. Until `winhttp_timeouts.exe` shows which setting governs the wait and whether WinHTTP keeps a default limit of its own, long transcriptions on Windows are at risk. OQ-7 (local SRT generation) is the decision Phase 5 needs; OQ-8 (missing aligner at start) is implemented as its recommendation, which mirrors the launcher, and stays open for the owner; OQ-4 item 2 (capability names), OQ-5, OQ-6, OQ-9, and OQ-10 affect later phases.
 
 ## Verification boundary
 
-Evidence comes from reading the documents and sources, environment probes in WSL2, the Phase 0 to 4 builds and tests in WSL2, and the owner's Phase 0 to 3 runs on Windows. The GUI has read the deployed profiles on the owner's machine; the Windows code paths of Phase 3 (process, pipe, WinHTTP GET, port owner) pass the integration tests there; the owner reports that the GUI works normally with the deployed server, without itemized results. The Phase 4 upload has run only against the stand-in server on Linux; its WinHTTP path and the deployed server's answers are `not verified` until the checks W4-1 to W4-4.
+Evidence comes from reading the documents and sources, environment probes in WSL2, the Phase 0 to 4 builds and tests in WSL2, and the owner's Phase 0 to 3 runs on Windows. The GUI has read the deployed profiles on the owner's machine; the Windows code paths of Phase 3 (process, pipe, WinHTTP GET, port owner) pass the integration tests there; the owner reported that the GUI works normally, but no server was started from the GUI (round 11), so starting and stopping the deployed server from the GUI is `not verified`. The Phase 4 upload passes against the stand-in server on Windows; WinHTTP's timeouts do not behave as the transport sets them; the deployed server's answers are `not verified` until W4-3.
 
 ## Next event
 
-The owner, or the Windows-side agent, runs `CHECKLIST.md` of the Phase 4 delivery and sends back `test-results.txt` and the `probe-results` folder; A003 then records the results, turns the recorded answers into test data, and closes Phase 4. The owner assigns the Windows-side agent's ID and display name.
+The owner, or the Windows-side agent, runs `winhttp_timeouts.exe --long` from its diagnostic delivery and sends back the output, and runs W4-2 to W4-4 of the Phase 4 delivery (the Start buttons are below the first screen of the dashboard). A003 then fixes the timeout, moves the profile list up, and makes a new delivery. The owner assigns the Windows-side agent's ID and display name.
