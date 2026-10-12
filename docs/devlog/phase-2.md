@@ -33,6 +33,10 @@ Status: built and tested on Linux; the owner's Windows run of the delivery is pe
 
 Not checked on Linux: scrolling, the Rescan button, and the Chinese texts of the new section, because synthetic X11 input does not reach EUI-NEO ([Phase 1 report](phase-1.md#linux-results-wsl2-wslg)). The Windows run covers them.
 
+## Delivery
+
+Both builds were rebuilt from a clean tree at commit `b397dcda97db2f227dccf51393635f85e93c0530` with the results above (184 steps each, no warnings, `ctest` 8 of 8), and `tools/package-windows.sh` produced `crisprustgui-b397dcd.zip` in `<HANDOFF_OUT>`: 26,739,068 bytes, SHA-256 `12bc0217ac604a3bdeb4d0f275c05d83bcfcb05b7e2171faee955d875f85d3f2`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, `fonts/` (Regular, Medium, Bold), the 8 unit tests with `testdata/`, `tests.txt`, `run-tests.cmd`/`.ps1`, and `BUILD-INFO.txt` with the font hashes (46 MB unpacked).
+
 ## Decisions and deviations
 
 - JSON: an in-repo parser instead of EUI-NEO's `eui/json.h`, which cannot list an object's members ([ARCHITECTURE.md §3](../ARCHITECTURE.md#3-key-decisions-and-rejected-alternatives)).
