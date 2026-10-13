@@ -57,7 +57,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui
 
 ## Phase 4 — ApiClient
 
-Implemented on 2026-10-12; the Linux acceptance passes. On Windows, `api_client_test` showed that a WinHTTP timeout did not apply; the cause is being measured, and W4-2 to W4-4 have not run ([Phase 4 report](devlog/phase-4.md)).
+Implemented on 2026-10-12; the Linux acceptance passes. On Windows, W4-1 passed 19 of 20 tests: `api_client_test` allows too little time for WinHTTP's coarse timer, which the diagnostic measured; W4-2 passed by the owner's statement; W4-3 and W4-4 have not run ([Phase 4 report](devlog/phase-4.md)). The corrections and the next delivery are task packets for A004: [P4-T1](agents/tasks/P4-T1-timeout-test/packet.md), [P4-T2](agents/tasks/P4-T2-dashboard-start/packet.md), [P4-T3](agents/tasks/P4-T3-delivery/packet.md).
 
 - [x] Implement the transport with libcurl (Linux) and WinHTTP (Windows): streaming multipart upload, timeouts, cancellation, and the `Authorization` header (`HttpPost` and `MultipartBody` in `src/platform/`).
 - [x] Map errors to the typed set of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport); parse `verbose_json`; add a small JSON writer.

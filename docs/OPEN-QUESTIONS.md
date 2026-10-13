@@ -1,8 +1,8 @@
 # Open Questions
 
-The single register of undecided questions. Each entry states the context, the options, A003's recommendation, and the status. When the owner decides, the entry moves to "Resolved" with a pointer to the document that now records the decision.
+The single register of undecided questions. Each entry states the context, the options, A003's recommendation, and the status. Questions of requirements, scope, and authorization are the owner's; technical and planning questions within the approved SPEC are decided by A003 as planner since 2026-10-13 (round 13), and the owner can overrule them ([agents/README.md](agents/README.md#identities)). A decided entry moves to "Resolved" with a pointer to the document that now records the decision.
 
-OQ-1 (Windows build path), OQ-2 (Git repository), and OQ-3 (WSL2 toolchain) are resolved; see [Resolved](#resolved). The numbers are not reused.
+OQ-1 (Windows build path), OQ-2 (Git repository), OQ-3 (WSL2 toolchain), and OQ-9 (workflow and review policy) are resolved; see [Resolved](#resolved). The numbers are not reused.
 
 ## OQ-4: Source material needed
 
@@ -42,12 +42,6 @@ OQ-1 (Windows build path), OQ-2 (Git repository), and OQ-3 (WSL2 toolchain) are 
 - Recommendation: (a), mirroring the proven launcher, with the warning shown on the dashboard and stored in each job's log.
 - Status: open. Phase 3 implements the recommendation: the server starts without `-am`, the dashboard and the server log show the warning, and job logs follow in Phase 7 ([ARCHITECTURE.md §2.2](ARCHITECTURE.md#22-servermanager)). Choosing (b) changes one check in `BuildLaunchCommand`.
 
-## OQ-9: Formal workflow and review policy
-
-- Context: `agent-dev-loop` and `reference-audit` are installed ([workflow](agents/README.md#workflow)); none is selected. The owner's Chronicle Harbor project merges documentation-only changes without a formal Review and runs `agent-dev-loop` (standard, or strict for persistence and concurrency) for code.
-- Question: Adopt the same policy here, and which identity or session acts as Reviewer?
-- Status: open.
-
 ## OQ-10: Queue behavior when the next job needs another profile
 
 - Context: Each job records the profile it was enqueued with, and the server serves one model at a time.
@@ -72,3 +66,10 @@ Owner directions of 2026-10-11:
 | OQ-2: a local Git repository with a private GitHub remote, `grshlogan/CrispGUI`, which the owner created; the first commit and push were authorized for round 3 | [agents/README.md](agents/README.md#checkouts) |
 | OQ-4 item 1: EUI-NEO v0.6.1 comes from the shared Learn library | [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
 | OQ-3: the owner installed the WSL2 packages | [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain) |
+
+Owner directions of 2026-10-12 and 2026-10-13 (rounds 12 and 13):
+
+| Decision | Recorded in |
+| --- | --- |
+| A003 becomes `A003[ClaudeCode]DocArch Planner` (decisions, documentation, direction); `A004[ClaudeCode]Master Coding` does all coding; A001 and A002 are the owner's Windows-side agents | [agents/README.md](agents/README.md#identities) |
+| OQ-9: coding on Sonnet 5.5 or Haiku 5.5 and Review on Sonnet 5.5 (owner, round 12); A003 decided a lightweight `agent-dev-loop` without coding subagents by default and with a fresh Review subagent per round; A004 merges reviewed work itself (owner's choice, round 13) | [agents/README.md](agents/README.md#workflow) |

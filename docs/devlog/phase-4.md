@@ -47,6 +47,12 @@ W4-1 (round 11): the owner ran `run-tests.cmd` of `crisprustgui-c296f23` on 2026
 
 W4-2 to W4-4 did not run: the owner did not find how to start the server from the GUI (round 11). At the default window size of 1100×720, the profile list with its Start buttons begins below the visible part of the dashboard's scrolling area; the page says "Start the server from a profile below", but the first screen shows no Start button (WSLg capture with the fake deployment, round 11). `CHECKLIST.md` now says where to scroll and what to do when a server started elsewhere holds the port, and the next delivery moves the profile list up.
 
+Diagnostic (round 12): the owner returned the output of `winhttp_timeouts.exe --long`. A copy that A003 read first ended after the heading of the long cases; the file now in the diagnostic's folder holds a complete run, up to "Done." (WinHTTP 6.2.22621.4830). It shows that the transport's settings take effect, that WinHTTP checks timeouts on a coarse timer of about 4 s, that its defaults would end a silent wait after about 30 s, and that with the transport's configuration a 95 s answer arrives within a 120 s limit ([ENVIRONMENT.md §4.6](../ENVIRONMENT.md#46-http-transport-facts)). The `api_client_test` failure is therefore a test that allows too little time, not a transport defect; [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md) corrects the test. The error texts in the returned file are garbled ("操作超时" arrived as "鎿嶄綔瓒呮椂") because the output passed through a PowerShell pipe; the numbers are unaffected.
+
+W4-2 (round 12, owner statement): the GUI started the server, and the owner reports "通过了软件测试，能正常生成字幕". W4-2 counts as passed on that statement; no screenshot was sent.
+
+W4-3 (round 13): not run. The owner's screenshot of the delivery folder (`1.jpg`, returned into the delivery's folder in `<HANDOFF_OUT>`) shows the `appdata\` folder of the GUI's run but no `probe-results\` folder, which `api_probe.exe` creates next to itself when it runs. W4-4: not reported.
+
 ## Decisions and deviations
 
 - The ApiClient offers the calls the transcription needs: the upload and `/progress`. `/health` and `/v1/models` stay with the ServerManager's poller, which already reads them; ARCHITECTURE's earlier list of four calls is updated.
@@ -56,14 +62,13 @@ W4-2 to W4-4 did not run: the owner did not find how to start the server from th
 - The file part carries the file's own name, cleaned for the header, because the server's decoder takes its format hint from the extension.
 - Defaults: 5 s to connect, 30 min for one transcription request, 64 MiB for an answer. The timeout becomes a setting in Phase 8.
 - The stub answers a malformed multipart body with a `400` that names the problem, where CrispASR sends its generic body, so a failing test shows what went wrong; the status, which the client types, is the same.
-- The Windows-side agent is registered without a stable ID or display name; both wait for the owner ([agents/README.md](../agents/README.md#identities)).
+- The Windows-side agent is registered without a stable ID or display name; both wait for the owner ([agents/README.md](../agents/README.md#identities)). Round 13: `A005` is proposed.
 
 ## Open items
 
-- The cause of the WinHTTP timeout result (`winhttp_timeouts.exe`), the fix, and a new delivery whose `api_client_test` passes on Windows.
-- The Windows checks W4-2 to W4-4, and W4-1 again with the new delivery.
-- The dashboard shows no Start button on its first screen at the default window size.
+- [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer; [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet.md): the next delivery. All three go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
+- W4-3 and W4-4, on `crisprustgui-c296f23` or on the next delivery, and W4-1 and W4-2 again with the next delivery.
 - The probe's recorded answers become test data in `tests/data/` and replace the synthetic answer where they cover the same case ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - That a client still sending an oversized body sees a reset rather than the `413` is a `hypothesis` from the source; the client never sends one.
 - libcurl's cancellation latency of up to about a second affects only Linux development builds.
-- [OQ-7](../OPEN-QUESTIONS.md#oq-7-local-srt-generation) (local SRT generation) is the next decision; Phase 5 needs it.
+- [OQ-7](../OPEN-QUESTIONS.md#oq-7-local-srt-generation) (local SRT generation) is the next decision; Phase 5 needs it. A003 decides it as planner when it plans Phase 5.

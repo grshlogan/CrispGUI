@@ -6,22 +6,25 @@ This document registers CrispRustGUI's identities, checkouts, delivery to Window
 
 | Stable ID | Display name | Host | Role and write scope | Context |
 | --- | --- | --- | --- | --- |
-| `A002` | not recorded | not recorded | Author of the audit reports in `reference/audits/audit-reports/` (each report's header names A002, dated 2026-10-11). No write scope in this checkout | None in this repository |
-| `A003` | `A003[ClaudeCode]Dev Gui` | Claude Code CLI on WSL2 | GUI development: application source, build files, and tests once a task assigns them; project documentation under owner instruction; its own context | [docs/identity/A003.md](../identity/A003.md) |
-| Not assigned yet | not recorded | An agent on the owner's Windows machine | Windows-native checks at the owner's direction: runs deliveries, the checks of their `CHECKLIST.md`, and targeted tests that A003 writes down; reports through the owner. No development and no access to this repository; its write scope is the owner's to set, and the checks themselves write only inside the delivery folder | None in this repository |
+| `A001` | not recorded | An agent on the owner's Windows machine | The owner's Windows-side agent for other work; does not work on this project. Listed so that the ID is not reused | None in this repository |
+| `A002` | not recorded | An agent on the owner's Windows machine | Wrote the audit reports in `reference/audits/audit-reports/` (each report's header names A002, dated 2026-10-11); does not develop this project. No write scope in this checkout | None in this repository |
+| `A003` | `A003[ClaudeCode]DocArch Planner`; `A003[ClaudeCode]Dev Gui` until round 12 | Claude Code CLI on WSL2, in `<WSL_ROOT>` | Planner and Coordinator: phase plans, task packets, technical decisions within the approved SPEC, project documents, delivery records and Windows results, consumption of receipts and Review reports; its own context. Writes documents, not product code | [docs/identity/A003.md](../identity/A003.md) |
+| `A004` | `A004[ClaudeCode]Master Coding` | Claude Code CLI on WSL2, in `<CODING_ROOT>` | Coding: application source, build files, tests, tools, and deliveries, as task packets assign them; its receipts; dispatches the Review of its candidates and merges reviewed work ([workflow](#workflow)); its own context | `docs/identity/A004.md`, which A004 creates |
+| `A005` (proposed) | `A005[<host>]Win Acceptance` (proposed) | An agent on the owner's Windows machine; the owner chooses the program | Windows-native checks at the owner's direction, per [WINDOWS-AGENT.md](../../tools/windows/WINDOWS-AGENT.md): runs deliveries and their `CHECKLIST.md`, writes only inside the delivery folder, and reports through the owner. No development and no access to this repository | None in this repository |
 
-The owner (the user) assigns identities, approves requirements and decisions, authorizes Git, environment, and import operations, copies deliveries to Windows, and performs Windows-native acceptance. On 2026-10-12 (round 10) the owner agreed to register the Windows-side agent, which confirmed the `msvcrt.dll` behavior in round 9; its stable ID and display name wait for the owner. Results it produces are recorded as the Windows-side agent's, reported by the owner. Coordinator, Coding, and Review roles are assigned per task once a workflow is selected.
+The owner (the user) assigns identities, approves requirements, authorizes Git, environment, and import operations, copies deliveries to Windows, and accepts Windows results. On 2026-10-13 (round 13) the owner made A003 the planner, responsible for decisions, documentation, and direction, and assigned all coding to A004; A001 and A002 are the owner's Windows-side agents, which is why this session became A003 in round 2. A003 decides technical and planning questions within the approved SPEC and records each decision where it governs; requirements, authorizations, and acceptance stay with the owner, who can overrule any decision. At present no Windows-side agent works on the project and the owner does the Windows work (owner, round 13); the `msvcrt.dll` confirmation of round 9 came from a Windows-side agent through the owner. In round 13 the owner offered to dispatch an agent for the checks; `A005` is the ID proposed for it.
 
 ## Checkouts
 
-- One development checkout, `<WSL_ROOT>`, in the WSL2 distribution `claude-debian12`. Its current location is `/home/claude/projects/CrispGUI`. Identities on WSL2 share it, one writer at a time.
+- The main checkout, `<WSL_ROOT>`, in the WSL2 distribution `claude-debian12`, at `/home/claude/projects/CrispGUI` on `main`. A003 is its only writer; it moves the local `main` only with `git pull --ff-only` and its own commits.
+- A004's checkout, `<CODING_ROOT>`, at `/home/claude/projects/CrispGUI-a004`: a linked worktree of the same repository, created by A003 on 2026-10-13 (round 13) under the owner's workflow decision. A004 is its only writer; it works on local task branches `a004/<task-id>` and keeps its build trees inside it. It sits next to `<WSL_ROOT>` so that the default EUI-NEO path `../Learn/...` resolves; the fonts come from `<WSL_ROOT>/fonts` through `-DCRISPGUI_FONT_DIR`. The two checkouts share the repository's objects, refs, and configuration.
 - Windows holds no development checkout. It hosts the CrispASR deployment (`<CRISPASR_ROOT>`, default `E:\AI\ASR\CrispASR`) and receives deliveries.
 - `<WSL_ROOT>` is a Git repository on `main`, initialized on 2026-10-11 under the owner's instruction. Its remote `origin` is `https://github.com/grshlogan/CrispGUI`, a private repository the owner created, and the source of record. Pushes authenticate through the GitHub CLI credential helper that is already configured for `github.com`.
 - Commits use the owner's Git identity, `grshlogan <grshlogan@gmail.com>`, the same as in the owner's Chronicle Harbor repository. It is passed with `git -c` on each commit; neither the repository nor the global Git configuration stores it.
 
 ## Delivery to Windows
 
-Status: seven deliveries made. The first five are accepted; the fourth found a test defect, which the fifth corrects. The sixth, Phase 4, waits for its Windows checks; the seventh is a diagnostic for a result of the sixth.
+Status: seven deliveries made. The first five are accepted; the fourth found a test defect, which the fifth corrects. The sixth, Phase 4, has results for W4-1 and W4-2 and waits for W4-3 and W4-4 and for a corrected build ([P4-T3](tasks/P4-T3-delivery/packet.md)); the seventh, a diagnostic for a result of the sixth, is complete.
 
 | Delivery | Commit | Archive SHA-256 | Contents | Windows result |
 | --- | --- | --- | --- | --- |
@@ -30,21 +33,23 @@ Status: seven deliveries made. The first five are accepted; the fourth found a t
 | `crisprustgui-b397dcd.zip` (26,739,068 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `b397dcda97db2f227dccf51393635f85e93c0530` | `12bc0217ac604a3bdeb4d0f275c05d83bcfcb05b7e2171faee955d875f85d3f2` | Phase 2: `crisprustgui.exe`, `assets/`, `fonts/`, 8 unit tests with `testdata/`, `run-tests.cmd` | Passed on 2026-10-12 UTC: the owner reports that the Windows test passed and that the dashboard's profile list agrees with the launcher; `test-results.txt` was not sent ([Phase 2 report](../devlog/phase-2.md#windows-results-owners-machine)) |
 | `crisprustgui-5046d3e.zip` (31,598,175 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `5046d3e4ca9aadfd0ff9397909fef3f65c6a01bd` | `8c7b04d2074587bcc916654ef429d2e0168d03f2d89955cc337f973a63a4728a` | Phase 3: `crisprustgui.exe`, `assets/`, `fonts/`, 11 unit and 3 integration tests, `stub_crispasr.exe`, `testdata/`, `run-tests.cmd` | 2026-10-12 UTC: 13 of 14 tests passed, all integration tests among them; `app_data_test` failed through a test defect present since Phase 1; the owner reports that the GUI works normally, without starting a server (round 11) ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
 | `crisprustgui-eda8e33.zip` (31,598,488 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `eda8e33fb4382eae9501a5d9776ed55633863d34` | `ccf922a1f04ed5533e9251553ca5d3d32045e02479b2efde764ab380dfca5774` | Phase 3 with the corrected `app_data_test`; `crisprustgui.exe` differs from the previous delivery only in its PE time stamp and checksum | Passed on 2026-10-12 UTC: 0 failures of 14; `app_data_test` printed the evidence of the `msvcrt.dll` behavior ([Phase 3 report](../devlog/phase-3.md#windows-results-owners-machine)) |
-| `crisprustgui-c296f23.zip` (37,060,506 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `c296f239748f65db24077a17820ea33b5df5e353` | `005bbfbc3255a16710423d01825d086cbefb881eed17485acd96e60b4f04259d` | Phase 4: `crisprustgui.exe`, `assets/`, `fonts/`, 15 unit and 5 integration tests, `stub_crispasr.exe`, `api_probe.exe`, `testdata/`, `run-tests.cmd`/`.ps1`, `run-api-probe.cmd`, `CHECKLIST.md` | W4-1 on 2026-10-12 UTC: 19 of 20 tests passed; `api_client_test` failed because a WinHTTP timeout did not apply. W4-2 to W4-4 not run: the Start buttons were not found ([Phase 4 report](../devlog/phase-4.md#windows-results-owners-machine)) |
-| `crisprustgui-diag-winhttp_timeouts-1907626.zip` (307,640 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1907626aecc659c0cd80b06a86984d9398dae057` | `e27f43eea253b1828fc0d5bc9d4511af9e14c872f76656fcf9d9559e914199d8` | Diagnostic: `winhttp_timeouts.exe` and `BUILD-INFO.txt`; run `winhttp_timeouts.exe --long` and send the output back | Not run yet |
+| `crisprustgui-c296f23.zip` (37,060,506 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `c296f239748f65db24077a17820ea33b5df5e353` | `005bbfbc3255a16710423d01825d086cbefb881eed17485acd96e60b4f04259d` | Phase 4: `crisprustgui.exe`, `assets/`, `fonts/`, 15 unit and 5 integration tests, `stub_crispasr.exe`, `api_probe.exe`, `testdata/`, `run-tests.cmd`/`.ps1`, `run-api-probe.cmd`, `CHECKLIST.md` | W4-1 on 2026-10-12 UTC: 19 of 20 tests passed; `api_client_test` failed because WinHTTP checks timeouts on a coarse timer. W4-2 passed by the owner's statement (round 12): the GUI started the server. W4-3 not run: no `probe-results` folder next to `api_probe.exe` (owner's screenshot, round 13). W4-4 not reported ([Phase 4 report](../devlog/phase-4.md#windows-results-owners-machine)) |
+| `crisprustgui-diag-winhttp_timeouts-1907626.zip` (307,640 bytes) and its unpacked folder, in `<HANDOFF_OUT>` | `1907626aecc659c0cd80b06a86984d9398dae057` | `e27f43eea253b1828fc0d5bc9d4511af9e14c872f76656fcf9d9559e914199d8` | Diagnostic: `winhttp_timeouts.exe` and `BUILD-INFO.txt`; run `winhttp_timeouts.exe --long` and send the output back | Complete: the returned output of a run with `--long` on 2026-10-12 UTC ends with "Done." (WinHTTP 6.2.22621.4830); results in [ENVIRONMENT.md §4.6](../ENVIRONMENT.md#46-http-transport-facts) |
 
 Steps:
 
-1. A delivery is built from a clean tree at a commit that has been pushed to `origin`.
+1. A004 builds a delivery when a task packet asks for it, from a clean tree at a commit that has been pushed to `origin`; A003 records it in the table above and gives the owner the steps.
 2. Default form: the MinGW-w64 release build folder (the executable plus EUI-NEO's `assets/`), zipped as `crisprustgui-<short SHA>.zip` with its SHA-256 in `<name>.zip.sha256`. A `BUILD-INFO.txt` inside the folder names the commit, the build type, and the toolchain versions. A diagnostic delivery, `crisprustgui-diag-<tool>-<short SHA>.zip` from `tools/package-diagnostic.sh`, carries one measurement tool of `tools/diagnostics/` and its `BUILD-INFO.txt`. The Windows side does no development and needs no source, so a Git bundle or a `git archive` snapshot is made only on request.
 3. Deliveries go to `<HANDOFF_OUT>`, a directory outside the checkout; the proposed location is `/home/claude/projects/CrispGUI-handoff/outgoing/`. The owner copies the folder to Windows by hand or with a copy script.
-4. Each delivery carries `CHECKLIST.md`, the numbered Windows checks of its phase (`tools/windows/CHECKLIST.md`), each with its steps, the expected result, and what to send back; the owner or the Windows-side agent runs them.
-5. Windows results come back through the owner, per check and with the files the check names (message, log excerpt, screenshot, or files). They are recorded against the delivered SHA and the platform; a phase closes on Windows only with `test-results.txt` in hand.
+4. Each delivery carries `CHECKLIST.md`, the numbered Windows checks of its phase (`tools/windows/CHECKLIST.md`), each with its steps, the expected result, and what to send back; the owner or the Windows-side agent runs them. From [P4-T3](tasks/P4-T3-delivery/packet.md) on, deliveries also carry `WINDOWS-AGENT.md`, the brief for that agent (`tools/windows/WINDOWS-AGENT.md`).
+5. Windows results come back through the owner, per check and with the files the check names (message, log excerpt, screenshot, or files). The Windows-side agent collects them in `results\<UTC time>\` inside the delivery folder, which the owner copies back into that delivery's folder in `<HANDOFF_OUT>`. They are recorded against the delivered SHA and the platform; a phase closes on Windows only with `test-results.txt` in hand.
 6. Nothing reads or writes across the system boundary, and WSL2 never mounts Windows drives.
 
 ## Standing authorizations
 
-- Commits and pushes (owner, 2026-10-11, round 5): A003 may commit per phase and task and push to `origin/main` without asking each round. Force pushes, history rewrites, branch deletion, and remote changes still need a separate authorization that names the target.
+- A003 (owner, 2026-10-11, round 5; extended by the workflow decision of 2026-10-13, round 13): commit per task and push to `origin/main` without asking each round; rebase its own commits that were not pushed yet onto `origin/main` when a push is refused because A004 pushed first. Under the same decision A003 created `<CODING_ROOT>` for A004.
+- A004 (owner, 2026-10-13, round 13: "编码代理自己合入"): in `<CODING_ROOT>`, create local task branches `a004/<task-id>` and commit on them; rebase its own task branch while it is not pushed; after a Review PASS and green gates, push the task branch fast-forward to `origin/main` (`git push origin HEAD:main`); delete its own merged local task branches with `git branch -d`; start Review and helper subagents; write deliveries into `<HANDOFF_OUT>`.
+- For every identity: force pushes, rewriting pushed commits, creating or deleting remote branches, moving a branch that another checkout has checked out, `reset --hard`, `clean`, removing a worktree, and Git configuration changes need a separate authorization that names the target.
 
 Everything else — other Git writes, system package installation, and source imports — needs a direct owner instruction or a task packet. One-time authorizations so far:
 
@@ -53,14 +58,45 @@ Everything else — other Git writes, system package installation, and source im
 
 ## Workflow
 
-The owner has not selected a formal Coding/Review workflow ([OQ-9](../OPEN-QUESTIONS.md#oq-9-formal-workflow-and-review-policy)). Installed candidates, checked by file listing on 2026-10-11:
+Selected on 2026-10-13 (round 13): a lightweight form of the `agent-dev-loop` Skill (`~/.claude/skills/codequality/agent-dev-loop/`). In round 13 A003 read its `SKILL.md`, protocol, routing, Claude Code CLI profile, host adapters, snapshot contract, Review card, and templates, and the multi-system reference of `project-agent-bootstrap`. The owner asked for coding on Sonnet 5.5 or Haiku 5.5 and Review on Sonnet 5.5 (round 12), asked A003 to decide whether A004 runs coding subagents and a Review loop, and chose that A004 merges reviewed work itself (round 13). This section resolves [OQ-9](../OPEN-QUESTIONS.md#resolved).
 
-| Skill | Location | Use |
-| --- | --- | --- |
-| `agent-dev-loop` | `~/.claude/skills/codequality/agent-dev-loop/` (`SKILL.md` readable) | Coding, independent Review, and acceptance with task packets and frozen candidates |
-| `reference-audit` | `~/.claude/skills/codequality/reference-audit/` | Independent audits of external projects; output is advisory |
+| Role | Who | Model | Duties |
+| --- | --- | --- | --- |
+| Planner and Coordinator | A003 | Opus 5.5 | Plans, task packets, decisions, documents, delivery records; consumes receipts and Review reports; may order a top-level Review for any task |
+| Coding | A004 | Sonnet 5.5 recommended | Implements packets in `<CODING_ROOT>`, runs the gates, dispatches the Review, answers findings, merges, builds deliveries |
+| Review | A fresh subagent per round, started by A004 | Sonnet 5.5 | Checks one candidate commit against its packet in its own export and writes its report ([prompt](tasks/README.md#review-dispatch)) |
+| Helpers | Subagents of A004, optional | Haiku 5.5 | Mechanical chores with a precise specification: fixtures from given data, repeated test runs, log collection, link and spelling sweeps; never design and never Review |
+| Windows checks | The owner, or the Windows-side agent | The owner's choice | Runs each delivery's `CHECKLIST.md` ([WINDOWS-AGENT.md](../../tools/windows/WINDOWS-AGENT.md)) |
 
-A Skill file being present does not put it in a session's context; a task must name it and the session must read it.
+The owner sets the model of each session; it is not part of an identity.
+
+### Decisions
+
+- No coding subagents by default. A004 implements each packet itself, in one worktree. Coding subagents in worktrees of their own, which the Skill allows, do not pay off at this project's size: the phases are sequential and build on each other; most tasks touch shared files such as `CMakeLists.txt` and `tests/CMakeLists.txt`, so parallel branches would conflict; every worktree needs its own two clean builds with EUI-NEO; each fresh subagent first re-reads the project rules, which costs more than it saves on blocks of a few hundred lines; and the bottleneck is the Windows round trip, not coding speed. A packet may mark blocks as parallel-safe (disjoint write scopes, no shared build files); only then may A004 hand them to coding subagents, each in its own worktree.
+- An independent Review for every code task. Phase 4 showed why: the Windows run and the mutation checks caught defects that the coding pass had missed. Each round is one fresh subagent that never sees the coding conversation. Profiles: `standard` for ordinary code; `strict`, which adds the packet's mutation matrix, for persistence, concurrency, the HTTP transport, and process control. Documentation changes by A003 go without a Review, as in the owner's Chronicle Harbor practice.
+- Candidates are commits. A round's candidate is a commit on the task branch: commits are immutable and hold every tracked input, and the owner's fonts, ignored by Git, are the only input outside them. This replaces the Skill's snapshot bundles; the reviewer exports the commit with `git archive` into a directory of its own.
+- A deviation from the Skill, by decision: the Skill wants the formal Review in a separate top-level session that the Coordinator dispatches. Here A004 dispatches a fresh subagent with A003's fixed prompt, which keeps the cost structure the owner asked for. A003 checks each report against its candidate when it consumes the task, and can order a top-level Review instead.
+
+### Task flow
+
+1. A003 writes `docs/agents/tasks/<task-id>/packet.md` ([format](tasks/README.md)), pushes it, and notifies A004.
+2. A004 fetches, creates `a004/<task-id>` from `origin/main`, writes `receipt.md` (state `Coding`), implements, runs the packet's gates, and commits the candidate.
+3. A004 dispatches Review `R01`. The reviewer writes `review-R01.md`; A004 commits it unchanged, together with the updated receipt.
+4. On FAIL, A004 answers each finding in the receipt (AGREE with a fix and a check that catches the defect, or DISAGREE with evidence), commits the repair, and dispatches `R02` with a new subagent. After `R03` without a PASS, or on a question of scope or contract, A004 stops and asks A003.
+5. On PASS: if `origin/main` moved, A004 rebases the task branch onto it and reruns the gates when code changed underneath; then `git push origin HEAD:main`, fast-forward only. The receipt records the reviewed commit; A003 records the merged one.
+6. A004 notifies A003, which checks the receipt and the report against the candidate, updates the [task index](tasks/README.md#task-index), and records the results in the phase report and STATUS.
+
+Deliveries are tasks too: A004 builds and packages them; A003 records them, changes `CHECKLIST.md` where no task does, and relays the Windows results.
+
+### Communication
+
+Files are the record: packets, receipts, Review reports, this register, and the phase reports. A003 and A004 run on the same WSL2 host, so Claude Code's own session messages may carry pointers between them (task ID, commit, file path) at four points: a packet is ready, a task is merged, a decision is needed, a delivery is built. Session messaging on Claude Code 2.1.294 is `not verified`; when a message does not arrive, the owner relays the pointer. A message never grants authority or replaces a file. The owner runs the sessions in bypass permission mode (round 13); that mode removes prompts, not rules: write scopes, protected paths, and the Review stay in force.
+
+### Token budget
+
+A003 reads receipts and reports rather than diffs, unless a report raises a question. Packets stay small: one coherent change, usually a few hundred lines. Reviewers report findings and evidence, not summaries of the code. Helpers get precise, self-contained instructions.
+
+Installed Skills: `agent-dev-loop`, used as above, and `reference-audit` (`~/.claude/skills/codequality/reference-audit/`), for independent audits of external projects, advisory only. A Skill file being present does not put it in a session's context; a task names it and the session reads it.
 
 ## Source imports
 

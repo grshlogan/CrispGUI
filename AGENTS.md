@@ -6,7 +6,7 @@ Read [docs/START_HERE.md](docs/START_HERE.md) at the start of every task. [docs/
 
 ## Project scope
 
-CrispRustGUI is a Windows desktop client, written in C++17 on the EUI-NEO UI framework. It manages a local CrispASR HTTP server and transcribes audio and video files to SRT through a persistent batch queue. Version 1 covers the ASR step of a six-step media pipeline, and the job model must accept the other steps later without a rewrite. The specification is approved; implementation has not started.
+CrispRustGUI is a Windows desktop client, written in C++17 on the EUI-NEO UI framework. It manages a local CrispASR HTTP server and transcribes audio and video files to SRT through a persistent batch queue. Version 1 covers the ASR step of a six-step media pipeline, and the job model must accept the other steps later without a rewrite. The specification is approved; Phases 0 to 3 are complete and Phase 4 is implemented ([STATUS](docs/STATUS.md)).
 
 ## Language
 
@@ -27,7 +27,7 @@ Use the labels `verified`, `observed`, `historical`, `planned`, `hypothesis`, an
 
 ## Identities
 
-Each session holds one identity with a stable ID (`A003`) and a display name (`A003[ClaudeCode]Dev Gui`); neither is a session ID or a permission. [docs/agents/README.md](docs/agents/README.md) registers identities and their write scopes. Each identity keeps one context file, `docs/identity/<id>.md`, which only that identity writes; others report problems to its owner. The layout follows [docs/identity/TEMPLATE.md](docs/identity/TEMPLATE.md).
+Each session holds one identity with a stable ID (`A003`) and a display name (`A003[ClaudeCode]DocArch Planner`); neither is a session ID or a permission. [docs/agents/README.md](docs/agents/README.md) registers identities and their write scopes. Each identity keeps one context file, `docs/identity/<id>.md`, which only that identity writes; others report problems to its owner. The layout follows [docs/identity/TEMPLATE.md](docs/identity/TEMPLATE.md).
 
 ## Environment boundaries
 
@@ -43,7 +43,7 @@ Snapshots under `reference/` are read-only evidence; [reference/README.md](refer
 
 ## Development workflow
 
-The phased plan is [docs/TASKS.md](docs/TASKS.md). The owner has not selected a formal Coding/Review workflow yet; see [workflow](docs/agents/README.md#workflow). Confirm that a named workflow Skill is installed and readable before relying on it.
+The phased plan is [docs/TASKS.md](docs/TASKS.md). Code changes follow the [workflow](docs/agents/README.md#workflow) selected on 2026-10-13: A003 writes a task packet in [docs/agents/tasks/](docs/agents/tasks/README.md), A004 implements it in its own worktree, a fresh Review subagent checks the candidate commit, and A004 merges it after a PASS. Documentation changes by A003 need no Review. Confirm that a named workflow Skill is installed and readable before relying on it.
 
 ## Reporting
 
