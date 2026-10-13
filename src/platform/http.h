@@ -29,8 +29,10 @@ struct HttpRequest {
     std::vector<std::pair<std::string, std::string>> headers;
     int connectTimeoutMs = 5000;
     // For sending the request and receiving the answer. WinHTTP applies it to each send and to
-    // the wait for the answer, so an upload can take this long and the wait as long again;
-    // libcurl limits the whole exchange, connecting included, to connectTimeoutMs + timeoutMs.
+    // the wait for the answer, so an upload can take this long and the wait as long again, and it
+    // enforces it on a coarse timer, so a limit may end a wait up to about 4 s late (observed,
+    // docs/ENVIRONMENT.md, section 4.6); libcurl limits the whole exchange, connecting included,
+    // to connectTimeoutMs + timeoutMs.
     int timeoutMs = 5000;
     std::size_t maxBodyBytes = 1024 * 1024;
 };

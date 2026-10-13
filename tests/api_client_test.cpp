@@ -260,7 +260,8 @@ int main() {
     }
 
     // Slow transcriptions: progress while one runs, a timeout, and a cancellation. Each request
-    // holds the stub's model lock for its whole delay, as CrispASR's model mutex does.
+    // holds the stub's model lock for its whole delay, as CrispASR's model mutex does, also after
+    // the client gave up; the cancellation therefore gets a server of its own.
     {
         int slowPort = 0;
         ChildProcess slowServer;
@@ -292,20 +293,31 @@ int main() {
         CHECK(sawBusy);
 
         // libcurl counts the connection's budget into the limit (platform/http.h), so it is small.
+        // WinHTTP enforces the limit on a coarse timer, which ends a wait up to about 4 s late
+        // (docs/ENVIRONMENT.md, section 4.6): it let a 3000 ms answer through a limit of 1000 ms.
+        // The stub therefore answers only after 9000 ms, later than any correct transport waits.
         ApiClientOptions shortWait = slow.Options();
         shortWait.connectTimeoutMs = 500;
         shortWait.transcribeTimeoutMs = 1000;
         TranscribeRequest request;
         request.file = audio;
-        request.fields = {{"stub_delay_ms", "3000"}};
+        request.fields = {{"stub_delay_ms", "9000"}};
         Transcript transcript;
         auto start = Clock::now();
         const ApiError timeout = ApiClient(shortWait).Transcribe(request, transcript);
         const double timeoutMs = MillisecondsSince(start);
         CHECK(timeout.kind == ApiErrorKind::kTimeout);
-        CHECK(timeoutMs >= 900 && timeoutMs < 4000);
+        CHECK(timeoutMs >= 900 && timeoutMs < 7500);
         std::printf("api_client_test: timeout after %.0f ms\n", timeoutMs);
+        crisp::test::EndProcess(slowServer);
 
+        // A cancellation 300 ms into a transcription that would take 3000 ms. The stub above
+        // would hold its model lock for the whole 9000 ms, so a request to it would queue behind
+        // the one that timed out; this one gets a server of its own.
+        int cancelPort = 0;
+        ChildProcess cancelServer;
+        CHECK(StartServer(cancelServer, cancelPort));
+        request.fields = {{"stub_delay_ms", "3000"}};
         HttpCancel cancel;
         ApiError cancelled;
         start = Clock::now();
@@ -313,13 +325,13 @@ int main() {
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
             cancel.Cancel();
         });
-        cancelled = slow.Transcribe(request, transcript, &cancel);
+        cancelled = Client(cancelPort).Transcribe(request, transcript, &cancel);
         const double cancelMs = MillisecondsSince(start);
         canceller.join();
         CHECK(cancelled.kind == ApiErrorKind::kCancelled);
         CHECK(cancelMs < 2500);
         std::printf("api_client_test: cancelled after %.0f ms\n", cancelMs);
-        crisp::test::EndProcess(slowServer);
+        crisp::test::EndProcess(cancelServer);
     }
 
     fs::remove_all(scratch, fsError);
