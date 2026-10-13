@@ -32,7 +32,8 @@
 //   STUB_MAX_BODY_BYTES  bodies over this size get 413 after being read (default 512 MiB)
 //   STUB_TRANSCRIBE_MS   the default duration of a transcription
 //   STUB_FAIL_FIRST      "<status>:<count>", such as "500:1": the first <count> transcriptions that
-//                        would run answer with <status> (500 or 503) instead, then they work
+//                        would run work for their delay and then answer with <status> (500 or 503)
+//                        instead, as an error inside the model does; the next ones work
 //   STUB_TRANSCRIPT      a verbose_json file to answer with
 //   STUB_TRANSCRIPT_SRT  an srt file to answer with
 // A port it cannot bind ends it with exit code 0 after the "listening" line, as CrispASR does.
@@ -757,12 +758,14 @@ std::string Transcribe(const Request& request) {
     if (!LooksLikeAudio(file->content)) {
         return JsonError(400, "failed to decode audio (unsupported format or corrupt file)");
     }
-    if (settings.failCount > 0 && failedSoFar.fetch_add(1) < settings.failCount) {
+    const std::string delay = FieldValue(parts, "stub_delay_ms", "");
+    const int delayMs = delay.empty() ? settings.transcribeMs : std::atoi(delay.c_str());
+    const bool fails = settings.failCount > 0 && failedSoFar.fetch_add(1) < settings.failCount;
+    RunModel(delayMs);
+    if (fails) {
         return JsonError(settings.failStatus, settings.failStatus == 503 ? "model is still loading"
                                                                        : "internal error: stub failure");
     }
-    const std::string delay = FieldValue(parts, "stub_delay_ms", "");
-    RunModel(delay.empty() ? settings.transcribeMs : std::atoi(delay.c_str()));
 
     const std::vector<Segment> segments = SyntheticSegments();
     if (format == "verbose_json") {

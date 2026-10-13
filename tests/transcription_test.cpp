@@ -340,6 +340,24 @@ int main() {
         CHECK(capped.State().preview == Entries({"(speaker 0)  Hello there.", "(speaker 1)  General Kenobi."}));
     }
 
+    // A transcript without segments is a success with no cue: the SRT is empty.
+    {
+        const fs::path directory = Case(scratch, "silence");
+        const fs::path json = directory / "silence.verbose.json";
+        CHECK(crisp::test::WriteFile(
+            json,
+            "{\"task\": \"transcribe\", \"language\": \"en\", \"duration\": 4.0, \"text\": \"\", \"segments\": []}"));
+        Server silent;
+        CHECK(silent.Start({{"STUB_TRANSCRIPT", json.u8string(), false}}));
+        const fs::path source = directory / "talk.wav";
+        CHECK(crisp::test::WriteFile(source, AudioBytes()));
+        Runner runner;
+        CHECK(runner.Run(Ask(source, silent)));
+        CHECK(Done(runner.State()));
+        CHECK(runner.State().cues == 0 && runner.State().durationMs == 4000 && runner.State().preview.empty());
+        CHECK(fs::is_regular_file(directory / "talk.srt", fsError) && Content(directory / "talk.srt").empty());
+    }
+
     // AC-2: while the server works, the state shows its progress and the elapsed time.
     {
         const fs::path directory = Case(scratch, "progress");
@@ -443,22 +461,24 @@ int main() {
             fs::create_directories(folder, fsError);
             CHECK(runner.Run(Ask(folder, sample)));
             CHECK(Failed(runner.State(), TranscriptionFailure::kSourceUnreadable));
-#if !defined(_WIN32)
             CHECK(runner.State().detail.find("is not a regular file") != std::string::npos);
-#endif
             CHECK(sample.Received() == before);
             fs::remove(folder, fsError);
             CHECK(Names(directory) == onlyAudio);
         }
-        // A source over the upload limit: refused before sending.
+        // A source over the upload limit: refused before sending, and before the question whether
+        // the SRT may be replaced, since the file could not be sent in any case.
         {
+            CHECK(crisp::test::WriteFile(directory / "talk.srt", "keep me"));
             TranscriptionOptions small = FastOptions();
             small.maxUploadBytes = 1000;
             Runner limited(small);
             const int before = sample.Received();
             CHECK(limited.Run(Ask(audio, sample)));
             CHECK(Failed(limited.State(), TranscriptionFailure::kTooLarge));
-            CHECK(sample.Received() == before);
+            CHECK(limited.State().attempt == 0 && sample.Received() == before);
+            CHECK(Content(directory / "talk.srt") == "keep me");
+            fs::remove(directory / "talk.srt", fsError);
             CHECK(Names(directory) == onlyAudio);
         }
         // An SRT that exists, without permission to replace it: refused before sending, and untouched.
@@ -541,6 +561,34 @@ int main() {
         CHECK(runner.State().attempt == 2 && flaky.Received() == 2);
         CHECK(Content(directory / "talk.srt") == sampleSrt);
         CHECK(Names(directory) == Entries({"talk.srt", "talk.wav"}));
+    }
+
+    // The retry starts with the progress unknown, not with where the failed attempt had got to.
+    {
+        const fs::path directory = Case(scratch, "retry-progress");
+        const fs::path source = directory / "talk.wav";
+        CHECK(crisp::test::WriteFile(source, AudioBytes()));
+        Server flaky;
+        CHECK(flaky.Start({{"STUB_TRANSCRIPT", sampleJson.u8string(), false}, {"STUB_FAIL_FIRST", "500:1", false}}));
+        Runner runner;
+        CHECK(runner.transcription.Start(Ask(source, flaky, false, {{"stub_delay_ms", "1200"}})));
+        int furthestOfFirst = -1;
+        int firstOfSecond = -2;
+        CHECK(crisp::test::WaitUntil(
+            [&] {
+                runner.transcription.Update();
+                const TranscriptionState& state = runner.State();
+                if (state.attempt == 1) {
+                    furthestOfFirst = std::max(furthestOfFirst, state.progress);
+                } else if (state.attempt == 2 && firstOfSecond == -2) {
+                    firstOfSecond = state.progress;
+                }
+                return state.phase != TranscriptionPhase::kRunning;
+            },
+            20000));
+        CHECK(Done(runner.State()) && runner.State().attempt == 2 && flaky.Received() == 2);
+        CHECK(furthestOfFirst >= 50);  // the server got far before it failed
+        CHECK(firstOfSecond < 50);     // and the retry did not start there
     }
 
     // A cancel during the pause before the retry ends it at once.
@@ -697,9 +745,10 @@ int main() {
             CHECK(wakesAtReturn >= 1);
             PauseMs(1500);
             CHECK(runner.wakes.load() == wakesAtReturn);
-            CHECK(!runner.transcription.Start(Ask(source, slow)));
             runner.transcription.Update();
             CHECK(Failed(runner.State(), TranscriptionFailure::kCancelled));
+            CHECK(!runner.transcription.Start(Ask(source, slow)));  // not running, yet closed for good
+            CHECK(runner.State().phase == TranscriptionPhase::kFailed);
             runner.transcription.Shutdown();  // again: nothing happens
             CHECK(runner.wakes.load() == wakesAtReturn);
         }

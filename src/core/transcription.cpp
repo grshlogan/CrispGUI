@@ -168,9 +168,21 @@ private:
         return client;
     }
 
-    // The source must be a regular file that opens and is within the upload limit.
+    // The source must be a regular file that opens and is within the upload limit. It is looked at
+    // before it is opened, because opening a pipe waits for the other end.
     bool CheckSource(Outcome& outcome) const {
         const std::string name = request_.source.u8string();
+        std::error_code lookup;
+        const std::filesystem::file_status kind = std::filesystem::status(request_.source, lookup);
+        if (lookup) {
+            outcome = Failed(TranscriptionFailure::kSourceUnreadable,
+                             "Could not open " + name + ": " + lookup.message() + ".");
+            return false;
+        }
+        if (!std::filesystem::is_regular_file(kind)) {
+            outcome = Failed(TranscriptionFailure::kSourceUnreadable, name + " is not a regular file.");
+            return false;
+        }
         std::FILE* file = platform::OpenFileForReading(request_.source);
         if (file == nullptr) {
             const int reason = errno;
