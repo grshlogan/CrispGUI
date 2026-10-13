@@ -37,9 +37,11 @@ struct ReadFileResult {
 // Reads the whole file at |path|; a file larger than |maxBytes| is an error.
 ReadFileResult ReadFileBytes(const std::filesystem::path& path, std::size_t maxBytes);
 
-// The path of a new temporary file for |destination|, as "<name>.<16 hexadecimal digits>.tmp" in
-// the destination's own directory, so that replacing the destination by it never crosses a
-// volume. Two calls give two different paths. The system's temporary folder may lie on another
+// The path of a new temporary file for |destination|, as "<start of the name>.<16 hexadecimal
+// digits>.tmp" in the destination's own directory, so that replacing the destination by it never
+// crosses a volume. The start of the destination's name is cut to 40 units at a character
+// boundary, which keeps the temporary name short enough for any destination that can be created
+// at all. Two calls give two different paths. The system's temporary folder may lie on another
 // volume and is never used.
 std::filesystem::path AtomicTemporaryPath(const std::filesystem::path& destination);
 
@@ -60,7 +62,11 @@ bool RenameOverFile(const std::filesystem::path& source, const std::filesystem::
 // (docs/SPEC.md, FR-3): the bytes go to a new temporary file next to |path|
 // (AtomicTemporaryPath), are flushed to the disk, and the temporary file replaces |path|. On any
 // failure the temporary file is removed, an existing |path| stays as it was, and the result is
-// false with a message in |error| that names the step that failed.
+// false with a message in |error| that names the step that failed. The new file has the default
+// attributes of a new file: the mode and owner of an existing |path| are not carried over, and a
+// symbolic link at |path| is replaced by a regular file. The temporary name is checked to be free
+// and then created, which would truncate a file that appeared in between; with 64 random bits a
+// clash is not expected.
 bool WriteFileAtomically(const std::filesystem::path& path, std::string_view bytes, std::string& error);
 
 }  // namespace crisp::platform

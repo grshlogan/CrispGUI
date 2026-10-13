@@ -34,6 +34,33 @@ std::string RandomHexDigits() {
     return digits;
 }
 
+// The start of a destination's file name that a temporary file's name keeps: at most
+// |kKeptNameUnits| units of the platform's native encoding, cut so that no character is split
+// (UTF-8 bytes on POSIX, UTF-16 units on Windows). A name that is not cut would add 21 units to
+// the destination's, so that a name close to the limit of the file system could be written
+// directly but not atomically.
+constexpr std::size_t kKeptNameUnits = 40;
+
+std::filesystem::path::string_type KeptStartOf(const std::filesystem::path::string_type& name) {
+    if (name.size() <= kKeptNameUnits) {
+        return name;
+    }
+    std::size_t cut = kKeptNameUnits;
+    if constexpr (sizeof(std::filesystem::path::value_type) == 2) {
+        // A high surrogate must not be the last unit kept.
+        const auto last = static_cast<unsigned>(name[cut - 1]);
+        if (last >= 0xD800 && last <= 0xDBFF) {
+            --cut;
+        }
+    } else {
+        // A continuation byte must not be the first one dropped.
+        while (cut > 0 && (static_cast<unsigned char>(name[cut]) & 0xC0) == 0x80) {
+            --cut;
+        }
+    }
+    return name.substr(0, cut);
+}
+
 }  // namespace
 
 ReadFileResult ReadFileBytes(const std::filesystem::path& path, std::size_t maxBytes) {
@@ -65,7 +92,7 @@ ReadFileResult ReadFileBytes(const std::filesystem::path& path, std::size_t maxB
 }
 
 std::filesystem::path AtomicTemporaryPath(const std::filesystem::path& destination) {
-    std::filesystem::path name = destination.filename();
+    std::filesystem::path name(KeptStartOf(destination.filename().native()));
     name += "." + RandomHexDigits() + ".tmp";
     return destination.parent_path() / name;
 }

@@ -129,7 +129,9 @@ int main() {
         CHECK(first != second && first != destination);
         const std::string name = first.filename().u8string();
         CHECK(name.rfind("name.srt.", 0) == 0 && name.size() > 13 && name.compare(name.size() - 4, 4, ".tmp") == 0);
-        CHECK(first.parent_path() != fs::temp_directory_path());
+        std::error_code tempError;
+        const fs::path systemTemp = fs::temp_directory_path(tempError);
+        CHECK(tempError || first.parent_path() != systemTemp);
         // A bare file name stays in the current directory.
         CHECK(AtomicTemporaryPath("bare.srt").parent_path().empty());
         std::set<std::string> names;
@@ -137,6 +139,37 @@ int main() {
             names.insert(AtomicTemporaryPath(destination).filename().u8string());
         }
         CHECK(names.size() == 1000);
+    }
+
+    // The temporary name keeps only the start of a long destination name, cut at a character
+    // boundary, so that it stays valid wherever the destination can be created.
+    {
+        const fs::path directory = scratch / "names";
+        // What a temporary name keeps of the destination's name: the name without the 21 characters
+        // of ".<16 digits>.tmp".
+        const auto kept = [&](const std::string& destinationName) {
+            const std::string name = AtomicTemporaryPath(directory / fs::u8path(destinationName)).filename().u8string();
+            CHECK(name.size() > 21 && name.compare(name.size() - 4, 4, ".tmp") == 0);
+            return name.size() > 21 ? name.substr(0, name.size() - 21) : std::string();
+        };
+        // A short name is kept whole.
+        CHECK(kept("name.srt") == "name.srt");
+        // A long one is cut to 40 units: ASCII characters count one each.
+        const std::string longAscii = std::string(250, 'a') + ".srt";
+        CHECK(kept(longAscii) == std::string(40, 'a'));
+        // A cut that falls inside a character moves back before it, so that no character is split:
+        // 39 letters, a character of four bytes in UTF-8 and two units in UTF-16, and more.
+        const std::string split = std::string(39, 'a') + "\xF0\xA0\xAE\xB7" + "bbbb.srt";
+        CHECK(kept(split) == std::string(39, 'a'));
+        // Kanji: the kept part is a whole number of characters and starts the destination's name.
+        std::string kanji;
+        for (int i = 0; i < 80; ++i) {
+            kanji += "\xE5\xAD\x97";
+        }
+        const std::string japanese = kanji + ".srt";
+        const std::string start = kept(japanese);
+        CHECK(!start.empty() && start.size() < japanese.size() && japanese.compare(0, start.size(), start) == 0);
+        CHECK((static_cast<unsigned char>(japanese[start.size()]) & 0xC0) != 0x80);
     }
 
     // The directory does not exist: nothing is written, nothing is created, and the message names
@@ -222,6 +255,51 @@ int main() {
         CHECK(Content(target) == "new");
         CHECK(Names(directory) == Entries({"out.srt"}));
     }
+
+    // A destination whose name is close to the limit of 255 bytes, in ASCII and in Japanese, is
+    // written atomically, created and replaced, as a plain write could create it.
+    {
+        const fs::path directory = Case(scratch, "long-names");
+        std::string kanji;
+        for (int i = 0; i < 80; ++i) {
+            kanji += "\xE5\xAD\x97";
+        }
+        const fs::path ascii = directory / (std::string(251, 'a') + ".srt");
+        const fs::path japanese = directory / fs::u8path(kanji + ".srt");
+        for (const fs::path& target : {ascii, japanese}) {
+            CHECK(WriteFileAtomically(target, "one", error));
+            CHECK(Content(target) == "one");
+            CHECK(WriteFileAtomically(target, "two", error));
+            CHECK(Content(target) == "two");
+        }
+        CHECK(Names(directory).size() == 2);
+    }
+
+#if defined(__linux__)
+    // No descriptor stays open, on success and on each failure.
+    {
+        const auto openDescriptors = [] {
+            std::size_t count = 0;
+            std::error_code listError;
+            for (const fs::directory_entry& entry : fs::directory_iterator("/proc/self/fd", listError)) {
+                static_cast<void>(entry);
+                ++count;
+            }
+            return count;
+        };
+        const fs::path directory = Case(scratch, "descriptors");
+        const fs::path target = directory / "out.srt";
+        CHECK(WriteFileAtomically(target, "warm up", error));
+        const std::size_t before = openDescriptors();
+        for (int i = 0; i < 50; ++i) {
+            CHECK(WriteFileAtomically(target, "again", error));
+            CHECK(!WriteFileAtomically(directory / "no such folder" / "out.srt", "x", error));
+            CHECK(!WriteFileAtomically(directory, "x", error));
+        }
+        CHECK(openDescriptors() == before);
+        CHECK(before > 0);
+    }
+#endif
 
     // A write that fails after the temporary file exists, made to fail by a limit on the size of
     // files (RLIMIT_FSIZE): the existing file stays as it was, no temporary file stays, and the
