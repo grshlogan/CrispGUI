@@ -11,7 +11,7 @@ Rules for every check:
 ## W4-1 Automated tests
 
 1. Double-click `run-tests.cmd`, or run `powershell -NoProfile -ExecutionPolicy Bypass -File .\run-tests.ps1` in this folder.
-2. Expected: the last line of `test-results.txt` reads `Failures: 0 of 20`.
+2. Expected: the last line of `test-results.txt` reads `Failures: 0 of N`, where N is the number of tests that `BUILD-INFO.txt` names.
 
 Send back: `test-results.txt`, the whole file.
 
@@ -19,7 +19,7 @@ Send back: `test-results.txt`, the whole file.
 
 1. Start `crisprustgui.exe`. If the Server line already shows Running, a server started elsewhere (by the launcher) holds the port, and the Start buttons stay dimmed: press Stop next to it and confirm, then wait for Stopped.
 2. On the Dashboard, scroll the upper part of the page down with the mouse wheel, or drag the scroll bar at its right edge, past "Profiles" and "Rescan". At the default window size the profile list starts below the visible part.
-3. Each profile row reads `[OK] <name> <backend>` followed by a Start button (启动 in the Chinese interface). Press Start in the row of the Japanese cohere profile (`cohere-asr-ja-q8`).
+3. Each profile row reads `[OK] <name> <backend>` followed by a Start button (启动 in the Chinese interface). Press Start in the row of a ready Japanese profile, for example `parakeet-ctc-1.1b-ja-q8`, which W4-3 used on 2026-10-13, or `cohere-asr-ja-q8`.
 4. The Server line at the top of the page changes to "Starting: loading the model…" and then to Running; the server log at the bottom shows the server's lines.
 5. Expected: Running.
 

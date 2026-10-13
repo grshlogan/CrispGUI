@@ -1,6 +1,6 @@
 # Task Packets
 
-Each code task of CrispRustGUI has a folder here, `docs/agents/tasks/<task-id>/`. The folder is the record of the task: what was asked, what was done, and what the independent Review found. The workflow that uses these files is in [agents/README.md](../README.md#workflow).
+Each code task of CrispGUI has a folder here, `docs/agents/tasks/<task-id>/`. The folder is the record of the task: what was asked, what was done, and what the independent Review found. The workflow that uses these files is in [agents/README.md](../README.md#workflow).
 
 | File | Writer | Content |
 | --- | --- | --- |
@@ -18,7 +18,11 @@ Maintained by A003 when it consumes a receipt.
 | --- | --- | --- | --- |
 | [P4-T1](P4-T1-timeout-test/packet.md) | A timeout check that allows for WinHTTP's coarse timer | Ready for A004 | — |
 | [P4-T2](P4-T2-dashboard-start/packet.md) | Start buttons on the dashboard's first screen | Ready for A004 | — |
-| [P4-T3](P4-T3-delivery/packet.md) | The agent brief in deliveries, and the next Phase 4 delivery | Waits for P4-T1 and P4-T2 | — |
+| [P4-T4](P4-T4-rename/packet.md) | The project's names in code and deliveries become CrispGUI | Waits for P4-T1 and P4-T2 | — |
+| [P4-T5](P4-T5-server-answers/packet.md) | The deployed server's answers as test data | Waits for P4-T4 | — |
+| [P4-T3](P4-T3-delivery/packet-v2.md) (v2) | The agent brief in deliveries, and the next Phase 4 delivery | Waits for P4-T1, P4-T2, P4-T4, and P4-T5 | — |
+
+Order: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3.
 
 States: `Ready for A004` → `Coding` → `Review Rxx` → `Merged` (A004) → `Consumed` (A003). `Blocked` names what is missing and who supplies it.
 
@@ -54,7 +58,7 @@ Commands run under `set -o pipefail` and record the real exit code. A check that
 A004 starts one fresh subagent per round: a general-purpose agent on Sonnet 5.5, never a fork of A004's conversation. It receives the prompt below with the placeholders filled and nothing else from the coding conversation. A new round (`R02`, ...) gets a new subagent and the previous report.
 
 ```text
-You are the independent Review <Rxx> for task <TASK_ID> of CrispRustGUI, a C++17 Windows desktop client built in WSL2. You did not write this code, and you never change it.
+You are the independent Review <Rxx> for task <TASK_ID> of CrispGUI, a C++17 Windows desktop client built in WSL2. You did not write this code, and you never change it.
 
 Inputs:
 - Packet: <CODING_ROOT>/docs/agents/tasks/<TASK_DIR>/packet.md. It defines the problem, the write scope, the acceptance criteria, the gates, and the Review profile. Read it first.

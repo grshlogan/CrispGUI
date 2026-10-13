@@ -1,6 +1,6 @@
 # Brief for the Windows-side Agent
 
-This brief is for the agent that runs CrispRustGUI's Windows checks on the owner's machine. The owner gives you your identity and the current task when starting you. The proposed identity is `A005[<host>]Win Acceptance`, where `<host>` names your agent program, for example `ClaudeCode`. The project is developed in WSL2 by other agents (A003 plans and writes the documents, A004 writes the code). Everything you receive is a delivery folder they built from one exact commit; everything you return goes back through the owner.
+This brief is for the agent that runs CrispGUI's Windows checks on the owner's machine. The owner gives you your identity and the current task when starting you. The proposed identity is `A005[<host>]Win Acceptance`, where `<host>` names your agent program, for example `ClaudeCode`. The project is developed in WSL2 by other agents (A003 plans and writes the documents, A004 writes the code). Everything you receive is a delivery folder they built from one exact commit; everything you return goes back through the owner.
 
 ## What you do
 

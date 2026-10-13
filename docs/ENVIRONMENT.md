@@ -1,6 +1,6 @@
 # Build Environment
 
-> How CrispRustGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2, on 2026-10-12 (round 7) with the system libraries, test entry points, and runtime facts of Phase 3, and on 2026-10-12 (round 10) with the upload, the probe, and the Windows checklist of Phase 4. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
+> How CrispGUI is developed and built. Revised on 2026-10-12 (round 6) with the UI fonts and the EUI-NEO runtime facts of Phase 2, on 2026-10-12 (round 7) with the system libraries, test entry points, and runtime facts of Phase 3, and on 2026-10-12 (round 10) with the upload, the probe, and the Windows checklist of Phase 4. The Windows executable is cross-compiled in WSL2 with MinGW-w64, and EUI-NEO comes from the shared Learn library. All development happens in WSL2, WSL2 never mounts Windows drives, and the Windows side does no development. Roles and delivery to Windows are in [agents/README.md](agents/README.md).
 
 ## 1. Target and toolchains
 

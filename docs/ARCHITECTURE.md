@@ -1,10 +1,10 @@
-# Architecture — CrispRustGUI
+# Architecture — CrispGUI
 
 > Design decisions with rationale. Companion documents: [SPEC.md](SPEC.md) (what), [API-CRISPASR.md](API-CRISPASR.md) (the server contract), [TASKS.md](TASKS.md) (build order). Revised on 2026-10-11: owner invariants (§1.1), transcription windows (§2.4, §2.5), the pluggable parameter model (§2.7), the SRT writer (§2.8), the platform split, and corrections from a source review; revised on 2026-10-12 with the Phase 2 implementation (§2.1, §2.3, §2.6, §3, §4) the Phase 3 implementation (§2.2, §2.3, §2.6, §3, §4), and the Phase 4 implementation (§2.3, §3, §4). Entries marked (P1) to (P4) in §2 are implemented; items marked *proposed* wait for the owner's decisions in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
 
 ## 1. Architectural style: thick client over a local service
 
-CrispRustGUI is a **desktop client for a local HTTP service**. The engine (the CrispASR server) is a separate process that the GUI manages; all AI work happens there. This was chosen over in-process engine embedding (what CrisperWeaver does through FFI) for v1 because:
+CrispGUI is a **desktop client for a local HTTP service**. The engine (the CrispASR server) is a separate process that the GUI manages; all AI work happens there. This was chosen over in-process engine embedding (what CrisperWeaver does through FFI) for v1 because:
 
 1. **Batch efficiency**: the server keeps a model resident across requests, so there is no per-file model load. FFI embedding achieves the same at a much higher implementation cost.
 2. **Crash containment**: engine faults kill the server process, not the GUI.
@@ -27,7 +27,7 @@ Set by the owner on the dates shown; changing one needs the owner.
 Status: Phases 1 to 4 created the entries marked `(P1)` to `(P4)`; the rest is `planned`.
 
 ```
-crisprustgui/
+CrispGUI/
 ├── src/
 │   ├── main.cpp                      // (P1) EUI-NEO entry points; owns the single Application
 │   ├── app/                          // (P1) application.{h,cpp}: state and page composition; app_data.{h,cpp}: app data folder and TMP/TEMP; (P2) crispasr_location.{h,cpp}: the CrispASR root; later the UI inbox
@@ -256,7 +256,7 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 | GUI exit | Leave the server running; the next launch adopts it | Stop the server on exit | [API-CRISPASR.md §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior) item 10; a crash and a normal exit behave alike |
 | Profiles | Read the existing JSONC files; no GUI editing in v1 | A new GUI-side preset store | Profiles are already the project's single source of truth with proven content (4 Japanese profiles, tested) |
 | Model switching | Restart the server with the new profile | Hot-swap through `/load` | The server holds one model per process, and `/load` keeps the old aligner (crispasr-audit §5.3–5.4) |
-| Language | C++17 end to end | Rust glue | User decision: one language across engine and GUI, no glue layer |
+| Language | C++17 end to end; no Rust now or planned (owner, 2026-10-13) | Rust glue | User decision: one language across engine and GUI, no glue layer. The project was called CrispRustGUI until 2026-10-13 and is now CrispGUI |
 | Parameter panel | Data-driven catalog plus the model's description plus a capability filter, rendered by a widget factory | One hardcoded page; per-model pages in code | Owner invariant 1: every model has its own parameter set, and new parameters or models must not need code changes |
 | Long jobs | Transcription windows with per-window retry and window-granular resume | One request per file with segment-level resume | Owner direction; the HTTP endpoint returns results only at the end of a request, so segment checkpoints are impossible without windows |
 | Response format | `verbose_json` plus a GUI-side SRT writer (*proposed*, OQ-7) | Saving the server's `srt` | The server's `srt` ignores `max_len`/`split_on_punct`, and windows need segment timings |

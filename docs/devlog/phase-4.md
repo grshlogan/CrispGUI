@@ -51,7 +51,18 @@ Diagnostic (round 12): the owner returned the output of `winhttp_timeouts.exe --
 
 W4-2 (round 12, owner statement): the GUI started the server, and the owner reports "通过了软件测试，能正常生成字幕". W4-2 counts as passed on that statement; no screenshot was sent.
 
-W4-3 (round 13): not run. The owner's screenshot of the delivery folder (`1.jpg`, returned into the delivery's folder in `<HANDOFF_OUT>`) shows the `appdata\` folder of the GUI's run but no `probe-results\` folder, which `api_probe.exe` creates next to itself when it runs. W4-4: not reported.
+W4-3 (round 13): not run yet. The owner's screenshot of the delivery folder (`1.jpg`, returned into the delivery's folder in `<HANDOFF_OUT>`) showed the `appdata\` folder of the GUI's run but no `probe-results\` folder, which `api_probe.exe` creates next to itself when it runs.
+
+W4-3 (round 14): passed. The owner ran `api_probe.exe --window 5000,10000` with `E:\AI\ASR\CrispASR\samples\ja-demo.mp3` (58,176 bytes, SHA-256 `5b471724bbb7f53077a6e011a48e33b433251503a80c1ffd28fbba58d79b6448`) at 2026-10-13T05:03:47Z and returned `probe-results\20261013T050347Z\`: all ten checks `PASS` and `Failures: 0`; the exit code was not sent. The server had the parakeet profile loaded (`/health` backend `fastconformer-ctc`, model `parakeet-ctc-1.1b-ja-q8_0.gguf`), not the cohere profile that W4-2 names; who started it is not recorded. What the answers show (`observed` on the deployed server):
+
+- `verbose_json` for the 9.696 s sample: one segment from 0.23 s to 8.71 s with 46 word times, one per character, in the layout of `crispasr_output.cpp` that the synthetic fixture follows; 3226 bytes with two-space indentation.
+- The window `offset_t_ms=5000`, `duration_ms=10000` answers in original-file time (its segment starts at 5.07 s), and its `duration` is 4.696 s, the part of the window inside the file, as [API-CRISPASR.md](../API-CRISPASR.md) §3.1 and §4 say.
+- The cut at 5 s fell inside a word: the full transcription has タイムスタンプ from 4.61 s to 5.29 s, and the window begins with キャンプ instead. This is the case the boundary guard of [ARCHITECTURE.md §2.5](../ARCHITECTURE.md#25-steprunner-interface-and-the-asr-window-loop) is for.
+- The server's `srt` is one cue whose text equals the segment's text, with the segment's times as `HH:MM:SS,mmm`, LF line ends, and an empty line after the cue. With the `verbose_json` of the same audio it is the equivalence fixture that [OQ-7](../OPEN-QUESTIONS.md#oq-7-local-srt-generation) needs.
+- Error bodies: `{"error": {"message": ..., "type": "invalid_api_key"}}` for the `401`, and the type `invalid_request_error` for both `400`s; the client reports their messages.
+- `/progress` reported `busy` with `progress` 0 at 0.32 s into a transcription; the cancellation returned at once, and the server reported idle 0.2 s later.
+
+[P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) adds these answers to `tests/data/`. W4-4: not reported.
 
 ## Decisions and deviations
 
@@ -66,9 +77,10 @@ W4-3 (round 13): not run. The owner's screenshot of the delivery folder (`1.jpg`
 
 ## Open items
 
-- [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer; [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet.md): the next delivery. All three go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
-- W4-3 and W4-4, on `crisprustgui-c296f23` or on the next delivery, and W4-1 and W4-2 again with the next delivery.
-- The probe's recorded answers become test data in `tests/data/` and replace the synthetic answer where they cover the same case ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
+- [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer; [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
+- W4-4, and W4-1 to W4-3 again with the next delivery.
+- The probe's recorded answers become test data in `tests/data/` ([P4-T5](../agents/tasks/P4-T5-server-answers/packet.md); [OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
+- The project's code-level names still read CrispRustGUI (executable, window title, delivery names); [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renames them to CrispGUI.
 - That a client still sending an oversized body sees a reset rather than the `413` is a `hypothesis` from the source; the client never sends one.
 - libcurl's cancellation latency of up to about a second affects only Linux development builds.
 - [OQ-7](../OPEN-QUESTIONS.md#oq-7-local-srt-generation) (local SRT generation) is the next decision; Phase 5 needs it. A003 decides it as planner when it plans Phase 5.

@@ -29,7 +29,7 @@ Complete: accepted on 2026-10-11 after the owner's Windows run of `crisprustgui-
 
 - [x] Top-level `CMakeLists.txt` that adds EUI-NEO from `CRISPGUI_EUI_NEO_DIR` with the options of [ENVIRONMENT.md §4.2](ENVIRONMENT.md#42-eui-neo-build-facts), for both the Linux and the MinGW build.
 - [x] The directory layout of [ARCHITECTURE.md §2](ARCHITECTURE.md#2-component-model) for the modules Phase 1 needs, with Windows and Linux implementations under `src/platform/`; later modules get their directories when they are written.
-- [x] `src/main.cpp`: a minimal EUI-NEO app using `DslAppConfig` (title "CrispRustGUI", window 1100x720, `onStart`), with a string table from the start.
+- [x] `src/main.cpp`: a minimal EUI-NEO app using `DslAppConfig` (titled with the project's name, window 1100x720, `onStart`), with a string table from the start.
 - [x] Tabs shell with four pages: Dashboard, Transcribe, Batch, Settings, built on EUI-NEO's `tabs` component; Settings already switches the UI language between English and Chinese, without saving it.
 - [x] Create the app data directory (`<folder of the executable>/appdata`) and point the GUI process's own `TMP`/`TEMP` at `appdata/tmp` in `onStart`; the dashboard shows both paths and warns when they are on the system drive.
 - [x] Unit tests for the string table and the app data preparation, run by CTest on Linux and by `run-tests.cmd` on Windows.
@@ -57,7 +57,7 @@ Complete: accepted on 2026-10-12 after the owner's Windows runs of `crisprustgui
 
 ## Phase 4 — ApiClient
 
-Implemented on 2026-10-12; the Linux acceptance passes. On Windows, W4-1 passed 19 of 20 tests: `api_client_test` allows too little time for WinHTTP's coarse timer, which the diagnostic measured; W4-2 passed by the owner's statement; W4-3 and W4-4 have not run ([Phase 4 report](devlog/phase-4.md)). The corrections and the next delivery are task packets for A004: [P4-T1](agents/tasks/P4-T1-timeout-test/packet.md), [P4-T2](agents/tasks/P4-T2-dashboard-start/packet.md), [P4-T3](agents/tasks/P4-T3-delivery/packet.md).
+Implemented on 2026-10-12; the Linux acceptance passes. On Windows, W4-1 passed 19 of 20 tests: `api_client_test` allows too little time for WinHTTP's coarse timer, which the diagnostic measured; W4-2 passed by the owner's statement; W4-3 passed, ten of ten probe checks against the deployed server; W4-4 is not reported ([Phase 4 report](devlog/phase-4.md)). The corrections, the rename to CrispGUI, the server's answers as test data, and the next delivery are task packets for A004: [P4-T1](agents/tasks/P4-T1-timeout-test/packet.md), [P4-T2](agents/tasks/P4-T2-dashboard-start/packet.md), [P4-T4](agents/tasks/P4-T4-rename/packet.md), [P4-T5](agents/tasks/P4-T5-server-answers/packet.md), [P4-T3](agents/tasks/P4-T3-delivery/packet-v2.md).
 
 - [x] Implement the transport with libcurl (Linux) and WinHTTP (Windows): streaming multipart upload, timeouts, cancellation, and the `Authorization` header (`HttpPost` and `MultipartBody` in `src/platform/`).
 - [x] Map errors to the typed set of [ARCHITECTURE.md §2.3](ARCHITECTURE.md#23-apiclient-and-http-transport); parse `verbose_json`; add a small JSON writer.

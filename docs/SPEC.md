@@ -1,4 +1,4 @@
-# Specification — CrispRustGUI v1
+# Specification — CrispGUI v1
 
 > Version 1 functional specification. Status: **approved for implementation**. Revised on 2026-10-11 with the owner's directions (a pluggable parameter panel with one parameter set per model, transcription windows with retry, the API key, the `C:\` rule) and with corrections from a source review of the server. Items marked *proposed* wait for the owner's decision in [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
 > Sources: user requirements (2026-10-11), audit reports in `reference/audits/audit-reports/`, server source in `reference/crispasr/`, the server contract in [API-CRISPASR.md](API-CRISPASR.md).
@@ -11,7 +11,7 @@ The CrispASR engine is driven today through a PowerShell launcher and manual CLI
 
 ```
 ┌────────────────────────┐        HTTP (127.0.0.1:5114)         ┌──────────────────────────┐
-│     CrispRustGUI       │ ── multipart POST /v1/audio/... ──▶ │   CrispASR server        │
+│       CrispGUI         │ ── multipart POST /v1/audio/... ──▶ │   CrispASR server        │
 │  (C++17 + EUI-NEO)     │ ── GET /health, /progress, ... ───▶ │   (spawned or adopted;   │
 │                        │                                      │    one model at a time)  │
 │  manages the server    │                                      │   reads models from      │
