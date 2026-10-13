@@ -3,8 +3,8 @@
 - Identity, session, model: A004, Claude Code session `0d1710c9-17d2-4343-bd00-ec946bfba62a`, Claude Sonnet 5.5
 - Packet: packet.md (v1)
 - Base: origin/main `2559a9d` (P4-T4 pushed at `fbe11fd`; `2559a9d` is documentation only) on 2026-10-13 (UTC); branch `a004/P4-T5`. The candidate was written on `fbe11fd` and rebased onto `2559a9d` before the Review, which touched none of its files
-- State: Review R01 (candidate committed; the Review is dispatched next)
-- Candidate commits reviewed: R01 — the SHA is recorded in the commit that adds the report, because a commit cannot contain its own SHA
+- State: Merged (pushed to `origin/main` as a fast-forward after a PASS)
+- Candidate commits reviewed: R01 `017b5b553e9a522b5f6bd72b8412c702766d586c` (PASS, [review-R01.md](review-R01.md)). The candidate was first committed as `dc62fe6f964035cb885988dec84ad67739793069` on `fbe11fd` and rebased onto `2559a9d` before the Review, with the same patch (`git range-diff` shows `=`; both have `git patch-id --stable` `8a4e11bb878d9a9ad536ae304d2ce55610cb0856`). `origin/main` had not moved past `2559a9d` when the branch was pushed, so the pushed commits contain the reviewed candidate itself. The commits that add the report, this receipt, and the identity context follow it; the pushed tip cannot be named here, and the notice to A003 and `git log origin/main` carry it
 
 ## Changes
 
@@ -49,13 +49,19 @@ All run in `<CODING_ROOT>` on Linux (Debian 12 under WSL2) with `set -o pipefail
 | `<CODING_ROOT>` | G2: `ctest --test-dir build/linux --output-on-failure` | 0 | 20 of 20 passed |
 | `<CODING_ROOT>` | G3: `for i in 1 2 3 4 5; do ctest --test-dir build/linux -L integration --output-on-failure \|\| exit 1; done` | 0 | Five rounds, each 5 of 5 passed |
 | `<CODING_ROOT>` | G4: `cmake --build build/mingw` on the tree configured with `cmake/toolchains/mingw-w64-x86_64.cmake` in P4-T4 | 0 | 42 steps, 0 compiler warnings; `build/mingw/tests/testdata/deployed-parakeet/` holds the eight files, all `OK`. The configure line of G4 is not repeated on this existing tree, which would only print the "CMAKE_TOOLCHAIN_FILE not used" notice; the Review runs both lines from a clean export |
-| `<CODING_ROOT>` | `python3 -I tools/dev/mdcheck.py .`; `git diff --check`; `awk` for lines over 120 columns in the changed C++ and CMake files | 0; 0; none | 0 problems; no whitespace errors; one line of 122 columns was split before the gates ran |
+| `<CODING_ROOT>` | `python3 -I tools/dev/mdcheck.py .`; `git diff --check` before the data files were staged; `awk` for lines over 120 columns in the changed C++ and CMake files | 0; 0; none | 0 problems; no complaint, but `git diff --check` skips untracked files, so it had not looked at the data (see F1 below); one line of 122 columns was split before the gates ran |
+| `<CODING_ROOT>` | `git commit` of the candidate as `dc62fe6`; `git fetch origin`; `git -c user.name=grshlogan -c user.email=grshlogan@gmail.com rebase origin/main`; `git range-diff fbe11fd..dc62fe6 origin/main..HEAD`; `git patch-id --stable` of both | 0; 0; 0; 0; 0 | Rebased onto `2559a9d` as `017b5b5`; `1: dc62fe6 = 1: 017b5b5`; equal patch IDs |
+| `<CODING_ROOT>` | `git diff --check 2559a9d..017b5b5` on the committed range, after the Review's F1 | 2 | `tests/data/deployed-parakeet/transcript.srt:4: new blank line at EOF`: the blank line ends the server's SRT cue and must stay byte for byte |
+| export of `017b5b5` | Review R01 (fresh Sonnet 5.5 subagent): G1 to G4 from clean exports, 40-odd mutations of the data, the tests, and the parsers, 600 repeated runs, sanitizer builds | see [review-R01.md](review-R01.md) | PASS: no P0, P1, or P2 finding, three P3 notes; G1 to G4 exit 0 with no warnings (223 and 226 steps), 20 of 20, five rounds of 5 of 5 |
+| `<CODING_ROOT>` | `git fetch origin` before the push | 0 | `origin/main` still `2559a9d`; the push is a fast-forward |
 
 ## Review findings and answers
 
 | Round / ID | AGREE / DISAGREE / UNCERTAIN | Change or counter-evidence |
 | --- | --- | --- |
-| — | — | — |
+| R01 / F1 (P3) | AGREE | My `git diff --check` ran while the data files were untracked, so my "no whitespace errors" did not cover them. For the committed range it exits 2 on `transcript.srt:4: new blank line at EOF`. That blank line is the cue terminator of the server's SRT, which AC-1 keeps byte for byte, so the file is right and the Commands table above now says what happened. A `.gitattributes` rule for the data folder would silence the check, but that file is outside this packet's write scope; passed to A003 |
+| R01 / F2 (P3) | AGREE, not applied | "One per character" in `tests/data/README.md` and in the comment above `CheckRecorded` is not exact: the 46 words of `transcript.verbose.json` cover 48 of the text's 50 characters, with the punctuation attached to the word before it (`は、`, `す。`), and the window has 25 words for 26 characters. The accurate description is one word per kana or kanji with punctuation attached to the word before it. The words come from A003's description; a change now would alter the reviewed patch, so I leave it to the next change of these files (Phase 5's SRT tests will read the same data) and tell A003 |
+| R01 / F3 (P3) | AGREE | For A003, outside this packet: `src/core/transcript.h:31` and `docs/API-CRISPASR.md:101` call a window request's `duration` the window's length; the recorded window answer shows the part of the window inside the file (4.696 s for 5000 ms plus 10000 ms on a 9.696 s file). The new comment in `tests/transcript_test.cpp` already says it correctly |
 
 ## Uncovered, skipped, and decisions requested
 
