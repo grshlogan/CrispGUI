@@ -3,8 +3,8 @@
 - Identity, session, model: A004, Claude Code session `0d1710c9-17d2-4343-bd00-ec946bfba62a`, Claude Sonnet 5.5
 - Packet: packet.md (v1)
 - Base: origin/main `4a92384` (P4-T1 and P4-T2 pushed; `4a92384` is documentation only) on 2026-10-13 (UTC); branch `a004/P4-T4`. The candidate was written on `7305781` and rebased onto `4a92384` before the Review, which touched none of its files
-- State: Review R01 (candidate committed; the Review is dispatched next)
-- Candidate commits reviewed: R01 — the SHA is recorded in the commit that adds the report, because a commit cannot contain its own SHA
+- State: Merged (pushed to `origin/main` as a fast-forward after a PASS)
+- Candidate commits reviewed: R01 `403bde943b4676d04c946f9c59b5cc7d4d7f8f99` (PASS, [review-R01.md](review-R01.md)). The candidate was first committed as `183ad546ffd26285a52c3c756dd8f88a2707f594` on `7305781` and rebased onto `4a92384` before the Review, with the same patch (`git range-diff` shows `=`; both have `git patch-id --stable` `94e2d255b41da29e41377e3fe94e72588fea0400`). `origin/main` had not moved past `4a92384` when the branch was pushed, so the pushed commits contain the reviewed candidate itself. The commits that add the report, this receipt, and the identity context follow it; the pushed tip cannot be named here, and the notice to A003 and `git log origin/main` carry it
 
 ## Changes
 
@@ -40,7 +40,7 @@ Two facts the packet asked me to record:
 | AC-3: the window title reads CrispGUI | `src/util/string_table.cpp`, `src/main.cpp` | The base string was "CrispRustGUI" (`git show 7305781:src/util/string_table.cpp`) | A running `build/linux/crispgui` under WSLg: `_NET_WM_NAME='CrispGUI - 0 FPS'` and `WM_NAME` the same, read with a throwaway script that uses libX11 (EUI-NEO appends the frame rate to the title). A capture, `<scratchpad>/captures/t4-stopped-3.png`, made with `tools/dev/guirun.sh`, shows the dashboard; the title bar is not part of a capture |
 | AC-4: the tests check the new boundary and the new note prefix, and the notes in the log pane are still recognized | `src/core/server_log.h` (`kNotePrefix`), `src/ui/pages.cpp:464`, `src/platform/multipart.cpp`, the two tests | Mutation M1: the constant back to `"[CrispRustGUI] "`: `server_manager_test` exits 8 with two failed checks (`tests/server_manager_test.cpp:128` and `:142`). Mutation M2: the boundary prefix back to `"CrispRustGUI-"`: `multipart_test` exits 8 with two failed checks (`:106`, `:110`). Mutation M3: the pane's check back to the old literal, as the two-literal drift the packet names: the capture shows the notes in the normal color, not the accent color. Each was restored (`cmp` against a saved copy: identical) | `<scratchpad>/captures/t4-log-top.png` (GUI-started stub server, `STUB_LINES=4`, the log scrolled to its top with real pointer events): four `[CrispGUI] …` notes ("Starting Japanese/cohere-asr-ja-q8", "Working directory", "Environment", "Started process") in the accent color, then the stub's own lines in the normal color. `<scratchpad>/captures/t4-M3-log-top.png`: the same notes in the normal color under M3 |
 | AC-5: the packaging scripts name their archives and texts `crispgui`; their clean-tree and release-build checks still work | The three scripts | `git diff` of the scripts shows only the names changing; `bash -n` on each script and on `guirun.sh` exits 0; each of the three scripts, run with an output folder in the scratchpad on this dirty tree, prints "the working tree is not clean" and exits 1, and writes nothing | Commands table. The check for a commit that is not on `origin/main` and the release-build check are in code that the change does not touch; a full packaging run is P4-T3's |
-| AC-6: the documents in the write scope name the new artifacts in the same commit | Changes table | — | Reading: `git diff -U0` of the five documents shows the artifact names changing and nothing else |
+| AC-6: the documents in the write scope name the new artifacts in the same commit | Changes table | — | Reading: `git diff -U0` of the five documents shows the artifact names changing and, in `tools/dev/README.md`, also the corrected stub path (P4-T2 Review F4), which the Changes table declares |
 | AC-7: gates pass | — | — | G1 to G4 in the Commands table |
 
 ## Commands
@@ -63,12 +63,18 @@ All run in `<CODING_ROOT>` on Linux (Debian 12 under WSL2, WSLg for the captures
 | `<CODING_ROOT>` | `bash -n` on `tools/package-windows.sh`, `tools/package-diagnostic.sh`, `tools/smoke/package-eui-smoke.sh`, `tools/dev/guirun.sh` | 0 each | Syntax is fine |
 | `<CODING_ROOT>` | `tools/package-windows.sh <scratchpad>/pkg-out`; `tools/package-diagnostic.sh winhttp_timeouts <scratchpad>/pkg-out`; `tools/smoke/package-eui-smoke.sh <scratchpad>/pkg-out`, all on the dirty tree | 1 each | "the working tree is not clean"; `<scratchpad>/pkg-out` was not created |
 | `<CODING_ROOT>` | `python3 -I tools/dev/mdcheck.py .`; `git diff --check` | 0; 0 | 0 problems; no whitespace errors |
+| `<CODING_ROOT>` | `git commit` of the candidate as `183ad54`; `git fetch origin`; `git -c user.name=grshlogan -c user.email=grshlogan@gmail.com rebase origin/main`; `git range-diff 7305781..183ad54 origin/main..HEAD`; `git patch-id --stable` of both | 0; 0; 0; 0; 0 | Rebased onto `4a92384` as `403bde9`; `1: 183ad54 = 1: 403bde9`; equal patch IDs |
+| export of `403bde9` | Review R01 (fresh Sonnet 5.5 subagent): G1 to G4 from clean exports, strings of the binaries, captures of the base and the candidate, the packaging scripts through a stand-in `git` (refusals and happy paths), six mutations | see [review-R01.md](review-R01.md) | PASS: no P0, P1, or P2 finding, four P3 notes; G1 to G4 exit 0 with no warnings (223 and 226 steps), 20 of 20, five rounds of 5 of 5 |
+| `<CODING_ROOT>` | `git fetch origin` before the push | 0 | `origin/main` still `4a92384`; the push is a fast-forward |
 
 ## Review findings and answers
 
 | Round / ID | AGREE / DISAGREE / UNCERTAIN | Change or counter-evidence |
 | --- | --- | --- |
-| — | — | — |
+| R01 / F1 (P3) | AGREE | The corrected stub path in `tools/dev/README.md` is not a rename; it is declared in the Changes table and the commit message, and the AC-6 row now says so instead of "nothing else". Receipt only |
+| R01 / F2 (P3) | AGREE | `docs/ARCHITECTURE.md:249` and `:259` use the word for the language, in a rejected alternative and a language row. The receipt lists them with their reasons. Whether AC-1's wording should name such uses is for A003; no change to the candidate |
+| R01 / F3 (P3) | AGREE, not applied | No test links `crisp_ui`, so no test can see the pane's recognition of notes; mutation M-C passes G2 and only a capture shows it. A function such as `core::IsNoteLine(std::string_view)` beside `kNotePrefix`, used by the pane and checked in `tests/server_log_test.cpp`, would put it into G2. That file is outside this packet's write scope and the change would alter the reviewed patch, so I leave it as an optional follow-up packet for A003 |
+| R01 / F4 (P3) | AGREE, not applied | The `#` comment of the `CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crispgui` line in `docs/ENVIRONMENT.md` §2.2 is four columns left of the next line's, because the name is four characters shorter. Cosmetic; re-padded the next time that file is touched |
 
 ## Uncovered, skipped, and decisions requested
 
@@ -77,3 +83,4 @@ All run in `<CODING_ROOT>` on Linux (Debian 12 under WSL2, WSLg for the captures
 - Decision inside the packet's freedom: the shared constant is in `src/core/server_log.h`, the header both the ServerManager and the UI already include, rather than in `server_manager.h`.
 - The note check in the log pane now needs the space after the bracket. A line of the server's own output that starts with `[CrispGUI]` and no space is not taken for a note, which the old check would have done.
 - Past deliveries and records keep the old names, as the packet requires: the seven earlier deliveries in `<HANDOFF_OUT>` and their rows are untouched.
+- Decision requested (optional, A003): a small follow-up that moves the note recognition into `core::IsNoteLine` and tests it in `server_log_test`, so that G2 catches the two-literal drift that only a capture catches now (Review F3).
