@@ -3,8 +3,8 @@
 - Identity, session, model: A004, Claude Code session `0d1710c9-17d2-4343-bd00-ec946bfba62a`, Claude Sonnet 5.5
 - Packet: packet.md (v1)
 - Base: origin/main `1268807` (the packet's commit) on 2026-10-13 (UTC); branch `a004/P5-T1`
-- State: Review R01 (candidate committed; the Review is dispatched next)
-- Candidate commits reviewed: R01 — the SHA is recorded in the commit that adds the report, because a commit cannot contain its own SHA
+- State: Merged (pushed to `origin/main` as a fast-forward after a PASS)
+- Candidate commits reviewed: R01 `3a11fefd90141bb14139afd76a68651e6fb40f7d` (PASS, [review-R01.md](review-R01.md)). `origin/main` had not moved past the base `1268807` when the candidate was committed or when the branch was pushed, so no rebase was needed and the pushed commits contain the reviewed candidate itself. The commits that add the report, this receipt, and the identity context follow it; the pushed tip cannot be named here, and the notice to A003 and `git log origin/main` carry it
 
 ## Changes
 
@@ -54,12 +54,18 @@ All run in `<CODING_ROOT>` on Linux (Debian 12 under WSL2) with `set -o pipefail
 | `<CODING_ROOT>` | G3: `for i in 1 2 3 4 5; do ctest --test-dir build/linux -L integration --output-on-failure \|\| exit 1; done` | 0 | Five rounds, each 5 of 5 passed |
 | `<CODING_ROOT>` | G4: `cmake --build build/mingw` on the tree configured with the toolchain file in P4-T4 (CMake re-ran for the new sources) | 0 | 35 steps, 0 compiler warnings; `build/mingw/tests/srt_writer_test.exe` exists; 22 `.exe` files in `build/mingw/tests/`. The configure line of G4 is not repeated on this existing tree, which would only print the "CMAKE_TOOLCHAIN_FILE not used" notice; the Review runs both lines from a clean export |
 | `<CODING_ROOT>` | `python3 -I tools/dev/mdcheck.py .`; `git diff --check` (with the new files added as intent-to-add); `awk` for lines over 120 columns in the changed and new files | 0; 0; none new | 0 problems; no whitespace errors; one line of 124 columns in `CMakeLists.txt:127` was there before and is not mine; two lines of the new test were split |
+| `<CODING_ROOT>` | `git commit` of the candidate as `3a11fef`; `git fetch origin` | 0; 0 | `origin/main` still `1268807`: no rebase |
+| export of `3a11fef` | Review R01 (fresh Sonnet 5.5 subagent): G1 to G4 from clean exports, sanitizer runs, 69 mutations of the writer, 12 data mutations, and a differential harness that compiles CrispASR's own `crispasr_output.cpp` and compares its `srt` for 460,000 random segment lists | see [review-R01.md](review-R01.md) | PASS: no P0, P1, or P2 finding, four P3 notes; G1 (226 steps), G2 (21 of 21), and G4 (229 steps) exit 0 with no warnings |
+| `<CODING_ROOT>` | `git fetch origin` before the push | 0 | `origin/main` still `1268807`; the push is a fast-forward |
 
 ## Review findings and answers
 
 | Round / ID | AGREE / DISAGREE / UNCERTAIN | Change or counter-evidence |
 | --- | --- | --- |
-| — | — | — |
+| R01 / F1 (P3) | AGREE, not applied | Four mutants survive: skipping a segment whose end is not after its start, sorting the segments by start, no check of the first letter of a two-letter label, and `label.size() >= 2`. Each differs from the real server's `srt` (zero-length and backward cues are written as given, the order is kept), and no test pins it. The checks the Review proposes: `Segment(1000, 1000, "z")` and `Segment(2000, 1500, "y")` give `00:00:01,000 --> 00:00:01,000` and `00:00:02,000 --> 00:00:01,500`; starts 5000 then 1000 stay in that order; `SrtSpeakerPrefix("aB") == "(aB) "` and `SrtSpeakerPrefix("BAD") == "(BAD) "`. AC-2 lists none of these rules, and adding the checks now would change the reviewed patch, so they wait for the next change of `tests/srt_writer_test.cpp` unless A003 asks for a micro-change |
+| R01 / F2 (P3) | AGREE, not applied | The "Read by" column of `transcript.verbose.json` and `window.verbose.json` in `tests/data/README.md` names `transcript_test` only; `srt_writer_test` reads both too. The packet asked to mark `transcript.srt` only; the two rows get `srt_writer_test` at the next change of the file |
+| R01 / F3 (P3) | AGREE | For A003: "one per kana or kanji with the punctuation attached to the word before it" is the packet's wording and holds for most words, but the `，` after 正確 and the final `。` of `transcript.verbose.json` (and the final `。` of the window answer) belong to no word. A wording such as "…; punctuation of the text can belong to no word" would be exact |
+| R01 / F4 (P3) | AGREE | For A003: `verbose_json` carries the normalized speaker label, so a participant named `A`, or two capital letters from `BA` to `ZZ`, cannot be told from a speaker number: the server's `(A) ` is written as `(speaker 0) `. Diarization is not in v1 and no recorded answer has a label; one sentence in ARCHITECTURE §2.8 or in the header of `srt_writer.h` when diarization is planned |
 
 ## Uncovered, skipped, and decisions requested
 
@@ -67,3 +73,4 @@ All run in `<CODING_ROOT>` on Linux (Debian 12 under WSL2) with `set -o pipefail
 - The writer has no caller yet: the Transcribe page and the queue come with later packets, which will feed it the merged segments of the windows and hand its output to `WriteFileAtomically` ([P5-T2](../P5-T2-atomic-write/packet.md)).
 - Subtitle shaping (characters per cue, splits at sentence ends) is not part of this task (the packet).
 - A speaker label that no number gives is written as `(<label>) `; the packet left the choice open and asked for it to be recorded here. If A003 prefers another shape, it is one line in `SrtSpeakerPrefix`.
+- Review F4 adds one limit: a participant's name that looks like a normalized label (`A`, or `BA` to `ZZ`) is written as a speaker number, because `verbose_json` does not keep the raw label.
