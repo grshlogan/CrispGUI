@@ -5,7 +5,7 @@ Helpers that A003 used for the Linux evidence of Phases 1 to 4, handed over in r
 | Helper | Use |
 | --- | --- |
 | `guirun.sh <prefix> <delay>...` | Runs `build/linux/crispgui` of this checkout under WSLg, saves window captures `<prefix>-<delay>.png` after the given delays in seconds, closes the window, and prints the exit code. `GUI_SIZE=1100x720` resizes the window first; the GUI's own environment variables pass through ([ENVIRONMENT.md §2.2](../../docs/ENVIRONMENT.md#22-commands)) |
-| `xctl.py` | Drives a window found by its process ID through libX11 (`ctypes`, no extra packages): `shot <pid> <png>`, `click <pid> <x> <y>`, `close <pid>`, `resize <pid> <w> <h>` |
+| `xctl.py` | Drives a window found by its process ID through libX11 (`ctypes`, no extra packages): `shot <pid> <png>`, `click <pid> <x> <y>`, `close <pid>`, `resize <pid> <w> <h>`. Under WSLg its `click` alone does not reach EUI-NEO controls; moving the real pointer to the target first with `XWarpPointer` makes the same events work (P4-T2 Review, finding F6) |
 | `mdcheck.py <repo-root>` | Checks the project's Markdown files: relative links and anchors, CR characters, trailing spaces, and open-item markers. Exit 0 when clean |
 | `fake-deployment/` | A stand-in CrispASR root for `CRISPGUI_CRISPASR_ROOT`: the four Japanese reference profiles (copies of `reference/crispasr/profiles-japanese/`), a broken profile, one-byte stand-ins for the cohere, qwen3, and aligner models, and a placeholder `cuda13/crispasr`. The dashboard lists two profiles as ready, two with missing models, and one parse error |
 

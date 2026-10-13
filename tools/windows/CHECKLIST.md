@@ -18,14 +18,14 @@ Send back: `test-results.txt`, the whole file.
 ## W4-2 Start the server from the GUI
 
 1. Start `crispgui.exe`. If the Server line already shows Running, a server started elsewhere (by the launcher) holds the port, and the Start buttons stay dimmed: press Stop next to it and confirm, then wait for Stopped.
-2. On the Dashboard, look at the Profiles list, which follows the Server line directly. At the default window size the first profiles are in view without scrolling, each with its Start button to the right of its name; a longer list scrolls with the mouse wheel.
+2. On the Dashboard, look at the Profiles list, which follows the Server panel. At the default window size the first profiles are in view without scrolling, each with its Start button to the right of its name; a longer list scrolls with the mouse wheel.
 3. Each profile row reads `[OK] <name> <backend>` followed by a Start button (启动 in the Chinese interface). Press Start in the row of a ready Japanese profile, for example `parakeet-ctc-1.1b-ja-q8`, which W4-3 used on 2026-10-13, or `cohere-asr-ja-q8`.
 4. The Server line at the top of the page changes to "Starting: loading the model…" and then to Running; the server log at the bottom shows the server's lines.
 5. Expected: Running.
 
 The server must come from the GUI: a server the GUI starts writes each upload into this folder's `appdata\tmp\server`, whereas a server from the launcher writes them into the user's TEMP folder, normally on `C:`. Keep the GUI and the server running for W4-3.
 
-Send back: PASS or FAIL; for a FAIL, a screenshot.
+Send back: PASS or FAIL; for a FAIL, a screenshot. Also say whether the Start button of the first ready profile was in view at the default window size without scrolling, with a screenshot if it was not.
 
 ## W4-3 Probe the running server
 

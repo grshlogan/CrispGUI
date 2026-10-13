@@ -64,7 +64,7 @@ Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1
 cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure      # -L unit or -L integration for one group
-CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crispgui   # reads <folder>/profile as the CrispASR root
+CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crispgui       # reads <folder>/profile as the CrispASR root
 CRISPGUI_DEV_AUTOSTART=<folder>/<profile> ...              # starts that profile once the first checks are done
 build/linux/api_probe --port <port> --key <key> <audio file>  # probes a running server (tools/api_probe)
 

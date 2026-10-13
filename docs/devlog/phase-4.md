@@ -83,7 +83,7 @@ W4-4 (round 15, owner statement): passed. After Stop and its confirmation the se
 - W4-1 to W4-4 again with the next delivery; the phase closes when its W4-1 has no failures.
 - The first screen at other window sizes (P4-T2 Review, finding F3): at the default 1100×720 the first ready profile's Start button sits about 50 px above the lower edge of the scrolling area with the fake deployment; at the minimum window of 800×560 no profile row is on the first screen. A longer Server panel or a folder path that wraps uses part of that margin. W4-2 of the next delivery shows how the owner's real list fits.
 - The probe's recorded answers become test data in `tests/data/` ([P4-T5](../agents/tasks/P4-T5-server-answers/packet.md); [OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
-- The project's code-level names still read CrispRustGUI (executable, window title, delivery names); [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renames them to CrispGUI.
+- [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renamed the code-level names to CrispGUI (`403bde9`): `crispgui.exe`, the window title, the WinHTTP user agent, the multipart boundary, the log notes, and the archive names; the next delivery is the first with them.
 - That a client still sending an oversized body sees a reset rather than the `413` is a `hypothesis` from the source; the client never sends one.
 - libcurl's cancellation latency of up to about a second affects only Linux development builds.
 - [OQ-7](../OPEN-QUESTIONS.md#oq-7-local-srt-generation) (local SRT generation) is the next decision; Phase 5 needs it. A003 decides it as planner when it plans Phase 5.
