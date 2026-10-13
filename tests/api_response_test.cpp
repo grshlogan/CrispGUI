@@ -1,6 +1,8 @@
 #include "check.h"
+#include "test_support.h"
 
 #include "core/api_client.h"
+#include "platform/files.h"
 #include "platform/http.h"
 
 #include <set>
@@ -87,6 +89,27 @@ int main() {
 
         CHECK(ClassifyApiResponse(Answer(500, "")).message == "The server answered HTTP 500.");
         CHECK(ClassifyApiResponse(Answer(400, "bad\r\nthing ")).message == "bad  thing");
+    }
+
+    // The error bodies of the deployed server, recorded by api_probe (tests/data/README.md): the
+    // messages the client reports are the server's own.
+    {
+        const auto recorded = [](const char* name) {
+            const auto file = crisp::platform::ReadFileBytes(
+                crisp::test::TestDataDirectory() / "deployed-parakeet" / name, 1 << 16);
+            CHECK(file.Ok());
+            return file.bytes;
+        };
+        const ApiError key = ClassifyApiResponse(Answer(401, recorded("error-key.json")));
+        CHECK(key.kind == ApiErrorKind::kUnauthorized && key.status == 401);
+        CHECK(key.message == "invalid or missing API key");
+        const ApiError format = ClassifyApiResponse(Answer(400, recorded("error-format.json")));
+        CHECK(format.kind == ApiErrorKind::kBadRequest && format.status == 400);
+        CHECK(format.message ==
+              "invalid response_format 'bogus'; must be one of: json, verbose_json, text, srt, vtt, diarized_json");
+        const ApiError decode = ClassifyApiResponse(Answer(400, recorded("error-decode.json")));
+        CHECK(decode.kind == ApiErrorKind::kBadRequest && decode.status == 400);
+        CHECK(decode.message == "failed to decode audio (unsupported format or corrupt file)");
     }
 
     // Messages of error bodies.

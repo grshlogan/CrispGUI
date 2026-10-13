@@ -1,0 +1,1 @@
+{"error": {"message": "invalid response_format 'bogus'; must be one of: json, verbose_json, text, srt, vtt, diarized_json", "type": "invalid_request_error"}}

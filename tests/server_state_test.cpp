@@ -1,6 +1,8 @@
 #include "check.h"
+#include "test_support.h"
 
 #include "core/server_state.h"
+#include "platform/files.h"
 
 #include <string>
 #include <vector>
@@ -379,6 +381,23 @@ int main() {
         CHECK(ClassifyModels(Http(401, "{}")).detail == "The server did not accept the API key (HTTP 401).");
         CHECK(ClassifyModels(Http(500, "{}")).detail == "GET /v1/models answered HTTP 500.");
         CHECK(!ClassifyModels(Http(200, "{\"data\": []}")).ok);
+
+        // The answers of the deployed server with the parakeet profile loaded, recorded by
+        // api_probe (tests/data/README.md).
+        const auto recorded = [](const char* name) {
+            const auto file = crisp::platform::ReadFileBytes(
+                crisp::test::TestDataDirectory() / "deployed-parakeet" / name, 1 << 16);
+            CHECK(file.Ok());
+            return file.bytes;
+        };
+        const HealthReport deployedHealth = ClassifyHealth(Http(200, recorded("health.json")));
+        CHECK(deployedHealth.kind == HealthKind::kCrispAsr && !deployedHealth.loading);
+        CHECK(deployedHealth.backend == "fastconformer-ctc");
+        const ModelsReport deployedModels = ClassifyModels(Http(200, recorded("models.json")));
+        CHECK(deployedModels.ok && deployedModels.backend == "fastconformer-ctc");
+        CHECK(deployedModels.model ==
+              "E:\\AI\\ASR\\CrispASR\\models\\Japanese\\[cstr]parakeet-ctc-1.1b-ja-GGUF\\"
+              "parakeet-ctc-1.1b-ja-q8_0.gguf");
     }
 
     // Where the GUI connects for a listening address.

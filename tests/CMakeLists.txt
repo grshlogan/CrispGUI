@@ -67,3 +67,17 @@ endforeach()
 # Server answers for the parser and the stub's replay (tests/data/README.md).
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/data/verbose-synthetic.json"
     "${CMAKE_CURRENT_BINARY_DIR}/testdata/verbose-synthetic.json" COPYONLY)
+# Answers recorded from the deployed server, copied byte for byte (tests/data/README.md).
+set(CRISPGUI_DEPLOYED_ANSWERS
+    transcript.verbose.json
+    window.verbose.json
+    transcript.srt
+    error-key.json
+    error-format.json
+    error-decode.json
+    health.json
+    models.json)
+foreach(answer IN LISTS CRISPGUI_DEPLOYED_ANSWERS)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/data/deployed-parakeet/${answer}"
+        "${CMAKE_CURRENT_BINARY_DIR}/testdata/deployed-parakeet/${answer}" COPYONLY)
+endforeach()

@@ -30,6 +30,48 @@ std::string ErrorOf(const std::string& body) {
     return ParseVerboseJson(body, transcript, error) ? std::string() : error;
 }
 
+// One answer recorded from the deployed server (tests/data/README.md): a single segment of
+// |wordCount| words, one per character. Checks the language, the duration, the segment's times,
+// the first and the last word, and that the word times stay inside the segment and never go
+// backwards.
+struct ExpectedWord {
+    const char* text;  // UTF-8
+    std::int64_t startMs;
+    std::int64_t endMs;
+};
+
+void CheckRecorded(const char* file, std::int64_t durationMs, std::int64_t startMs, std::int64_t endMs,
+                   std::size_t wordCount, const ExpectedWord& first, const ExpectedWord& last) {
+    const auto bytes =
+        crisp::platform::ReadFileBytes(crisp::test::TestDataDirectory() / "deployed-parakeet" / file, 1 << 20);
+    CHECK(bytes.Ok());
+    Transcript answer;
+    std::string error;
+    CHECK(ParseVerboseJson(bytes.bytes, answer, error));
+    CHECK(error.empty());
+    CHECK(answer.task == "transcribe" && answer.language == "ja" && answer.durationMs == durationMs);
+    CHECK(answer.segments.size() == 1);
+    if (answer.segments.size() != 1) {
+        return;
+    }
+    const auto& segment = answer.segments[0];
+    CHECK(segment.id == 0 && segment.startMs == startMs && segment.endMs == endMs);
+    CHECK(!segment.text.empty() && segment.text == answer.text && segment.speaker.empty());
+    CHECK(segment.words.size() == wordCount);
+    if (segment.words.size() != wordCount || wordCount == 0) {
+        return;
+    }
+    CHECK(segment.words.front().word == first.text && segment.words.front().startMs == first.startMs &&
+          segment.words.front().endMs == first.endMs);
+    CHECK(segment.words.back().word == last.text && segment.words.back().startMs == last.startMs &&
+          segment.words.back().endMs == last.endMs);
+    std::int64_t previousStartMs = startMs;
+    for (const auto& word : segment.words) {
+        CHECK(word.startMs >= previousStartMs && word.endMs >= word.startMs && word.endMs <= endMs);
+        previousStartMs = word.startMs;
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -87,6 +129,15 @@ int main() {
         CHECK(second.words.empty());
         CHECK(transcript.segments[2].startMs == 7100 && transcript.segments[2].endMs == 12340);
     }
+
+    // The deployed server's answers for the sample ja-demo.mp3 (tests/data/README.md). The whole
+    // file: 9.696 s and one segment from 0.23 s to 8.71 s. The window of 10 s from 5 s: its times
+    // stay in the file's time and its duration, 4.696 s, is the part of the window inside the file.
+    // Members the GUI does not use, such as the tokens, are ignored.
+    CheckRecorded("transcript.verbose.json", 9696, 230, 8710, 46, {"\xE3\x81\x93", 230, 250},
+                  {"\xE3\x81\x99", 8690, 8710});
+    CheckRecorded("window.verbose.json", 4696, 5070, 8710, 25, {"\xE3\x82\xAD", 5070, 5090},
+                  {"\xE3\x81\x99", 8690, 8710});
 
     // A window past the end of the audio: no segments and duration 0. Unknown members, such as
     // the vad_segments that a vad_export request adds, are ignored.

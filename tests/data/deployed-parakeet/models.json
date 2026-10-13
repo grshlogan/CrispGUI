@@ -1,0 +1,1 @@
+{"object": "list", "data": [{"id": "E:\\AI\\ASR\\CrispASR\\models\\Japanese\\[cstr]parakeet-ctc-1.1b-ja-GGUF\\parakeet-ctc-1.1b-ja-q8_0.gguf", "object": "model", "owned_by": "crispasr", "backend": "fastconformer-ctc"}]}

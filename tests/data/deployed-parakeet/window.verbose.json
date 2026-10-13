@@ -1,0 +1,45 @@
+{
+  "task": "transcribe",
+  "language": "ja",
+  "duration": 4.696,
+  "text": "キャンプがタ語レベルで正確に撮れるか確認しています。",
+  "segments": [
+    {
+      "id": 0,
+      "start": 5.07,
+      "end": 8.71,
+      "text": "キャンプがタ語レベルで正確に撮れるか確認しています。",
+      "temperature": 0.000000,
+      "avg_logprob": -0.144439,
+      "no_speech_prob": 0.0,
+      "words": [
+        {"word": "キ", "start": 5.07, "end": 5.09},
+        {"word": "ャ", "start": 5.11, "end": 5.13},
+        {"word": "ン", "start": 5.19, "end": 5.21},
+        {"word": "プ", "start": 5.29, "end": 5.31},
+        {"word": "が", "start": 5.41, "end": 5.43},
+        {"word": "タ", "start": 5.59, "end": 5.61},
+        {"word": "語", "start": 5.81, "end": 5.83},
+        {"word": "レ", "start": 5.93, "end": 5.95},
+        {"word": "ベ", "start": 6.07, "end": 6.09},
+        {"word": "ル", "start": 6.17, "end": 6.19},
+        {"word": "で", "start": 6.29, "end": 6.31},
+        {"word": "正", "start": 6.59, "end": 6.61},
+        {"word": "確", "start": 6.83, "end": 6.85},
+        {"word": "に", "start": 7.07, "end": 7.09},
+        {"word": "撮", "start": 7.21, "end": 7.23},
+        {"word": "れ", "start": 7.33, "end": 7.35},
+        {"word": "る", "start": 7.43, "end": 7.45},
+        {"word": "か", "start": 7.53, "end": 7.55},
+        {"word": "確", "start": 7.75, "end": 7.77},
+        {"word": "認", "start": 8.01, "end": 8.03},
+        {"word": "し", "start": 8.25, "end": 8.27},
+        {"word": "て", "start": 8.35, "end": 8.37},
+        {"word": "い", "start": 8.45, "end": 8.47},
+        {"word": "ま", "start": 8.55, "end": 8.57},
+        {"word": "す", "start": 8.69, "end": 8.71}
+      ],
+      "tokens": [697, 29, 147, 5, 154, 711, 136, 291, 43, 9, 514, 838, 4, 1463, 314, 14, 828, 226, 8]
+    }
+  ]
+}
