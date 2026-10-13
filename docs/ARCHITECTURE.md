@@ -42,7 +42,7 @@ CrispGUI/
 │   │   ├── job_model.{h,cpp}         // Job / StepSpec / states
 │   │   ├── job_queue.{h,cpp}         // queue execution, ordering, pause and resume
 │   │   ├── job_store.{h,cpp}         // persistence: per-job JSON + checkpoint lines
-│   │   ├── srt_writer.{h,cpp}        // segments -> SRT (§2.8)
+│   │   ├── srt_writer.{h,cpp}        // (P5) segments -> SRT in the server's cue format (§2.8)
 │   │   └── step_runners/
 │   │       ├── step_runner.h         // interface
 │   │       └── asr_step.cpp          // v1's only runner: the window loop (§2.5)
@@ -240,6 +240,8 @@ Illustration from the current profiles, without a manifest: the `parakeet-ctc-1.
 - Input: the merged segments (start and end in seconds with centisecond precision, text, optional words and speaker).
 - Default output reproduces the server's `srt` format ([API-CRISPASR.md §4](API-CRISPASR.md#4-response-formats)): one cue per segment with non-empty text, numbered from 1, `HH:MM:SS,mmm --> HH:MM:SS,mmm`, the text, and a blank line, in UTF-8. Equivalence with the server's own output is a test (SPEC FR-3).
 - Optional shaping (GUI tier): a maximum number of characters per cue and splitting at sentence-ending punctuation, using word timings when present and proportional timing otherwise. The behavior follows `crispasr_output.cpp`, but the code is written independently (AGPL boundary).
+- Status: the default writer exists since [P5-T1](agents/tasks/P5-T1-srt-writer/packet.md) (`src/core/srt_writer.{h,cpp}`). It equals the server's `srt` for the recorded answer byte for byte, and its Review compared it with CrispASR's own formatter on 300,000 random segment lists without a difference. Shaping is planned.
+- Speaker labels: `verbose_json` carries the normalized label (`A`, `B`, ..., then `BA` and on), and the writer maps it back to the server's prefix `(speaker N) `. A participant whose real label has that shape cannot be told from a numbered speaker; this matters once diarization (pipeline step 2) is used.
 
 ## 3. Key decisions and rejected alternatives
 
