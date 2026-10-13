@@ -107,7 +107,7 @@ std::string RandomMultipartBoundary() {
                        static_cast<std::uint32_t>(thread), static_cast<std::uint32_t>(count)};
     std::mt19937_64 generator(seed);
     static const char kHex[] = "0123456789abcdef";
-    std::string boundary = "CrispRustGUI-";
+    std::string boundary = "CrispGUI-";
     for (int part = 0; part < 2; ++part) {
         std::uint64_t bits = generator();
         for (int digit = 0; digit < 16; ++digit) {

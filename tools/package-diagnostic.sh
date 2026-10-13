@@ -25,13 +25,13 @@ if ! grep -q '^CMAKE_BUILD_TYPE:STRING=Release$' "$build/CMakeCache.txt"; then
   exit 1
 fi
 
-name="crisprustgui-diag-$target-${sha:0:7}"
+name="crispgui-diag-$target-${sha:0:7}"
 stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip" "$out/$name.zip.sha256"
 mkdir -p "$stage"
 cp "$build/$target.exe" "$stage/"
 {
-  echo "CrispRustGUI diagnostic: $target.exe"
+  echo "CrispGUI diagnostic: $target.exe"
   echo "Commit: $sha (on origin/main)"
   echo "Packaged: $(date -u +%Y-%m-%dT%H:%M:%SZ) in WSL2 ($WSL_DISTRO_NAME)"
   echo "Toolchain: MinGW-w64 GCC $(dpkg-query -W -f='${Version}' g++-mingw-w64-x86-64-posix), $(cmake --version | head -1)"

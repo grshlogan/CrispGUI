@@ -103,11 +103,11 @@ int main() {
     CHECK(!MultipartBody({{"prompt", "x--B y"}}, file, "B").Error().empty());
     {
         const std::string boundary = RandomMultipartBoundary();
-        CHECK(boundary.size() == 45 && boundary.compare(0, 13, "CrispRustGUI-") == 0);
+        CHECK(boundary.size() == 41 && boundary.compare(0, 9, "CrispGUI-") == 0);
         CHECK(RandomMultipartBoundary() != boundary);
         // Without a given boundary, the body draws one.
         MultipartBody body({{"prompt", "a"}}, file);
-        CHECK(body.Error().empty() && body.Boundary().size() == 45);
+        CHECK(body.Error().empty() && body.Boundary().size() == 41);
     }
 
     // Files that cannot be sent.

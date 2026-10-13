@@ -23,7 +23,7 @@ const DslAppConfig& dslAppConfig() {
     static const DslAppConfig config = [] {
         DslAppConfig result = DslAppConfig{}
                                   .title(std::string(crisp::util::StringTable().Get("app.title")))
-                                  .pageId("crisprustgui")
+                                  .pageId("crispgui")
                                   .windowSize(1100, 720)
                                   .minWindowSize(800, 560)
                                   .fps(60.0)

@@ -60,11 +60,11 @@ Never run `shadertoy_probe` against the Learn snapshot: it creates `build-shader
 Project builds (`verified` on 2026-10-11 and 2026-10-12; results in the [Phase 1](devlog/phase-1.md), [Phase 2](devlog/phase-2.md), [Phase 3](devlog/phase-3.md), and [Phase 4](devlog/phase-4.md) reports):
 
 ```bash
-# Linux development build (WSLg); the app is build/linux/crisprustgui
+# Linux development build (WSLg); the app is build/linux/crispgui
 cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure      # -L unit or -L integration for one group
-CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crisprustgui   # reads <folder>/profile as the CrispASR root
+CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crispgui   # reads <folder>/profile as the CrispASR root
 CRISPGUI_DEV_AUTOSTART=<folder>/<profile> ...              # starts that profile once the first checks are done
 build/linux/api_probe --port <port> --key <key> <audio file>  # probes a running server (tools/api_probe)
 
@@ -176,8 +176,8 @@ From the Phase 4 code and its Linux runs of 2026-10-12 ([Phase 4 report](devlog/
 | Server executable | `<root>\<profile.build>\crispasr.exe` | Derived from the profile |
 | Profiles directory | `<root>\profile` | Derived from the root |
 | Models directory | `<root>\models` | Derived from the root |
-| UI fonts | `<folder of crisprustgui.exe>\fonts\HarmonyOS_Sans_SC_{Regular,Medium,Bold}.ttf` ([§4.3](#43-ui-fonts)) | Copied by the build; EUI-NEO's default font when absent |
-| App data directory | `<folder of crisprustgui.exe>\appdata`; for Linux development runs `build/linux/appdata` | Derived from the executable's folder (Phase 1); a setting from Phase 8. Never on `C:\`: the dashboard warns when it is |
+| UI fonts | `<folder of crispgui.exe>\fonts\HarmonyOS_Sans_SC_{Regular,Medium,Bold}.ttf` ([§4.3](#43-ui-fonts)) | Copied by the build; EUI-NEO's default font when absent |
+| App data directory | `<folder of crispgui.exe>\appdata`; for Linux development runs `build/linux/appdata` | Derived from the executable's folder (Phase 1); a setting from Phase 8. Never on `C:\`: the dashboard warns when it is |
 | Temporary files | `<appdata>\tmp` for the GUI, `<appdata>\tmp\server` as `TMP`/`TEMP` of the server process | Derived from the app data directory |
 | Server working directory | `<CRISPASR_ROOT>` | Derived from the root (Phase 3) |
 | Health check | `GET /health` every 1.5 s; connect timeout 5 s, request timeout 5 s | `ServerManagerOptions` (Phase 3) |

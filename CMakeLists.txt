@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(CrispRustGUI VERSION 0.1.0 LANGUAGES C CXX)
+project(CrispGUI VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -108,11 +108,11 @@ crisp_apply_options(crisp_ui)
 
 # The executable. eui_neo_configure_app() adds EUI-NEO's entry point, icon, link options, and
 # assets copy, so the warnings stay on this project's main.cpp only.
-add_executable(crisprustgui src/main.cpp)
-target_link_libraries(crisprustgui PRIVATE crisp_ui)
-eui_neo_configure_app(crisprustgui)
+add_executable(crispgui src/main.cpp)
+target_link_libraries(crispgui PRIVATE crisp_ui)
+eui_neo_configure_app(crispgui)
 set_source_files_properties(src/main.cpp PROPERTIES COMPILE_OPTIONS "-Wall;-Wextra")
-target_compile_options(crisprustgui PRIVATE -fno-exceptions -fno-rtti)
+target_compile_options(crispgui PRIVATE -fno-exceptions -fno-rtti)
 
 # UI fonts: the HarmonyOS Sans SC weights the UI uses (src/ui/fonts.cpp), copied from the
 # owner-provided fonts/ folder, which is not in Git, to fonts/ next to the executable. Without
@@ -133,7 +133,7 @@ foreach(font IN LISTS CRISPGUI_UI_FONTS)
 endforeach()
 if(crisp_font_outputs)
     add_custom_target(crisp_fonts DEPENDS ${crisp_font_outputs})
-    add_dependencies(crisprustgui crisp_fonts)
+    add_dependencies(crispgui crisp_fonts)
 endif()
 
 if(CRISPGUI_BUILD_TESTS)

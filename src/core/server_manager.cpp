@@ -20,9 +20,6 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-// Lines the GUI adds to the server log, so its own notes stand out from the server's output.
-constexpr const char* kNotePrefix = "[CrispRustGUI] ";
-
 struct Event {
     enum class Kind { kHealth, kModels, kSpawned, kExited, kStopFinished, kLog };
     Kind kind = Kind::kLog;

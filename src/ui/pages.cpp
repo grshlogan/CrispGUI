@@ -461,7 +461,7 @@ void ComposeServerLog(eui::Ui& ui, const PageContext& context, float width, floa
             .row([&log, noteColor, lineColor](eui::Ui& row, const std::string& rowId, std::int64_t index, float rowWidth,
                                                float rowHeight) {
                 const std::string& line = log.At(static_cast<std::size_t>(index));
-                const bool note = line.rfind("[CrispRustGUI]", 0) == 0;
+                const bool note = line.rfind(core::kNotePrefix, 0) == 0;
                 row.text(rowId + ".text")
                     .size(rowWidth, rowHeight)
                     .text(line)

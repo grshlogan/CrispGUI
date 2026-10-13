@@ -10,6 +10,10 @@
 // The server's output as the log pane shows it (docs/ARCHITECTURE.md, section 2.2).
 namespace crisp::core {
 
+// The prefix of the lines the GUI adds to the server log, so that its own notes stand out from the
+// server's output. The ServerManager writes it and the log pane recognizes a note by it.
+constexpr const char* kNotePrefix = "[CrispGUI] ";
+
 // Cleans one line of process output for display: drops carriage returns at its end and keeps
 // only the text after a carriage return inside it (progress output that redraws a line), removes
 // terminal escape sequences and control characters, turns tabs into spaces, and replaces invalid

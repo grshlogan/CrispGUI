@@ -18,7 +18,7 @@ if ! git -C "$root" merge-base --is-ancestor "$sha" origin/main; then
   exit 1
 fi
 
-name="crisprustgui-eui-smoke-${sha:0:7}"
+name="crispgui-eui-smoke-${sha:0:7}"
 stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip" "$out/$name.zip.sha256"
 mkdir -p "$stage"
@@ -41,7 +41,7 @@ done
 mingw_version="$(dpkg-query -W -f='${Version}' g++-mingw-w64-x86-64-posix)"
 headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
 {
-  echo "CrispRustGUI Phase 0 smoke delivery"
+  echo "CrispGUI Phase 0 smoke delivery"
   echo "Commit: $sha (on origin/main)"
   echo "Packaged: $(date -u +%Y-%m-%dT%H:%M:%SZ) in WSL2 ($WSL_DISTRO_NAME)"
   echo "Toolchain: MinGW-w64 GCC $mingw_version, headers $headers_version, $(cmake --version | head -1), Ninja $(ninja --version)"

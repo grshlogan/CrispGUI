@@ -14,7 +14,7 @@ struct Entry {
 
 // Sorted by key, which the lookup relies on; string_table_test checks the order.
 constexpr Entry kEntries[] = {
-    {"app.title", "CrispRustGUI", "CrispRustGUI"},
+    {"app.title", "CrispGUI", "CrispGUI"},
     {"appdata.error", "The app data folder could not be prepared:", "无法准备应用数据文件夹："},
     {"appdata.error.action", "Move the program folder to a writable location outside C:\\ and restart.",
      "请把程序文件夹移到 C 盘以外的可写位置，然后重新启动。"},

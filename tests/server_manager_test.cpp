@@ -125,7 +125,7 @@ int main() {
         CHECK(fs::is_directory(deployment.options.serverTemp, error));
         // The server's output reached the log, with what the launcher would set.
         const LogBuffer& log = manager.Log();
-        CHECK(LogHas(log, "[CrispRustGUI] Starting Test/stub: "));
+        CHECK(LogHas(log, "[CrispGUI] Starting Test/stub: "));
         CHECK(LogHas(log, "crispasr-server: listening on 127.0.0.1:" + std::to_string(port)));
         CHECK(LogHas(log, "stub: env CRISPASR_API_KEYS=testkey"));
         CHECK(LogHas(log, "stub: env CRISPASR_MODELS_DIR=" + deployment.paths.models.u8string()));
@@ -139,7 +139,7 @@ int main() {
         CHECK(manager.Status().state == ServerState::kStopping);
         CHECK(InState(manager, ServerState::kStopped, 10000));
         CHECK(!manager.Status().owned && manager.Status().pid == 0);
-        CHECK(LogHas(log, "[CrispRustGUI] The server process exited with"));
+        CHECK(LogHas(log, "[CrispGUI] The server process exited with"));
         CHECK(crisp::test::Get(port, "/health").failure == crisp::platform::HttpFailure::kRefused);
 
         // A process that exits with code 0 before it answers has failed.

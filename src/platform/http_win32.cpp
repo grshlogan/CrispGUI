@@ -129,7 +129,7 @@ HttpResponse Exchange(const HttpRequest& request, HttpBody* body, HttpCancel* ca
         return response;
     }
 
-    InternetHandle session(WinHttpOpen(L"CrispRustGUI", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
+    InternetHandle session(WinHttpOpen(L"CrispGUI", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
                                        WINHTTP_NO_PROXY_BYPASS, 0));
     if (session.get() == nullptr) {
         return fail(GetLastError());

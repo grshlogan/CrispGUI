@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Packages the MinGW release build of CrispRustGUI as a Windows delivery (docs/agents/README.md).
+# Packages the MinGW release build of CrispGUI as a Windows delivery (docs/agents/README.md).
 # Usage: tools/package-windows.sh [handoff-out]
 # Requires a clean tree whose HEAD is on origin/main, and a release build in build/mingw
 # (docs/ENVIRONMENT.md, section 2.2).
@@ -23,12 +23,12 @@ if ! grep -q '^CMAKE_BUILD_TYPE:STRING=Release$' "$build/CMakeCache.txt"; then
   exit 1
 fi
 
-name="crisprustgui-${sha:0:7}"
+name="crispgui-${sha:0:7}"
 stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip" "$out/$name.zip.sha256"
 mkdir -p "$stage"
 
-cp "$build/crisprustgui.exe" "$stage/"
+cp "$build/crispgui.exe" "$stage/"
 cp -r "$build/assets" "$stage/"
 # The owner-provided UI fonts (not in Git); without them the UI uses EUI-NEO's default font.
 if [ -d "$build/fonts" ]; then
@@ -55,7 +55,7 @@ done
 mingw_version="$(dpkg-query -W -f='${Version}' g++-mingw-w64-x86-64-posix)"
 headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
 {
-  echo "CrispRustGUI delivery"
+  echo "CrispGUI delivery"
   echo "Commit: $sha (on origin/main)"
   echo "Packaged: $(date -u +%Y-%m-%dT%H:%M:%SZ) in WSL2 ($WSL_DISTRO_NAME)"
   echo "Toolchain: MinGW-w64 GCC $mingw_version, headers $headers_version, $(cmake --version | head -1), Ninja $(ninja --version)"
@@ -66,7 +66,7 @@ headers_version="$(dpkg-query -W -f='${Version}' mingw-w64-x86-64-dev)"
   else
     echo "UI fonts: none; EUI-NEO's default font"
   fi
-  echo "Run: crisprustgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit and $(grep -c '^integration ' "$stage/tests.txt") integration tests"
+  echo "Run: crispgui.exe; run-tests.cmd runs $(grep -c '^unit ' "$stage/tests.txt") unit and $(grep -c '^integration ' "$stage/tests.txt") integration tests"
   echo "Checks: CHECKLIST.md lists the Windows checks of this delivery and what to send back"
 } | sed 's/$/\r/' > "$stage/BUILD-INFO.txt"
 

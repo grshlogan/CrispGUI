@@ -61,7 +61,7 @@ constexpr const char* kNewline = "\r\n";
 constexpr const char* kNewline = "\n";
 #endif
 
-constexpr const char* kNotAudio = "CrispRustGUI api_probe: this file is not audio.\n";
+constexpr const char* kNotAudio = "CrispGUI api_probe: this file is not audio.\n";
 
 struct Options {
     std::string host = "127.0.0.1";
@@ -392,7 +392,7 @@ int Run(const std::vector<std::string>& args) {
     std::uint64_t audioBytes = 0;
     std::string audioSha256;
     const bool audioRead = HashFile(options.audio, audioBytes, audioSha256);
-    report.Line("CrispRustGUI api_probe, started " + UtcStamp(false));
+    report.Line("CrispGUI api_probe, started " + UtcStamp(false));
     report.Line("Server: " + crisp::platform::HttpUrl(options.host, options.port, "") + ", key \"" + options.key +
                 "\"");
     report.Line("Audio: " + Utf8(options.audio) +

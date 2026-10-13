@@ -64,7 +64,7 @@ private:
 // characters, the extension among them, stay. "audio" when |name| is empty.
 std::string MultipartFileName(const std::string& name);
 
-// "CrispRustGUI-" and 32 random hexadecimal digits.
+// "CrispGUI-" and 32 random hexadecimal digits.
 std::string RandomMultipartBoundary();
 
 }  // namespace crisp::platform
