@@ -28,8 +28,9 @@ struct TranscriptSegment {
 struct Transcript {
     std::string task;  // "transcribe" or "translate"
     std::string language;
-    // The processed audio: the window's length for a window request, 0 for a window that starts
-    // past the end of the file.
+    // The processed audio: for a window request the part of the window that lies inside the file,
+    // which is less than the window's length when the file ends first, and 0 for a window that
+    // starts past the end of the file.
     std::int64_t durationMs = 0;
     std::string text;
     std::vector<TranscriptSegment> segments;

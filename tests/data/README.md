@@ -18,9 +18,9 @@ Answers recorded from the deployed server with `api_probe` ([OQ-4](../../docs/OP
 
 | File | SHA-256 | Read by | What it is |
 | --- | --- | --- | --- |
-| `deployed-parakeet/transcript.verbose.json` | `02f98ab50ce3e6e809b87a734faad98bc41a514becd1d4bbada1a808c4ed87de` | `transcript_test` | `verbose_json` of the whole sample: duration 9.696 s, one segment from 0.23 s to 8.71 s with 46 word times, one per character |
+| `deployed-parakeet/transcript.verbose.json` | `02f98ab50ce3e6e809b87a734faad98bc41a514becd1d4bbada1a808c4ed87de` | `transcript_test` | `verbose_json` of the whole sample: duration 9.696 s, one segment from 0.23 s to 8.71 s with 46 word times, one per kana or kanji with the punctuation attached to the word before it |
 | `deployed-parakeet/window.verbose.json` | `10b163853a619416da366ce27881bae6d23f48acabebd27815385674be367fe9` | `transcript_test` | `verbose_json` of the window `offset_t_ms=5000`, `duration_ms=10000`: times in the file's time, duration 4.696 s (the part inside the file), one segment from 5.07 s to 8.71 s with 25 word times |
-| `deployed-parakeet/transcript.srt` | `1ca527e2229ae22ee171c1ab3055049e99eb696315740807881ac06f6e8bf53a` | none yet | The server's `srt` for the whole sample: one cue. It is the expected output of Phase 5's SRT writer for `transcript.verbose.json` ([OQ-7](../../docs/OPEN-QUESTIONS.md#oq-7-local-srt-generation)) and stays untested until then |
+| `deployed-parakeet/transcript.srt` | `1ca527e2229ae22ee171c1ab3055049e99eb696315740807881ac06f6e8bf53a` | `srt_writer_test` | The server's `srt` for the whole sample: one cue. It is the expected output of the SRT writer for `transcript.verbose.json` ([OQ-7](../../docs/OPEN-QUESTIONS.md#oq-7-local-srt-generation)), which `srt_writer_test` compares byte for byte |
 | `deployed-parakeet/error-key.json` | `3677d3c69206e3aff31d1b5b5bf00cb5b427df13d64c4d54fb2dd4ccb0ecf149` | `api_response_test` | The body of the `401` for a wrong API key |
 | `deployed-parakeet/error-format.json` | `9d1384deddc802040620f830dd4764433f1621cd3b1a6dee6a94e2f2ba346d4a` | `api_response_test` | The body of the `400` for `response_format=bogus` |
 | `deployed-parakeet/error-decode.json` | `cb51bf5c5dfb135a731c7ddc0c4a7254aaeb450f06ceb5876f47afb95c45bf1c` | `api_response_test` | The body of the `400` for a file that is not audio |

@@ -30,16 +30,17 @@ std::string ErrorOf(const std::string& body) {
     return ParseVerboseJson(body, transcript, error) ? std::string() : error;
 }
 
-// One answer recorded from the deployed server (tests/data/README.md): a single segment of
-// |wordCount| words, one per character. Checks the language, the duration, the segment's times,
-// the first and the last word, and that the word times stay inside the segment and never go
-// backwards.
+// A word of a recorded answer as the test expects it.
 struct ExpectedWord {
     const char* text;  // UTF-8
     std::int64_t startMs;
     std::int64_t endMs;
 };
 
+// One answer recorded from the deployed server (tests/data/README.md): a single segment of
+// |wordCount| words, one per kana or kanji with the punctuation attached to the word before it.
+// Checks the language, the duration, the segment's times, the first and the last word, and that
+// the word times stay inside the segment and never go backwards.
 void CheckRecorded(const char* file, std::int64_t durationMs, std::int64_t startMs, std::int64_t endMs,
                    std::size_t wordCount, const ExpectedWord& first, const ExpectedWord& last) {
     const auto bytes =

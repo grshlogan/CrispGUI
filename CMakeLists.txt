@@ -49,6 +49,7 @@ add_library(crisp_core STATIC
     src/core/server_log.cpp
     src/core/server_manager.cpp
     src/core/server_state.cpp
+    src/core/srt_writer.cpp
     src/core/transcript.cpp
     src/platform/command_line.cpp
     src/platform/files.cpp
