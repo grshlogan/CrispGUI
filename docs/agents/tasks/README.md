@@ -16,8 +16,8 @@ Maintained by A003 when it consumes a receipt.
 
 | Task | Title | State | Merged commit |
 | --- | --- | --- | --- |
-| [P4-T1](P4-T1-timeout-test/packet.md) | A timeout check that allows for WinHTTP's coarse timer | Coding (branch `a004/P4-T1`, round 15) | — |
-| [P4-T2](P4-T2-dashboard-start/packet.md) | Start buttons on the dashboard's first screen | Ready for A004 | — |
+| [P4-T1](P4-T1-timeout-test/packet.md) | A timeout check that allows for WinHTTP's coarse timer | Consumed (round 16): R01 PASS; Windows AC-5 waits for the next delivery's W4-1 | `c483964` (reviewed as `46bb1ea`, same patch ID) |
+| [P4-T2](P4-T2-dashboard-start/packet.md) | Start buttons on the dashboard's first screen | Coding (round 16) | — |
 | [P4-T4](P4-T4-rename/packet.md) | The project's names in code and deliveries become CrispGUI | Waits for P4-T1 and P4-T2 | — |
 | [P4-T5](P4-T5-server-answers/packet.md) | The deployed server's answers as test data | Waits for P4-T4 | — |
 | [P4-T3](P4-T3-delivery/packet-v2.md) (v2) | The agent brief in deliveries, and the next Phase 4 delivery | Waits for P4-T1, P4-T2, P4-T4, and P4-T5 | — |

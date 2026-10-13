@@ -79,7 +79,7 @@ W4-4 (round 15, owner statement): passed. After Stop and its confirmation the se
 
 ## Open items
 
-- [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer; [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
+- [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer, merged as `c483964` after Review R01 passed it (its Windows check is W4-1 of the next delivery); [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
 - W4-1 to W4-4 again with the next delivery; the phase closes when its W4-1 has no failures.
 - The probe's recorded answers become test data in `tests/data/` ([P4-T5](../agents/tasks/P4-T5-server-answers/packet.md); [OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - The project's code-level names still read CrispRustGUI (executable, window title, delivery names); [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renames them to CrispGUI.
