@@ -1,6 +1,6 @@
 # Phase 4 Report — ApiClient
 
-Status: implemented; the Linux acceptance passes. On Windows, check W4-1 passed 19 of 20 tests: a WinHTTP timeout did not apply, which `winhttp_timeouts` is to explain; W4-2 to W4-4 have not run. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
+Status: implemented; the Linux acceptance passes. On Windows, with `crisprustgui-c296f23`: W4-1 passed 19 of 20 tests, the failing one allowing too little time for WinHTTP's coarse timer ([P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md)); W4-2 passed by the owner's statement; W4-3 passed; W4-4 passed by the owner's statement. The phase closes when the next delivery's W4-1 has no failures. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
 
 ## What was built
 
@@ -62,7 +62,9 @@ W4-3 (round 14): passed. The owner ran `api_probe.exe --window 5000,10000` with 
 - Error bodies: `{"error": {"message": ..., "type": "invalid_api_key"}}` for the `401`, and the type `invalid_request_error` for both `400`s; the client reports their messages.
 - `/progress` reported `busy` with `progress` 0 at 0.32 s into a transcription; the cancellation returned at once, and the server reported idle 0.2 s later.
 
-[P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) adds these answers to `tests/data/`. W4-4: not reported.
+[P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) adds these answers to `tests/data/`.
+
+W4-4 (round 15, owner statement): passed. After Stop and its confirmation the server panel showed Stopped with exit code 1, and the GPU memory and RAM the server held were released. Exit code 1 is the code the GUI's stop gives the process: `src/platform/process_win32.cpp` ends it with `TerminateProcess(..., 1)`.
 
 ## Decisions and deviations
 
@@ -78,7 +80,7 @@ W4-3 (round 14): passed. The owner ran `api_probe.exe --window 5000,10000` with 
 ## Open items
 
 - [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer; [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
-- W4-4, and W4-1 to W4-3 again with the next delivery.
+- W4-1 to W4-4 again with the next delivery; the phase closes when its W4-1 has no failures.
 - The probe's recorded answers become test data in `tests/data/` ([P4-T5](../agents/tasks/P4-T5-server-answers/packet.md); [OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - The project's code-level names still read CrispRustGUI (executable, window title, delivery names); [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renames them to CrispGUI.
 - That a client still sending an oversized body sees a reset rather than the `413` is a `hypothesis` from the source; the client never sends one.
