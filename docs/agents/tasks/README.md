@@ -22,11 +22,24 @@ Maintained by A003 when it consumes a receipt.
 | [P4-T5](P4-T5-server-answers/packet.md) | The deployed server's answers as test data | Consumed (round 19): R01 PASS | `017b5b5` |
 | [P4-T3](P4-T3-delivery/packet-v2.md) (v2) | The agent brief in deliveries, and the next Phase 4 delivery | Consumed (round 20): R01 PASS; delivery `crispgui-621df7d` built from `621df7d` | `bd925e8` |
 | [P5-T1](P5-T1-srt-writer/packet.md) | The SRT writer: the server's cue format from `verbose_json` | Consumed (round 21): R01 PASS | `3a11fef` |
-| [P5-T2](P5-T2-atomic-write/packet.md) | Writing a file atomically | Coding (round 21) | — |
+| [P5-T2](P5-T2-atomic-write/packet.md) | Writing a file atomically | Consumed (round 22): R01 PASS with one P2, repaired; R02 PASS; Windows cases in W5-1 | `d841b27`, `2575782` |
 
 Order for Phase 4: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3. Phase 5: P5-T1, then P5-T2.
 
 States: `Ready for A004` → `Coding` → `Review Rxx` → `Merged` (A004) → `Consumed` (A003). `Blocked` names what is missing and who supplies it.
+
+## Standard gates
+
+Packets name these gates; each runs in the task's checkout or the Review's export, with `set -o pipefail`. Packets up to P5-T2 name "G1 to G4 of P4-T1"; that table is the same, and its "20 of 20" means every test the tree has.
+
+| ID | Command | Expected |
+| --- | --- | --- |
+| G1 | `cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug && cmake --build build/linux` | Exit 0, no compiler warnings |
+| G2 | `ctest --test-dir build/linux --output-on-failure` | Exit 0, all tests pass |
+| G3 | `for i in 1 2 3 4 5; do ctest --test-dir build/linux -L integration --output-on-failure \|\| exit 1; done` | Exit 0 |
+| G4 | `cmake -S . -B build/mingw -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64-x86_64.cmake && cmake --build build/mingw` | Exit 0, no compiler warnings |
+
+In `<CODING_ROOT>` add `-DCRISPGUI_FONT_DIR=/home/claude/projects/CrispGUI/fonts` to the first configure of each tree; the Review adds the EUI-NEO and font paths of its prompt.
 
 ## Receipt
 

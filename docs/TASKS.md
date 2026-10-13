@@ -71,7 +71,8 @@ Started on 2026-10-13 with the core tasks that do not depend on Phase 4's last W
 
 - [x] Implement the SRT writer ([ARCHITECTURE.md §2.8](ARCHITECTURE.md#28-srt-writer)) with equivalence fixtures: [P5-T1](agents/tasks/P5-T1-srt-writer/packet.md), merged as `3a11fef`; byte-equal to the recorded server SRT.
 - [ ] Wire the Transcribe page: file picker with size pre-check, profile indicator (the server must be running), Transcribe button, progress from `/progress`, result preview, and save path.
-- [ ] Save the SRT next to the source file by default; honor the output-directory setting.
+- [ ] Save the SRT next to the source file by default; honor the output-directory setting. The atomic write exists: [P5-T2](agents/tasks/P5-T2-atomic-write/packet.md), merged as `d841b27` and `2575782`.
+- [ ] Windows checks of the Phase 5 delivery (W5) include, besides the acceptance below: the Windows-only cases of `file_write_test` (replacing, a destination held open, wide paths), which `run-tests.cmd` runs; saving to a destination path of about 250 characters, since the temporary name adds up to 21 characters and `MAX_PATH` is 260 (`hypothesis`, P5-T2 Review R02 F1); and saving with real-time virus scanning on, since `MoveFileExW` runs once without a retry (`hypothesis`, R01 F6).
 - [ ] Acceptance: [Windows] transcribing `E:\AI\ASR\CrispASR\samples\ja-demo.mp3` through the GUI yields an SRT identical to the server's `srt` output for the same audio and parameters.
 
 ## Phase 6 — Parameter model and panel (pluggable)
