@@ -1,6 +1,6 @@
 # Phase 4 Report — ApiClient
 
-Status: implemented; the Linux acceptance passes. On Windows, with `crisprustgui-c296f23`: W4-1 passed 19 of 20 tests, the failing one allowing too little time for WinHTTP's coarse timer ([P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md)); W4-2 passed by the owner's statement; W4-3 passed; W4-4 passed by the owner's statement. The phase closes when the next delivery's W4-1 has no failures. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
+Status: implemented; the Linux acceptance passes. On Windows, with `crisprustgui-c296f23`: W4-1 passed 19 of 20 tests, the failing one allowing too little time for WinHTTP's coarse timer ([P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md)); W4-2 passed by the owner's statement; W4-3 passed; W4-4 passed by the owner's statement. The corrected delivery `crispgui-621df7d` waits for its Windows checks; the phase closes when its W4-1 has no failures. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
 
 ## What was built
 
@@ -33,6 +33,8 @@ Process note: the first round of mutation checks restored each file with its old
 ## Delivery
 
 Both builds were rebuilt from a clean tree at commit `c296f239748f65db24077a17820ea33b5df5e353` (223 and 224 steps, no warnings, `ctest` 20 of 20), and `tools/package-windows.sh` produced `crisprustgui-c296f23.zip` in `<HANDOFF_OUT>`: 37,060,506 bytes, SHA-256 `005bbfbc3255a16710423d01825d086cbefb881eed17485acd96e60b4f04259d`, `unzip -tq` without errors. It holds `crisprustgui.exe`, `assets/`, `fonts/`, the 15 unit and 5 integration tests, `stub_crispasr.exe`, `api_probe.exe`, `testdata/` (with `verbose-synthetic.json`), `tests.txt`, `run-tests.cmd`/`.ps1`, `run-api-probe.cmd`, `CHECKLIST.md`, and `BUILD-INFO.txt` (79 MB unpacked).
+
+Corrected delivery (round 20): A004 built `crispgui-621df7d.zip` from a clean tree at `621df7da83bb83a6ed394331242425b224fbd104` after fresh builds (Linux 223 steps and MinGW 226 steps, no warnings; `ctest` 20 of 20; the integration tests five rounds of 5 of 5): 36,987,684 bytes, SHA-256 `60c0fe5b21d2c0480da91a8008c490267e5c6342d80ec643858845b748a2ea22`, 69 files. It carries the corrections of [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md), [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md), [P4-T4](../agents/tasks/P4-T4-rename/packet.md), and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md), and `WINDOWS-AGENT.md` ([P4-T3 receipt](../agents/tasks/P4-T3-delivery/receipt.md)).
 
 ## Windows results (owner's machine)
 
@@ -80,7 +82,7 @@ W4-4 (round 15, owner statement): passed. After Stop and its confirmation the se
 ## Open items
 
 - [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer, merged as `c483964` after Review R01 passed it (its Windows check is W4-1 of the next delivery); [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen, merged as `5649b4f` after Review R01 passed it; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
-- W4-1 to W4-4 again with the next delivery; the phase closes when its W4-1 has no failures.
+- W4-1 to W4-4 with `crispgui-621df7d`; the phase closes when its W4-1 has no failures.
 - The first screen at other window sizes (P4-T2 Review, finding F3): at the default 1100×720 the first ready profile's Start button sits about 50 px above the lower edge of the scrolling area with the fake deployment; at the minimum window of 800×560 no profile row is on the first screen. A longer Server panel or a folder path that wraps uses part of that margin. W4-2 of the next delivery shows how the owner's real list fits.
 - The probe's recorded answers are test data in `tests/data/deployed-parakeet/` since [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (`017b5b5`); `transcript.srt` waits there for Phase 5's SRT writer ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renamed the code-level names to CrispGUI (`403bde9`): `crispgui.exe`, the window title, the WinHTTP user agent, the multipart boundary, the log notes, and the archive names; the next delivery is the first with them.

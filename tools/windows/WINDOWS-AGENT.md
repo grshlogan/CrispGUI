@@ -30,6 +30,8 @@ You do no development: you never edit, rebuild, patch, or "fix" anything, includ
 
 When a check fails, stop that check, record what it shows, and continue with the next check only if it does not depend on the failed one.
 
+A diagnostic delivery (`crispgui-diag-<tool>-<commit>`) has no `CHECKLIST.md`. Run its tool as the owner's task says, write its output into your results folder as a file (see the encoding rule below), and report the run as one check.
+
 ## Rules
 
 - Write only inside the delivery folder: your results folder, plus what the programs you run write there by design (`appdata\`, `probe-results\`, `test-results.txt`). Third-party programs may write to the system TEMP folder; nothing else on `C:\`.
