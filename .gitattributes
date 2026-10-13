@@ -4,6 +4,10 @@
 # Reference snapshots stay byte-identical to their sources.
 reference/** -text
 
+# Recorded server answers stay byte-identical to what the server sent, whitespace included
+# (an SRT cue ends with an empty line).
+tests/data/deployed-*/** -text -whitespace
+
 # Windows command scripts need CRLF.
 *.cmd text eol=crlf
 *.bat text eol=crlf

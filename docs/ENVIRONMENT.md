@@ -87,7 +87,7 @@ The top-level `CMakeLists.txt` sets the EUI-NEO options of [§4.2](#42-eui-neo-b
 - `fonts/`: the UI fonts the owner provides ([§4.3](#43-ui-fonts)); ignored by Git, so a fresh clone builds with EUI-NEO's default font.
 - `params/`: the parameter catalog and model packs ([ARCHITECTURE.md §2.7](ARCHITECTURE.md#27-parameter-model-pluggable)); data, committed.
 - `build*/`, `appdata/`, `CMakeUserPresets.json`, `.cache/`, and `fonts/` are ignored by Git (`.gitignore`).
-- Line endings are LF (`.gitattributes`), except CRLF for `*.cmd` and `*.bat`, and except `reference/`, which Git stores byte for byte.
+- Line endings are LF (`.gitattributes`), except CRLF for `*.cmd` and `*.bat`, and except `reference/` and the recorded server answers in `tests/data/deployed-*/`, which Git stores byte for byte; the recorded answers are also exempt from Git's whitespace checks.
 - `reference/`: read-only learning material, never part of the build.
 - Deliveries are written outside the checkout, to `<HANDOFF_OUT>`.
 

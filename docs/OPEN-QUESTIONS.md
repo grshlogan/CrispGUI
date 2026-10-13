@@ -11,7 +11,7 @@ OQ-1 (Windows build path), OQ-2 (Git repository), OQ-3 (WSL2 toolchain), and OQ-
   1. The EUI-NEO v0.6.1 source: resolved; see [Resolved](#resolved).
   2. The engine's CLI flag names and backend capability names. The CLI flag names are resolved: Phase 2 extracted all 246 flags of the CrispASR 0.8.42 CLI from `examples/cli/cli.cpp` in the Learn library into `src/core/cli_flags_table.inc` (`tools/extract-cli-flags.py`). The capability names remain for Phase 6 (`crispasr_backend.h` declares them). The text output of `crispasr.exe --help` and `crispasr.exe --list-backends-json` from the deployed `cuda13` build remains useful to confirm that the deployment matches 0.8.42.
   3. Optional: one short Japanese sample with the SRT the server produces for it, for parser and SRT-writer tests without models. Since Phase 4 the audio itself is not needed in WSL2: `api_probe` records the server's `verbose_json` and `srt` answers for the same file (Windows check W4-3), and the stub server replays them.
-- Status: item 1 resolved; item 2 resolved for the CLI flags, open for the capability names; item 3: the answers of W4-3 arrived on 2026-10-13 (`ja-demo.mp3`, parakeet profile), and [P4-T5](agents/tasks/P4-T5-server-answers/packet.md) adds them to the tests.
+- Status: item 1 resolved; item 2 resolved for the CLI flags, open for the capability names; item 3 resolved: the deployed server's answers to W4-3 are test data in `tests/data/deployed-parakeet/` ([P4-T5](agents/tasks/P4-T5-server-answers/packet.md)).
 
 ## OQ-5: Location of the model's authoritative parameter description
 
