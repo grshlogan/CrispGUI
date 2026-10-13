@@ -47,8 +47,9 @@ done
 # the probe of a running server (tools/api_probe), which api_probe_test also runs.
 cp "$build/tests/stub_crispasr.exe" "$stage/"
 cp "$build/api_probe.exe" "$stage/"
-# The test runner, the probe's wrapper, and the checks of this delivery, with CRLF line ends.
-for file in run-tests.cmd run-tests.ps1 run-api-probe.cmd CHECKLIST.md; do
+# The test runner, the probe's wrapper, the checks of this delivery, and the brief for the
+# Windows-side agent, with CRLF line ends.
+for file in run-tests.cmd run-tests.ps1 run-api-probe.cmd CHECKLIST.md WINDOWS-AGENT.md; do
   sed 's/\r*$/\r/' "$root/tools/windows/$file" > "$stage/$file"
 done
 

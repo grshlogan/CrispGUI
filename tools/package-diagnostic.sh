@@ -30,6 +30,8 @@ stage="$out/$name"
 rm -rf "$stage" "$out/$name.zip" "$out/$name.zip.sha256"
 mkdir -p "$stage"
 cp "$build/$target.exe" "$stage/"
+# The brief for the Windows-side agent, with CRLF line ends.
+sed 's/\r*$/\r/' "$root/tools/windows/WINDOWS-AGENT.md" > "$stage/WINDOWS-AGENT.md"
 {
   echo "CrispGUI diagnostic: $target.exe"
   echo "Commit: $sha (on origin/main)"
