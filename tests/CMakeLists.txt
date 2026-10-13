@@ -15,6 +15,7 @@ set(CRISPGUI_UNIT_TESTS
     multipart_test
     transcript_test
     srt_writer_test
+    file_write_test
     api_response_test)
 foreach(name IN LISTS CRISPGUI_UNIT_TESTS)
     add_executable(${name} ${name}.cpp)
