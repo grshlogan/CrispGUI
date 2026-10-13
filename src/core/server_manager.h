@@ -49,6 +49,10 @@ public:
     void Stop();
 
     const ServerStatus& Status() const;
+    // The API key that the manager's own checks of the current server use (see
+    // ServerStateMachine::ApiKey()); while Status().state is kRunning, a request to
+    // Status().endpoint needs exactly this key.
+    const std::string& ApiKey() const;
     const LogBuffer& Log() const;
     void ClearLog();
 

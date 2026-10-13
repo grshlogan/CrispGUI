@@ -633,6 +633,10 @@ const ServerStatus& ServerManager::Status() const {
     return impl_->machine.Status();
 }
 
+const std::string& ServerManager::ApiKey() const {
+    return impl_->machine.ApiKey();
+}
+
 const LogBuffer& ServerManager::Log() const {
     return impl_->log;
 }

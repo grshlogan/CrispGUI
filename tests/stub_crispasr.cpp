@@ -9,6 +9,7 @@
 //   GET  /progress                 {"busy": ..., "progress": ...}; needs a key
 //   POST /v1/audio/transcriptions  a multipart upload; needs a key; see below
 //   POST /stub/echo                {"bytes": N, "fnv1a": ..., "content_type": ...} of the body
+//   GET  /stub/requests            {"transcriptions": N}: the transcription requests received so far
 // Anything else gets 404 with CrispASR's "not found" body.
 //
 // A transcription "decodes" a file whose first bytes look like audio (RIFF, ID3, fLaC, OggS, an
@@ -30,6 +31,8 @@
 //   STUB_LINES           print this many numbered lines at start
 //   STUB_MAX_BODY_BYTES  bodies over this size get 413 after being read (default 512 MiB)
 //   STUB_TRANSCRIBE_MS   the default duration of a transcription
+//   STUB_FAIL_FIRST      "<status>:<count>", such as "500:1": the first <count> transcriptions that
+//                        would run answer with <status> (500 or 503) instead, then they work
 //   STUB_TRANSCRIPT      a verbose_json file to answer with
 //   STUB_TRANSCRIPT_SRT  an srt file to answer with
 // A port it cannot bind ends it with exit code 0 after the "listening" line, as CrispASR does.
@@ -258,6 +261,8 @@ struct Settings {
     bool foreign = false;
     std::uint64_t maxBodyBytes = 512ull * 1024 * 1024;
     int transcribeMs = 0;
+    int failStatus = 0;  // the status of the first failCount transcriptions
+    int failCount = 0;
     bool replayJson = false;
     std::string transcriptJson;
     bool replaySrt = false;
@@ -269,6 +274,8 @@ Settings settings;
 std::mutex modelMutex;
 std::atomic<int> busy{0};
 std::atomic<int> progress{-1};
+std::atomic<int> received{0};  // transcription requests, answered or not
+std::atomic<int> failedSoFar{0};
 
 void SendAll(SocketHandle socket, const std::string& data) {
     std::size_t sent = 0;
@@ -709,6 +716,7 @@ void RunModel(int delayMs) {
 // POST /v1/audio/transcriptions, in the order of crispasr_server.cpp:2027-2310. An empty result
 // means: close the connection without an answer.
 std::string Transcribe(const Request& request) {
+    ++received;
     // cpp-httplib splits the body while reading it, before the route's handler checks the key.
     std::vector<Part> parts;
     std::string error;
@@ -748,6 +756,10 @@ std::string Transcribe(const Request& request) {
     // The upload is decoded before the model lock is taken (docs/API-CRISPASR.md, section 7).
     if (!LooksLikeAudio(file->content)) {
         return JsonError(400, "failed to decode audio (unsupported format or corrupt file)");
+    }
+    if (settings.failCount > 0 && failedSoFar.fetch_add(1) < settings.failCount) {
+        return JsonError(settings.failStatus, settings.failStatus == 503 ? "model is still loading"
+                                                                       : "internal error: stub failure");
     }
     const std::string delay = FieldValue(parts, "stub_delay_ms", "");
     RunModel(delay.empty() ? settings.transcribeMs : std::atoi(delay.c_str()));
@@ -799,6 +811,9 @@ std::string Answer(const Request& request) {
     }
     if (request.method == "POST" && path == "/v1/audio/transcriptions") {
         return Transcribe(request);
+    }
+    if (request.method == "GET" && path == "/stub/requests") {
+        return Response(200, "{\"transcriptions\": " + std::to_string(received.load()) + "}");
     }
     if (request.method == "POST" && path == "/stub/echo") {
         return Response(200, "{\"bytes\": " + std::to_string(request.body.size()) + ", \"fnv1a\": \"" +
@@ -871,6 +886,14 @@ int Run(const std::vector<std::string>& argv) {
         settings.maxBodyBytes = std::strtoull(maxBody.c_str(), nullptr, 10);
     }
     settings.transcribeMs = std::atoi(Env("STUB_TRANSCRIBE_MS").c_str());
+    {
+        const std::string failFirst = Env("STUB_FAIL_FIRST");
+        const std::size_t colon = failFirst.find(':');
+        if (colon != std::string::npos) {
+            settings.failStatus = std::atoi(failFirst.substr(0, colon).c_str());
+            settings.failCount = std::atoi(failFirst.substr(colon + 1).c_str());
+        }
+    }
     const std::string json = Env("STUB_TRANSCRIPT");
     if (!json.empty() && !(settings.replayJson = ReadWholeFile(json, settings.transcriptJson))) {
         Say("stub: cannot read STUB_TRANSCRIPT " + json);

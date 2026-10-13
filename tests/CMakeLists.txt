@@ -41,7 +41,8 @@ set(CRISPGUI_INTEGRATION_TESTS
     http_test
     server_manager_test
     api_client_test
-    api_probe_test)
+    api_probe_test
+    transcription_test)
 foreach(name IN LISTS CRISPGUI_INTEGRATION_TESTS)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE crisp_core)

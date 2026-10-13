@@ -51,6 +51,7 @@ add_library(crisp_core STATIC
     src/core/server_state.cpp
     src/core/srt_writer.cpp
     src/core/transcript.cpp
+    src/core/transcription.cpp
     src/platform/command_line.cpp
     src/platform/files.cpp
     src/platform/http.cpp

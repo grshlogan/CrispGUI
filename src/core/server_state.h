@@ -168,6 +168,10 @@ public:
     ServerCommands OnStopFinished(bool ok, const std::string& error);
 
     const ServerStatus& Status() const { return status_; }
+    // The key that the checks of the current server use: the one a started server got, or the
+    // configured key for one that was adopted. It belongs to the server while Status().state is
+    // kRunning; it is not cleared when a server goes away.
+    const std::string& ApiKey() const { return apiKey_; }
 
 private:
     ServerCommands NewEpoch(ServerCommands commands);
