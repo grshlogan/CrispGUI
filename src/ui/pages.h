@@ -58,8 +58,9 @@ struct StopConfirmation {
 void ComposePlaceholder(eui::Ui& ui, const PageContext& context, const char* id, std::string_view titleKey,
                         std::string_view bodyKey);
 
-// The dashboard: the server with its controls, the app data folders, the profiles of the
-// CrispASR folder with their readiness as the launcher would show them, and the server log.
+// The dashboard: the server with its controls, the profiles of the CrispASR folder with their
+// readiness as the launcher would show them and their Start buttons, the app data folders, and
+// the server log.
 void ComposeDashboard(eui::Ui& ui, const PageContext& context, const DashboardState& state);
 
 // The stop confirmation as an overlay over the whole window.

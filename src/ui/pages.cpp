@@ -21,6 +21,8 @@ constexpr float kStatusWidth = 72.0f;
 constexpr float kDetailIndent = kStatusWidth + 10.0f;
 constexpr float kLogRowHeight = 18.0f;
 constexpr float kLogFontSize = 12.0f;
+constexpr float kLogHeaderHeight = 34.0f;
+constexpr float kLogGap = 6.0f;
 
 std::string Text(const PageContext& context, std::string_view key) {
     return std::string(context.strings.Get(key));
@@ -417,11 +419,9 @@ void ComposeProfiles(eui::Ui& ui, const PageContext& context, float width, const
 // the end.
 void ComposeServerLog(eui::Ui& ui, const PageContext& context, float width, float height, const DashboardState& state) {
     const core::LogBuffer& log = state.log;
-    constexpr float kHeaderHeight = 34.0f;
-    constexpr float kGap = 6.0f;
-    const float listHeight = std::max(0.0f, height - kHeaderHeight - kGap);
-    ui.column("log").size(width, height).gap(kGap).content([&] {
-        ui.row("log.header").size(width, kHeaderHeight).gap(16.0f).alignItems(eui::Align::CENTER).content([&] {
+    const float listHeight = std::max(0.0f, height - kLogHeaderHeight - kLogGap);
+    ui.column("log").size(width, height).gap(kLogGap).content([&] {
+        ui.row("log.header").size(width, kLogHeaderHeight).gap(16.0f).alignItems(eui::Align::CENTER).content([&] {
             Heading(ui, context, "log.title", Text(context, "server.log.title"));
             components::text(ui, "log.count", context.theme)
                 .text(Text(context, "server.log.count") + std::to_string(log.Size()))
@@ -475,6 +475,16 @@ void ComposeServerLog(eui::Ui& ui, const PageContext& context, float width, floa
     }).build();
 }
 
+// The height of the log pane. Until the server has written a line it needs only its header and the
+// text that says why it is empty (two lines, for a narrow window), which leaves the room to the
+// profiles; with lines it keeps a fixed part of the page.
+float ServerLogHeight(const PageContext& context, const core::LogBuffer& log) {
+    if (log.Size() == 0) {
+        return kLogHeaderHeight + kLogGap + 2.0f * kDetailLineHeight;
+    }
+    return std::clamp(context.height * 0.32f, 140.0f, 320.0f);
+}
+
 }  // namespace
 
 void ComposePlaceholder(eui::Ui& ui, const PageContext& context, const char* id, std::string_view titleKey,
@@ -491,9 +501,8 @@ void ComposePlaceholder(eui::Ui& ui, const PageContext& context, const char* id,
 }
 
 void ComposeDashboard(eui::Ui& ui, const PageContext& context, const DashboardState& state) {
-    // The log keeps a fixed part of the page below the scrolling content, so the two scroll
-    // areas never nest.
-    const float logHeight = std::clamp(context.height * 0.32f, 140.0f, 320.0f);
+    // The log sits below the scrolling content, so the two scroll areas never nest.
+    const float logHeight = ServerLogHeight(context, state.log);
     const float contentHeight = std::max(0.0f, context.height - logHeight - kSectionGap);
     ui.column("page.dashboard.layout").size(context.width, context.height).gap(kSectionGap).content([&] {
         // The scroll view composes its content twice per frame, once to measure it, each time
@@ -509,8 +518,8 @@ void ComposeDashboard(eui::Ui& ui, const PageContext& context, const DashboardSt
                 Line(content, context, width, "dashboard.body", Text(context, "page.dashboard.body"),
                      Muted(context));
                 ComposeServer(content, context, width, state);
-                ComposeAppData(content, context, width, state.appData);
                 ComposeProfiles(content, context, width, state);
+                ComposeAppData(content, context, width, state.appData);
             })
             .build();
         ComposeServerLog(ui, context, context.width, logHeight, state);
