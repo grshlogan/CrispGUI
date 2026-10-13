@@ -9,7 +9,9 @@
 #include "util/json.h"
 
 #if !defined(_WIN32)
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #include <algorithm>
@@ -173,14 +175,14 @@ struct Runner {
 
     const TranscriptionState& State() const { return transcription.State(); }
 
-    // Applies the reports until the transcription is no longer running; false after |timeoutMs|.
+    // Applies the reports until the transcription is neither running nor saving; false after |timeoutMs|.
     bool Finish(int timeoutMs = 20000) {
         return crisp::test::WaitUntil(
             [this] {
                 if (transcription.Update()) {
                     ++changes;
                 }
-                return State().phase != TranscriptionPhase::kRunning;
+                return State().phase != TranscriptionPhase::kRunning && State().phase != TranscriptionPhase::kSaving;
             },
             timeoutMs);
     }
@@ -189,6 +191,46 @@ struct Runner {
     bool Run(TranscriptionRequest request, int timeoutMs = 20000) {
         return transcription.Start(std::move(request)) && Finish(timeoutMs);
     }
+};
+
+// Makes the write of |target| fail while it is active: a read-only folder on POSIX, which the
+// superuser ignores (Active() is then false); on Windows an existing |target| held open without
+// delete sharing, as file_write_test does.
+class WriteBlocker {
+public:
+    explicit WriteBlocker(const fs::path& target) : folder_(target.parent_path()) {
+#if defined(_WIN32)
+        held_ = CreateFileW(target.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        active_ = held_ != INVALID_HANDLE_VALUE;
+#else
+        chmod(folder_.c_str(), 0555);
+        active_ = access(folder_.c_str(), W_OK) != 0;
+#endif
+    }
+    ~WriteBlocker() { Release(); }
+    WriteBlocker(const WriteBlocker&) = delete;
+    WriteBlocker& operator=(const WriteBlocker&) = delete;
+
+    bool Active() const { return active_; }
+
+    void Release() {
+#if defined(_WIN32)
+        if (held_ != INVALID_HANDLE_VALUE) {
+            CloseHandle(held_);
+            held_ = INVALID_HANDLE_VALUE;
+        }
+#else
+        chmod(folder_.c_str(), 0755);
+#endif
+        active_ = false;
+    }
+
+private:
+    fs::path folder_;
+    bool active_ = false;
+#if defined(_WIN32)
+    HANDLE held_ = INVALID_HANDLE_VALUE;
+#endif
 };
 
 bool Done(const TranscriptionState& state) {
@@ -301,6 +343,11 @@ int main() {
         CHECK(Names(directory) == Entries({u8"音声 テスト.srt", u8"音声 テスト.wav"}));
         CHECK(sample.Received() - before == 1);
         CHECK(runner.wakes.load() >= 1 && runner.changes >= 1);
+        // After the end the clock stops and Update() has nothing to report.
+        const std::int64_t endedAt = state.elapsedMs;
+        PauseMs(1100);
+        CHECK(!runner.transcription.Update());
+        CHECK(state.elapsedMs == endedAt);
     }
 
     // The cues skip a segment without text, the preview holds the first ones with their speaker
@@ -448,6 +495,7 @@ int main() {
             request.endpoint = {"127.0.0.1", crisp::test::FreePort()};
             CHECK(runner.Run(request));
             CHECK(Failed(runner.State(), TranscriptionFailure::kServerUnreachable));
+            CHECK(runner.State().attempt == 1);
             CHECK(Names(directory) == onlyAudio);
         }
         // A source that is missing, or is not a file: nothing is sent.
@@ -466,6 +514,37 @@ int main() {
             fs::remove(folder, fsError);
             CHECK(Names(directory) == onlyAudio);
         }
+#if !defined(_WIN32)
+        // A pipe is refused without being opened: opening one waits for the other end, so a lookup
+        // that is missing would block here (a helper thread frees it after 3 s, to fail instead of hang).
+        {
+            const fs::path pipe = directory / "pipe.wav";
+            CHECK(mkfifo(pipe.c_str(), 0600) == 0);
+            std::atomic<bool> finished{false};
+            std::thread rescue([&] {
+                for (int i = 0; i < 30 && !finished.load(); ++i) {
+                    PauseMs(100);
+                }
+                while (!finished.load()) {
+                    const int writer = open(pipe.c_str(), O_WRONLY | O_NONBLOCK);
+                    if (writer >= 0) {
+                        close(writer);
+                        return;
+                    }
+                    PauseMs(50);
+                }
+            });
+            const int before = sample.Received();
+            CHECK(runner.Run(Ask(pipe, sample), 2000));
+            CHECK(Failed(runner.State(), TranscriptionFailure::kSourceUnreadable));
+            CHECK(runner.State().detail.find("is not a regular file") != std::string::npos);
+            CHECK(sample.Received() == before);
+            finished = true;
+            rescue.join();
+            fs::remove(pipe, fsError);
+            CHECK(Names(directory) == onlyAudio);
+        }
+#endif
         // A source over the upload limit: refused before sending, and before the question whether
         // the SRT may be replaced, since the file could not be sent in any case.
         {
@@ -512,22 +591,51 @@ int main() {
             CHECK(crisp::test::WriteFile(directory / "talk.srt", "mine"));
             CHECK(runner.Finish());
             CHECK(Failed(runner.State(), TranscriptionFailure::kDestinationExists));
+            CHECK(runner.State().srtKept && runner.State().srt == sampleSrt);  // the work is kept
             CHECK(Content(directory / "talk.srt") == "mine");
             CHECK(Names(directory) == Entries({"talk.srt", "talk.wav"}));
+            // A retry follows the same rule: refused while the file is there, and once it is gone the
+            // kept SRT is written.
+            CHECK(runner.transcription.RetryWrite());
+            CHECK(runner.Finish());
+            CHECK(Failed(runner.State(), TranscriptionFailure::kDestinationExists) && runner.State().srtKept);
+            CHECK(Content(directory / "talk.srt") == "mine");
+            fs::remove(directory / "talk.srt", fsError);
+            CHECK(runner.transcription.RetryWrite());
+            CHECK(runner.Finish());
+            CHECK(Done(runner.State()) && runner.State().destination == directory / "talk.srt");
+            CHECK(Content(directory / "talk.srt") == sampleSrt);
+            CHECK(sample.Received() - before == 1);  // no second request
             fs::remove(directory / "talk.srt", fsError);
         }
-        // The SRT cannot be written (here: a folder has its name) after the server has worked.
+        // A folder in the SRT's place is refused before any request, with permission to replace or without.
         {
             fs::create_directories(directory / "talk.srt", fsError);
             CHECK(crisp::test::WriteFile(directory / "talk.srt" / "inside.txt", "inside"));
             const int before = sample.Received();
-            CHECK(runner.Run(Ask(audio, sample, true)));
-            CHECK(Failed(runner.State(), TranscriptionFailure::kCannotWrite));
-            CHECK(runner.State().detail.rfind("Could not replace ", 0) == 0);
-            CHECK(runner.State().attempt == 1 && sample.Received() - before == 1);
+            for (const bool replace : {false, true}) {
+                CHECK(runner.Run(Ask(audio, sample, replace)));
+                CHECK(Failed(runner.State(), TranscriptionFailure::kDestinationNotFile));
+                CHECK(runner.State().attempt == 0 && sample.Received() == before);
+                CHECK(!runner.State().srtKept && runner.State().srt.empty());
+            }
             CHECK(Content(directory / "talk.srt" / "inside.txt") == "inside");
             CHECK(Names(directory) == Entries({"talk.srt", "talk.wav"}));
             fs::remove_all(directory / "talk.srt", fsError);
+        }
+        // The same when the folder appears while the server works: the finished SRT is kept.
+        {
+            const int before = sample.Received();
+            CHECK(runner.transcription.Start(Ask(audio, sample, false, {{"stub_delay_ms", "1000"}})));
+            CHECK(sample.WaitForRequests(before + 1, 10000));
+            PauseMs(100);
+            fs::create_directories(directory / "talk.srt", fsError);
+            CHECK(runner.Finish());
+            CHECK(Failed(runner.State(), TranscriptionFailure::kDestinationNotFile));
+            CHECK(runner.State().srtKept && runner.State().srt == sampleSrt && runner.State().cues == 1);
+            CHECK(sample.Received() - before == 1);
+            fs::remove_all(directory / "talk.srt", fsError);
+            CHECK(Names(directory) == onlyAudio);
         }
         // The runner is still usable after all of it.
         CHECK(runner.Run(Ask(audio, sample)));
@@ -621,10 +729,12 @@ int main() {
         Server slow;
         CHECK(slow.Start());
         TranscriptionOptions options = FastOptions();
+        options.connectTimeoutMs = 300;  // libcurl's limit is this plus the request timeout
         options.transcribeTimeoutMs = 1000;
         Runner runner(options);
         CHECK(runner.Run(Ask(source, slow, false, {{"stub_delay_ms", "20000"}}), 15000));
         CHECK(Failed(runner.State(), TranscriptionFailure::kTimeout));
+        CHECK(runner.State().attempt == 1);       // a timeout is not retried
         CHECK(runner.State().elapsedMs < 12000);  // WinHTTP's timer may end the wait seconds late
         CHECK(Names(directory) == Entries({"talk.wav"}));
     }
@@ -659,6 +769,196 @@ int main() {
             std::fclose(reader);
         }
 #endif
+    }
+
+    // AC-5: when the write fails after the work, the finished SRT is kept. Retrying writes it once the
+    // cause is gone, SaveTo() writes it elsewhere, and both are refused when there is nothing to save.
+    {
+        const fs::path directory = Case(scratch, "kept");
+        const fs::path rescue = Case(scratch, "kept-rescue");
+        const fs::path source = directory / "talk.wav";
+        const fs::path target = directory / "talk.srt";
+        CHECK(crisp::test::WriteFile(source, AudioBytes()));
+        // Blocks the write of the SRT and runs a transcription that ends in that failure.
+        const auto failWrite = [&](Runner& runner, WriteBlocker*& blocker, std::unique_ptr<WriteBlocker>& owner) {
+            std::error_code ignored;
+            fs::remove(target, ignored);
+#if defined(_WIN32)
+            CHECK(crisp::test::WriteFile(target, "old"));  // held open below, so replacing it fails
+#endif
+            owner = std::make_unique<WriteBlocker>(target);
+            blocker = owner.get();
+            CHECK(runner.Run(Ask(source, sample, true)));
+            return blocker->Active();
+        };
+
+        Runner runner;
+        std::unique_ptr<WriteBlocker> owner;
+        WriteBlocker* blocker = nullptr;
+        const int before = sample.Received();
+        const bool active = failWrite(runner, blocker, owner);
+        if (!active) {
+            std::fprintf(stderr, "transcription_test: a write cannot be made to fail here (superuser?); "
+                                 "the cases of a kept SRT are skipped\n");
+        } else {
+            const TranscriptionState& state = runner.State();
+            CHECK(Failed(state, TranscriptionFailure::kCannotWrite));
+#if defined(_WIN32)
+            CHECK(state.detail.rfind("Could not replace ", 0) == 0);
+#else
+            CHECK(state.detail.rfind("Could not create the temporary file ", 0) == 0);
+#endif
+            CHECK(state.srtKept && state.srt == sampleSrt);
+            CHECK(state.cues == 1 && state.durationMs == 9696 && state.preview == Entries({LineOf(sampleSrt, 2)}));
+            CHECK(state.progress == -1 && state.attempt == 1 && sample.Received() - before == 1);
+
+            // A retry while the cause remains fails again, keeps the SRT, and sends nothing.
+            CHECK(runner.transcription.RetryWrite());
+            CHECK(state.phase == TranscriptionPhase::kSaving);
+            CHECK(!runner.transcription.RetryWrite());                       // not twice at once
+            CHECK(!runner.transcription.SaveTo(rescue / "twice.srt"));       // nor another save meanwhile
+            CHECK(!runner.transcription.Start(Ask(source, sample, true)));  // nor a transcription
+            CHECK(runner.Finish());
+            CHECK(Failed(state, TranscriptionFailure::kCannotWrite));
+            CHECK(state.srtKept && state.srt == sampleSrt && state.cues == 1);
+            CHECK(sample.Received() - before == 1);
+            CHECK(!fs::exists(rescue / "twice.srt", fsError));
+
+            // Once the cause is gone, a retry writes the SRT to the destination.
+            blocker->Release();
+            CHECK(runner.transcription.RetryWrite());
+            CHECK(runner.Finish());
+            CHECK(Done(state));
+            CHECK(state.destination == target && Content(target) == sampleSrt);
+            CHECK(!state.srtKept && state.srt.empty() && state.progress == 100);
+            CHECK(state.cues == 1 && state.preview == Entries({LineOf(sampleSrt, 2)}));
+            CHECK(state.detail.empty());
+            CHECK(Names(directory) == Entries({"talk.srt", "talk.wav"}));
+            CHECK(sample.Received() - before == 1);
+            // Nothing is left to save now.
+            CHECK(!runner.transcription.RetryWrite());
+            CHECK(!runner.transcription.SaveTo(rescue / "nothing.srt"));
+            CHECK(!fs::exists(rescue / "nothing.srt", fsError));
+        }
+        owner.reset();
+
+        // The same failure again: the SRT is saved elsewhere, into folders that do not exist yet.
+        if (active) {
+            Runner second;
+            std::unique_ptr<WriteBlocker> secondOwner;
+            WriteBlocker* secondBlocker = nullptr;
+            CHECK(failWrite(second, secondBlocker, secondOwner));
+            const TranscriptionState& state = second.State();
+            CHECK(Failed(state, TranscriptionFailure::kCannotWrite) && state.srtKept);
+            const fs::path saved = rescue / "deeper" / "still" / "talk.srt";
+            CHECK(second.transcription.SaveTo(saved));
+            CHECK(state.phase == TranscriptionPhase::kSaving);
+            CHECK(second.Finish());
+            CHECK(Done(state));
+            CHECK(state.destination == saved && Content(saved) == sampleSrt);
+            CHECK(!state.srtKept && state.srt.empty() && state.progress == 100 && state.detail.empty());
+            CHECK(state.source == source && state.cues == 1);
+            CHECK(Names(saved.parent_path()) == Entries({"talk.srt"}));
+#if !defined(_WIN32)
+            CHECK(!fs::exists(target, fsError));  // the destination itself was never written
+#endif
+            secondOwner.reset();
+        }
+
+        // A save replaces a file at its path in one step, like the first write.
+        if (active) {
+            Runner third;
+            std::unique_ptr<WriteBlocker> thirdOwner;
+            WriteBlocker* thirdBlocker = nullptr;
+            CHECK(failWrite(third, thirdBlocker, thirdOwner));
+            const fs::path existing = rescue / "existing.srt";
+            CHECK(crisp::test::WriteFile(existing, "the old subtitles"));
+#if !defined(_WIN32)
+            struct stat oldInfo;
+            CHECK(stat(existing.c_str(), &oldInfo) == 0);
+            std::FILE* reader = std::fopen(existing.c_str(), "rb");
+            CHECK(reader != nullptr);
+#endif
+            CHECK(third.transcription.SaveTo(existing));
+            CHECK(third.Finish());
+            CHECK(Done(third.State()) && third.State().destination == existing);
+            CHECK(Content(existing) == sampleSrt);
+#if !defined(_WIN32)
+            struct stat newInfo;
+            CHECK(stat(existing.c_str(), &newInfo) == 0);
+            CHECK(oldInfo.st_ino != newInfo.st_ino);  // a new file took the name
+            if (reader != nullptr) {
+                char buffer[64];
+                const std::size_t count = std::fread(buffer, 1, sizeof(buffer), reader);
+                CHECK(std::string(buffer, count) == "the old subtitles");  // the reader still has the old one
+                std::fclose(reader);
+            }
+#endif
+            CHECK(Names(rescue) == Entries({"deeper", "existing.srt"}));
+            thirdOwner.reset();
+        }
+
+        // Never the source itself, and never anything that is not a file.
+        if (active) {
+            Runner fourth;
+            std::unique_ptr<WriteBlocker> fourthOwner;
+            WriteBlocker* fourthBlocker = nullptr;
+            CHECK(failWrite(fourth, fourthBlocker, fourthOwner));
+            fs::create_directories(rescue / "folder.srt", fsError);
+            CHECK(fourth.transcription.SaveTo(rescue / "folder.srt"));
+            CHECK(fourth.Finish());
+            CHECK(Failed(fourth.State(), TranscriptionFailure::kDestinationNotFile) && fourth.State().srtKept);
+            CHECK(fourth.State().detail.find("is not a file") != std::string::npos);  // the new reason
+            CHECK(fourth.transcription.SaveTo(source));
+            CHECK(fourth.Finish());
+            CHECK(Failed(fourth.State(), TranscriptionFailure::kDestinationExists) && fourth.State().srtKept);
+            CHECK(fourth.State().detail.find("is the source file itself") != std::string::npos);
+            CHECK(Content(source) == AudioBytes());
+            fourthOwner.reset();
+        }
+    }
+
+    // Saving and retrying are refused while a transcription runs, and when no SRT is kept.
+    {
+        const fs::path directory = Case(scratch, "no-save");
+        const fs::path rescue = Case(scratch, "no-save-rescue");
+        const fs::path source = directory / "talk.wav";
+        CHECK(crisp::test::WriteFile(source, AudioBytes()));
+        Runner runner;
+        CHECK(!runner.transcription.RetryWrite() && !runner.transcription.SaveTo(rescue / "idle.srt"));
+        CHECK(runner.transcription.Start(Ask(source, sample, false, {{"stub_delay_ms", "1000"}})));
+        CHECK(!runner.transcription.RetryWrite());
+        CHECK(!runner.transcription.SaveTo(rescue / "running.srt"));
+        CHECK(runner.State().phase == TranscriptionPhase::kRunning);
+        CHECK(runner.Finish());
+        CHECK(Done(runner.State()));
+        CHECK(!runner.transcription.RetryWrite() && !runner.transcription.SaveTo(rescue / "done.srt"));
+        CHECK(runner.Run(Ask(directory / "missing.wav", sample)));
+        CHECK(Failed(runner.State(), TranscriptionFailure::kSourceUnreadable) && !runner.State().srtKept);
+        CHECK(!runner.transcription.RetryWrite() && !runner.transcription.SaveTo(rescue / "failed.srt"));
+        CHECK(Names(rescue).empty());
+    }
+
+    // After a failure the progress is unknown, whatever the last reading was.
+    {
+        const fs::path directory = Case(scratch, "failed-progress");
+        const fs::path source = directory / "talk.wav";
+        CHECK(crisp::test::WriteFile(source, AudioBytes()));
+        Server flaky;
+        CHECK(flaky.Start({{"STUB_FAIL_FIRST", "500:2", false}}));
+        Runner runner;
+        CHECK(runner.transcription.Start(Ask(source, flaky, false, {{"stub_delay_ms", "900"}})));
+        int furthest = -1;
+        CHECK(crisp::test::WaitUntil(
+            [&] {
+                runner.transcription.Update();
+                furthest = std::max(furthest, runner.State().progress);
+                return runner.State().phase != TranscriptionPhase::kRunning;
+            },
+            20000));
+        CHECK(Failed(runner.State(), TranscriptionFailure::kServerError));
+        CHECK(furthest >= 30);  // the server did report progress before it failed
+        CHECK(runner.State().progress == -1);
     }
 
     // One transcription at a time; the next one starts clean after the end of the last; a cancel

@@ -66,6 +66,7 @@ cmake --build build/linux
 ctest --test-dir build/linux --output-on-failure      # -L unit or -L integration for one group
 CRISPGUI_CRISPASR_ROOT=<folder> build/linux/crispgui       # reads <folder>/profile as the CrispASR root
 CRISPGUI_DEV_AUTOSTART=<folder>/<profile> ...              # starts that profile once the first checks are done
+CRISPGUI_DEV_TRANSCRIBE=[choose:]<file> ...                # chooses the file on the Transcribe page at launch, without the file dialog, and transcribes it once a server runs; with "choose:" it only chooses
 build/linux/api_probe --port <port> --key <key> <audio file>  # probes a running server (tools/api_probe)
 
 # Windows release build (MinGW-w64 cross-compilation) and its delivery

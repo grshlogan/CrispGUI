@@ -9,4 +9,6 @@ Helpers that A003 used for the Linux evidence of Phases 1 to 4, handed over in r
 | `mdcheck.py <repo-root>` | Checks the project's Markdown files: relative links and anchors, CR characters, trailing spaces, and open-item markers. Exit 0 when clean |
 | `fake-deployment/` | A stand-in CrispASR root for `CRISPGUI_CRISPASR_ROOT`: the four Japanese reference profiles (copies of `reference/crispasr/profiles-japanese/`), a broken profile, one-byte stand-ins for the cohere, qwen3, and aligner models, and a placeholder `cuda13/crispasr`. The dashboard lists two profiles as ready, two with missing models, and one parse error |
 
+`CRISPGUI_DEV_TRANSCRIBE=[choose:]<file>` selects the Transcribe page with that file chosen, without the file dialog (WSLg has no `zenity` or `kdialog`), and transcribes it once a server runs; with `choose:` it only chooses ([ENVIRONMENT.md §2.2](../../docs/ENVIRONMENT.md#22-commands)).
+
 To start a server from the GUI under WSLg, copy `fake-deployment/` to a scratch folder, replace `cuda13/crispasr` in that copy with `build/linux/tests/stub_crispasr`, and point `CRISPGUI_CRISPASR_ROOT` at the copy; the GUI then starts the stub as the server (as in the Phase 3 checks). Leave the checkout's own copy unchanged.

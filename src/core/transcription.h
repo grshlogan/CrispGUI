@@ -21,6 +21,7 @@ namespace crisp::core {
 enum class TranscriptionPhase {
     kIdle,  // nothing was started
     kRunning,
+    kSaving,  // the kept SRT is being written again, by RetryWrite() or SaveTo()
     kDone,    // the SRT is written
     kFailed,  // see TranscriptionState::failure
 };
@@ -29,18 +30,19 @@ enum class TranscriptionPhase {
 // detail carries what the server or the system said, in English.
 enum class TranscriptionFailure {
     kNone,
-    kServerUnreachable,  // no answer: the server is stopped, still starting, or gone
+    kServerUnreachable,   // no answer: the server is stopped, still starting, or gone
     kTimeout,
     kCancelled,
-    kBadRequest,         // 400: the detail is the server's message
-    kUnauthorized,       // 401: the key is not the server's
-    kTooLarge,           // 413, or a source over the upload limit, which is then not sent
-    kServerBusy,         // 503: the model is loading or being swapped
-    kServerError,        // 500, also after the one retry
-    kUnexpectedAnswer,   // another status, or an answer that is not a transcript
-    kSourceUnreadable,   // the source is not a readable regular file
-    kDestinationExists,  // the SRT exists and may not be replaced, or is the source itself
-    kCannotWrite,        // the SRT could not be written; the detail is WriteFileAtomically's message
+    kBadRequest,          // 400: the detail is the server's message
+    kUnauthorized,        // 401: the key is not the server's
+    kTooLarge,            // 413, or a source over the upload limit, which is then not sent
+    kServerBusy,          // 503: the model is loading or being swapped
+    kServerError,         // 500, also after the one retry
+    kUnexpectedAnswer,    // another status, or an answer that is not a transcript
+    kSourceUnreadable,    // the source is not a readable regular file
+    kDestinationExists,   // the SRT exists and may not be replaced, or is the source itself
+    kDestinationNotFile,  // the SRT's name belongs to a folder or another entry that is not a file
+    kCannotWrite,         // the SRT could not be written; the detail is WriteFileAtomically's message
 };
 
 struct TranscriptionRequest {
@@ -66,11 +68,14 @@ struct TranscriptionState {
     TranscriptionPhase phase = TranscriptionPhase::kIdle;
     std::filesystem::path source;
     std::filesystem::path destination;
-    int attempt = 0;             // 1 for the request, 2 for the one retry of a 500
-    int progress = -1;           // the server's progress, 0..100, while it is known; 100 once done
+    int attempt = 0;  // 1 for the request, 2 for the one retry of a 500
+    // The server's progress, 0..100, while it is known: while kRunning, and 100 once kDone. It is -1
+    // before the first reading, after a new attempt begins, and after any failure, whatever the
+    // last reading was.
+    int progress = -1;
     std::int64_t elapsedMs = 0;  // since the start; fixed when the transcription ends
 
-    // kDone
+    // kDone, and kFailed with srtKept
     int cues = 0;
     std::int64_t durationMs = 0;       // of the processed audio, from the transcript
     std::vector<std::string> preview;  // the texts of the first cues, as the file has them
@@ -78,6 +83,12 @@ struct TranscriptionState {
     // kFailed
     TranscriptionFailure failure = TranscriptionFailure::kNone;
     std::string detail;
+    // The SRT of a transcription that finished while its write failed (kCannotWrite, or kDestinationExists
+    // and kDestinationNotFile found just before the write), so that the work is not lost: RetryWrite()
+    // and SaveTo() write it. Empty text with srtKept set is a transcript without cues. After a
+    // successful write, srtKept is false and destination is the path written.
+    bool srtKept = false;
+    std::string srt;
 };
 
 // Where the SRT of |source| goes: next to it, with the extension replaced by ".srt".
@@ -94,15 +105,26 @@ public:
 
     // Starts transcribing |request.source|: the state is kRunning at once. Before anything is sent,
     // the job thread checks that the source is a readable regular file within the upload limit and
-    // that the destination is free or may be replaced. The request is retried once after a 500 and
-    // never otherwise. Returns false and changes nothing while a transcription runs and after
-    // Shutdown().
+    // that the destination is free, or a file that may be replaced. The request is retried once after
+    // a 500 and never otherwise. Returns false and changes nothing while a transcription runs or an
+    // SRT is being saved, and after Shutdown().
     bool Start(TranscriptionRequest request);
     // Aborts the request in progress: the state becomes kFailed with kCancelled, nothing is
     // written, and no temporary file stays. A cancel that arrives while the file is being written
-    // lets the write finish, and the state becomes kDone. Ignored when nothing runs.
+    // lets the write finish, and the state becomes kDone. Ignored when no request runs.
     void Cancel();
-    // Cancels a running transcription and joins the threads. Calling it again does nothing.
+    // With a kept SRT (kFailed and srtKept), writes it again to the destination, under the same rule
+    // as the first write: an SRT that exists is replaced only when the request allowed it. The state
+    // is kSaving until the result is applied: kDone with the path written, or kFailed again with the
+    // new reason and the SRT still kept. Returns false and does nothing in any other state, in
+    // particular while a transcription runs or a save is in progress, and after Shutdown().
+    bool RetryWrite();
+    // The same to |path|, which replaces a file that is there, and whose missing folders are created
+    // (the page saves into the app data folder). Never the source file, and never anything that is
+    // not a file. Starting another transcription drops the kept SRT.
+    bool SaveTo(const std::filesystem::path& path);
+    // Cancels a running transcription and joins the threads; a save in progress is finished first,
+    // since a write cannot be cancelled. Calling it again does nothing.
     void Shutdown();
 
     // Applies what the threads reported and refreshes the elapsed time. Call on the UI thread
@@ -113,6 +135,8 @@ public:
     const TranscriptionState& State() const;
 
 private:
+    bool StartSave(const std::filesystem::path& path, bool replaceExisting);
+
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

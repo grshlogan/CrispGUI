@@ -28,6 +28,8 @@ struct Outcome {
     std::int64_t durationMs = 0;
     std::vector<std::string> preview;
     std::int64_t elapsedMs = 0;
+    bool srtKept = false;  // a failed write keeps the finished SRT
+    std::string srt;
 };
 
 Outcome Failed(TranscriptionFailure failure, std::string detail = std::string()) {
@@ -70,11 +72,12 @@ std::int64_t ElapsedMs(Clock::time_point since) {
 }
 
 struct Event {
-    enum class Kind { kAttempt, kProgress, kFinished };
+    enum class Kind { kAttempt, kProgress, kFinished, kSaved };
     Kind kind = Kind::kProgress;
     int attempt = 0;    // of kAttempt, and the attempt a kProgress event was read in
     int progress = -1;  // of kProgress: -1 when the server reported none
-    Outcome outcome;    // of kFinished
+    Outcome outcome;    // of kFinished and kSaved
+    std::filesystem::path path;  // of kSaved: where the write went
 };
 
 // Where the worker threads post what they observe; Update() takes it on the UI thread.
@@ -104,6 +107,59 @@ private:
     std::mutex mutex_;
     std::vector<Event> events_;
 };
+
+// Whether an SRT may be written to |destination| for |source|: nothing there, or a file that
+// |replaceExisting| allows to replace; never anything that is not a file, and never the source.
+// Nothing is sent or written by this check.
+bool CheckDestination(const std::filesystem::path& source, const std::filesystem::path& destination,
+                      bool replaceExisting, Outcome& outcome) {
+    std::error_code error;
+    const std::filesystem::file_status status = std::filesystem::status(destination, error);
+    if (!std::filesystem::exists(status)) {
+        return true;
+    }
+    const std::string name = destination.u8string();
+    if (!std::filesystem::is_regular_file(status)) {
+        outcome = Failed(TranscriptionFailure::kDestinationNotFile, name + " is not a file.");
+        return false;
+    }
+    if (std::filesystem::equivalent(source, destination, error)) {
+        outcome = Failed(TranscriptionFailure::kDestinationExists, name + " is the source file itself.");
+        return false;
+    }
+    if (!replaceExisting) {
+        outcome = Failed(TranscriptionFailure::kDestinationExists, name + " already exists.");
+        return false;
+    }
+    return true;
+}
+
+// The save thread: writes the kept SRT to |path|, creating its folder, and posts how it went.
+void RunSave(Inbox& inbox, const std::filesystem::path& source, std::filesystem::path path, bool replaceExisting,
+             const std::string& srt) {
+    Outcome outcome;
+    if (CheckDestination(source, path, replaceExisting, outcome)) {
+        std::error_code error;
+        const std::filesystem::path folder = path.parent_path();
+        if (!folder.empty()) {
+            std::filesystem::create_directories(folder, error);
+        }
+        std::string message;
+        if (error) {
+            outcome = Failed(TranscriptionFailure::kCannotWrite,
+                             "Could not create the folder " + folder.u8string() + ": " + error.message() + ".");
+        } else if (platform::WriteFileAtomically(path, srt, message)) {
+            outcome.phase = TranscriptionPhase::kDone;
+        } else {
+            outcome = Failed(TranscriptionFailure::kCannotWrite, message);
+        }
+    }
+    Event event;
+    event.kind = Event::Kind::kSaved;
+    event.outcome = std::move(outcome);
+    event.path = std::move(path);
+    inbox.Post(std::move(event));
+}
 
 // One transcription. The job thread runs Run(); a second thread reads /progress while the request
 // waits; the UI thread may Cancel() at any time.
@@ -140,7 +196,8 @@ public:
 private:
     Outcome Execute() {
         Outcome outcome;
-        if (!CheckSource(outcome) || !CheckDestination(outcome)) {
+        if (!CheckSource(outcome) ||
+            !CheckDestination(request_.source, destination_, request_.replaceExisting, outcome)) {
             return outcome;
         }
         const ApiClient client(ClientOptions());
@@ -201,24 +258,6 @@ private:
             outcome = Failed(TranscriptionFailure::kTooLarge,
                              name + " is " + std::to_string(size) + " bytes; the upload limit is " +
                                  std::to_string(options_.maxUploadBytes) + " bytes.");
-            return false;
-        }
-        return true;
-    }
-
-    // The SRT must not exist, unless the request allows replacing it; it is never the source.
-    bool CheckDestination(Outcome& outcome) const {
-        std::error_code error;
-        if (!std::filesystem::exists(destination_, error)) {
-            return true;
-        }
-        const std::string name = destination_.u8string();
-        if (std::filesystem::equivalent(request_.source, destination_, error)) {
-            outcome = Failed(TranscriptionFailure::kDestinationExists, name + " is the source file itself.");
-            return false;
-        }
-        if (!request_.replaceExisting) {
-            outcome = Failed(TranscriptionFailure::kDestinationExists, name + " already exists.");
             return false;
         }
         return true;
@@ -303,31 +342,40 @@ private:
         }
     }
 
-    // Writes the SRT of |transcript| and describes it.
+    // Writes the SRT of |transcript| and describes it. When the SRT cannot be written, the outcome
+    // keeps it, so that the finished work is not lost.
     Outcome Write(const Transcript& transcript) {
         if (CancelRequested()) {
             return Failed(TranscriptionFailure::kCancelled);
         }
-        // The SRT may have appeared while the server worked.
-        Outcome outcome;
-        if (!CheckDestination(outcome)) {
-            return outcome;
-        }
-        std::string error;
-        if (!platform::WriteFileAtomically(destination_, SegmentsToSrt(transcript.segments), error)) {
-            return Failed(TranscriptionFailure::kCannotWrite, error);
-        }
-        outcome.phase = TranscriptionPhase::kDone;
-        outcome.durationMs = transcript.durationMs;
+        std::string srt = SegmentsToSrt(transcript.segments);
+        int cues = 0;
+        std::vector<std::string> preview;
         for (const TranscriptSegment& segment : transcript.segments) {
             if (segment.text.empty()) {
                 continue;  // SegmentsToSrt writes no cue for it
             }
-            ++outcome.cues;
-            if (outcome.preview.size() < options_.previewCues) {
-                outcome.preview.push_back(SrtSpeakerPrefix(segment.speaker) + segment.text);
+            ++cues;
+            if (preview.size() < options_.previewCues) {
+                preview.push_back(SrtSpeakerPrefix(segment.speaker) + segment.text);
             }
         }
+        Outcome outcome;
+        std::string error;
+        // The SRT may have appeared, or become a folder, while the server worked.
+        if (!CheckDestination(request_.source, destination_, request_.replaceExisting, outcome)) {
+            outcome.srtKept = true;
+            outcome.srt = std::move(srt);
+        } else if (platform::WriteFileAtomically(destination_, srt, error)) {
+            outcome.phase = TranscriptionPhase::kDone;
+        } else {
+            outcome = Failed(TranscriptionFailure::kCannotWrite, error);
+            outcome.srtKept = true;
+            outcome.srt = std::move(srt);
+        }
+        outcome.cues = cues;
+        outcome.durationMs = transcript.durationMs;
+        outcome.preview = std::move(preview);
         return outcome;
     }
 
@@ -363,7 +411,8 @@ struct Transcription::Impl {
     TranscriptionState state;
     Clock::time_point started;
     std::unique_ptr<Job> job;
-    std::thread thread;
+    std::thread thread;  // the job's, or the save's
+    bool replaceExisting = false;  // of the last request
     bool shutDown = false;
 };
 
@@ -375,19 +424,45 @@ Transcription::~Transcription() {
 }
 
 bool Transcription::Start(TranscriptionRequest request) {
-    if (impl_->shutDown || impl_->state.phase == TranscriptionPhase::kRunning) {
+    const TranscriptionPhase phase = impl_->state.phase;
+    if (impl_->shutDown || phase == TranscriptionPhase::kRunning || phase == TranscriptionPhase::kSaving) {
         return false;
     }
     if (impl_->thread.joinable()) {
-        impl_->thread.join();  // the previous job, which has posted its end
+        impl_->thread.join();  // the previous job or save, which has posted its end
     }
     impl_->state = TranscriptionState();
     impl_->state.phase = TranscriptionPhase::kRunning;
     impl_->state.source = request.source;
     impl_->state.destination = TranscriptionDestination(request.source);
+    impl_->replaceExisting = request.replaceExisting;
     impl_->started = Clock::now();
     impl_->job = std::make_unique<Job>(std::move(request), impl_->options, impl_->inbox, impl_->started);
     impl_->thread = std::thread([job = impl_->job.get()] { job->Run(); });
+    return true;
+}
+
+bool Transcription::RetryWrite() {
+    return StartSave(impl_->state.destination, impl_->replaceExisting);
+}
+
+bool Transcription::SaveTo(const std::filesystem::path& path) {
+    return StartSave(path, true);
+}
+
+bool Transcription::StartSave(const std::filesystem::path& path, bool replaceExisting) {
+    TranscriptionState& state = impl_->state;
+    if (impl_->shutDown || state.phase != TranscriptionPhase::kFailed || !state.srtKept) {
+        return false;
+    }
+    if (impl_->thread.joinable()) {
+        impl_->thread.join();  // the job that ended in this failure
+    }
+    state.phase = TranscriptionPhase::kSaving;
+    state.failure = TranscriptionFailure::kNone;
+    state.detail.clear();
+    impl_->thread = std::thread([inbox = &impl_->inbox, source = state.source, path, replaceExisting,
+                                 srt = state.srt] { RunSave(*inbox, source, path, replaceExisting, srt); });
     return true;
 }
 
@@ -434,8 +509,30 @@ bool Transcription::Update() {
             state.durationMs = outcome.durationMs;
             state.preview = std::move(outcome.preview);
             state.elapsedMs = outcome.elapsedMs;
+            state.srtKept = outcome.srtKept;
+            state.srt = std::move(outcome.srt);
             if (state.phase == TranscriptionPhase::kDone) {
                 state.progress = 100;
+            } else {
+                state.progress = -1;  // the last reading says nothing about a failed request
+            }
+            break;
+        }
+        case Event::Kind::kSaved: {
+            Outcome& outcome = event.outcome;
+            if (outcome.phase == TranscriptionPhase::kDone) {
+                state.phase = TranscriptionPhase::kDone;
+                state.failure = TranscriptionFailure::kNone;
+                state.detail.clear();
+                state.destination = std::move(event.path);
+                state.srtKept = false;
+                state.srt = std::string();
+                state.progress = 100;
+            } else {
+                // The SRT stays kept, so that another try or another place is still possible.
+                state.phase = TranscriptionPhase::kFailed;
+                state.failure = outcome.failure;
+                state.detail = std::move(outcome.detail);
             }
             break;
         }
