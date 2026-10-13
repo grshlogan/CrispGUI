@@ -275,7 +275,7 @@ Settings settings;
 std::mutex modelMutex;
 std::atomic<int> busy{0};
 std::atomic<int> progress{-1};
-std::atomic<int> received{0};  // transcription requests, answered or not
+std::atomic<int> transcriptionRequests{0};  // answered or not
 std::atomic<int> failedSoFar{0};
 
 void SendAll(SocketHandle socket, const std::string& data) {
@@ -717,7 +717,7 @@ void RunModel(int delayMs) {
 // POST /v1/audio/transcriptions, in the order of crispasr_server.cpp:2027-2310. An empty result
 // means: close the connection without an answer.
 std::string Transcribe(const Request& request) {
-    ++received;
+    ++transcriptionRequests;
     // cpp-httplib splits the body while reading it, before the route's handler checks the key.
     std::vector<Part> parts;
     std::string error;
@@ -816,7 +816,7 @@ std::string Answer(const Request& request) {
         return Transcribe(request);
     }
     if (request.method == "GET" && path == "/stub/requests") {
-        return Response(200, "{\"transcriptions\": " + std::to_string(received.load()) + "}");
+        return Response(200, "{\"transcriptions\": " + std::to_string(transcriptionRequests.load()) + "}");
     }
     if (request.method == "POST" && path == "/stub/echo") {
         return Response(200, "{\"bytes\": " + std::to_string(request.body.size()) + ", \"fnv1a\": \"" +
