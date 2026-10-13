@@ -30,7 +30,7 @@
 
 ## Scope gate
 
-The specification is approved. Phases 0 to 3 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md)). Phase 4, the ApiClient, is implemented; its remaining Windows checks and two corrections are open, the corrections as task packets for A004 ([Phase 4 report](devlog/phase-4.md)). Phase 5 starts after Phase 4 closes, with task packets from A003. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
+The specification is approved. Phases 0 to 3 of [TASKS.md](TASKS.md) are complete ([Phase 0 report](devlog/phase-0.md), [Phase 1 report](devlog/phase-1.md), [Phase 2 report](devlog/phase-2.md), [Phase 3 report](devlog/phase-3.md)). Phase 4, the ApiClient, is implemented; its remaining Windows checks and two corrections are open, the corrections as task packets for A004 ([Phase 4 report](devlog/phase-4.md)). Phase 5 has started with core tasks that do not depend on Phase 4's last Windows check; its GUI work and delivery follow once Phase 4 closes. Installing packages, importing sources, and Git writes beyond the standing commit-and-push authorization each need the owner's authorization ([agents/README.md](agents/README.md#standing-authorizations)).
 
 ## Language
 

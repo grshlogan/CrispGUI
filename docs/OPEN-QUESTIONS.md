@@ -2,7 +2,7 @@
 
 The single register of undecided questions. Each entry states the context, the options, A003's recommendation, and the status. Questions of requirements, scope, and authorization are the owner's; technical and planning questions within the approved SPEC are decided by A003 as planner since 2026-10-13 (round 13), and the owner can overrule them ([agents/README.md](agents/README.md#identities)). A decided entry moves to "Resolved" with a pointer to the document that now records the decision.
 
-OQ-1 (Windows build path), OQ-2 (Git repository), OQ-3 (WSL2 toolchain), and OQ-9 (workflow and review policy) are resolved; see [Resolved](#resolved). The numbers are not reused.
+OQ-1 (Windows build path), OQ-2 (Git repository), OQ-3 (WSL2 toolchain), OQ-7 (local SRT generation), and OQ-9 (workflow and review policy) are resolved; see [Resolved](#resolved). The numbers are not reused.
 
 ## OQ-4: Source material needed
 
@@ -28,12 +28,6 @@ OQ-1 (Windows build path), OQ-2 (Git repository), OQ-3 (WSL2 toolchain), and OQ-
 - Context: Owner direction: retry failed chunks rather than build elaborate resume. Each window is one request. The server decodes the whole uploaded file for every request and then trims it to the window ([API-CRISPASR §6](API-CRISPASR.md#6-lifecycle-and-resource-behavior)), so very short windows multiply decode and upload work.
 - Proposal: window length 300 s, where 0 means the whole file in one request and files shorter than 1.5 windows also go in one request; 2 automatic retries per window with 2 s and 10 s backoff; boundary guard 1.0 s. All three are GUI-tier parameters stored in each job snapshot.
 - Status: open; the owner may prefer shorter windows.
-
-## OQ-7: Local SRT generation
-
-- Context: The server's `srt` output ignores `max_len` and `split_on_punct` ([API-CRISPASR §4](API-CRISPASR.md#4-response-formats)), and merging windows needs segment timings.
-- Proposal: Request `verbose_json` and write the SRT in the GUI. With no shaping applied, the writer reproduces the server's cue format exactly; subtitle shaping becomes a GUI-tier option that works for every backend. Acceptance compares the GUI's SRT with the server's own `srt` output.
-- Status: open.
 
 ## OQ-8: Missing aligner at server start
 
@@ -73,3 +67,7 @@ Owner directions of 2026-10-12 and 2026-10-13 (rounds 12 and 13):
 | --- | --- |
 | A003 becomes `A003[ClaudeCode]DocArch Planner` (decisions, documentation, direction); `A004[ClaudeCode]Master Coding` does all coding; A001 and A002 are the owner's Windows-side agents | [agents/README.md](agents/README.md#identities) |
 | OQ-9: coding on Sonnet 5.5 or Haiku 5.5 and Review on Sonnet 5.5 (owner, round 12); A003 decided a lightweight `agent-dev-loop` without coding subagents by default and with a fresh Review subagent per round; A004 merges reviewed work itself (owner's choice, round 13) | [agents/README.md](agents/README.md#workflow) |
+
+### OQ-7: Local SRT generation
+
+Decided by A003 as planner on 2026-10-13 (round 20). The GUI requests `verbose_json` and writes the SRT itself. Without shaping, its output equals the server's `srt` for the same segments byte for byte, which the recorded pair in `tests/data/deployed-parakeet/` checks ([P5-T1](agents/tasks/P5-T1-srt-writer/packet.md)); subtitle shaping (characters per cue, splits at sentence ends) comes later as a GUI-tier option that works for every backend. Reasons: the server's `srt` ignores `max_len` and `split_on_punct` ([API-CRISPASR §4](API-CRISPASR.md#4-response-formats)), and merging transcription windows needs segment timings. Recorded in [ARCHITECTURE.md §2.8](ARCHITECTURE.md#28-srt-writer) and [SPEC.md FR-3](SPEC.md#fr-3-transcription-single-file).

@@ -67,6 +67,8 @@ Implemented on 2026-10-12; the Linux acceptance passes. On Windows, W4-1 passed 
 
 ## Phase 5 — Single-file transcription and SRT writer
 
+Started on 2026-10-13 with the core tasks that do not depend on Phase 4's last Windows check: [P5-T1](agents/tasks/P5-T1-srt-writer/packet.md) (the SRT writer; OQ-7 is decided) and [P5-T2](agents/tasks/P5-T2-atomic-write/packet.md) (writing a file atomically). The Transcribe page and the Phase 5 delivery follow as packets once Phase 4 closes.
+
 - [ ] Implement the SRT writer ([ARCHITECTURE.md §2.8](ARCHITECTURE.md#28-srt-writer)) with equivalence fixtures.
 - [ ] Wire the Transcribe page: file picker with size pre-check, profile indicator (the server must be running), Transcribe button, progress from `/progress`, result preview, and save path.
 - [ ] Save the SRT next to the source file by default; honor the output-directory setting.

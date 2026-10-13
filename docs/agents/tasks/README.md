@@ -21,8 +21,10 @@ Maintained by A003 when it consumes a receipt.
 | [P4-T4](P4-T4-rename/packet.md) | The project's names in code and deliveries become CrispGUI | Consumed (round 18): R01 PASS; the next delivery shows the new names on Windows | `403bde9` |
 | [P4-T5](P4-T5-server-answers/packet.md) | The deployed server's answers as test data | Consumed (round 19): R01 PASS | `017b5b5` |
 | [P4-T3](P4-T3-delivery/packet-v2.md) (v2) | The agent brief in deliveries, and the next Phase 4 delivery | Consumed (round 20): R01 PASS; delivery `crispgui-621df7d` built from `621df7d` | `bd925e8` |
+| [P5-T1](P5-T1-srt-writer/packet.md) | The SRT writer: the server's cue format from `verbose_json` | Ready for A004 | — |
+| [P5-T2](P5-T2-atomic-write/packet.md) | Writing a file atomically | Ready for A004 | — |
 
-Order: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3.
+Order for Phase 4: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3. Phase 5: P5-T1, then P5-T2.
 
 States: `Ready for A004` → `Coding` → `Review Rxx` → `Merged` (A004) → `Consumed` (A003). `Blocked` names what is missing and who supplies it.
 
