@@ -225,3 +225,32 @@ My answers to its notes. A finding that would change the reviewed patch is not a
 | F7 (P3): the comments of `transcription_test.cpp` label cases "AC-4", "AC-5", and "AC-6" with P5-T3's numbers, and one with P5-T4's, so "AC-5" names two criteria | Agreed; the task ID in each label, at the next change of the test |
 
 Environment notes of the report: a stub server from the first Review subagent, which I had stopped, was left running on port 5114 (`<scratchpad>/r1-gui/root/bin/crispasr`, parent process 1) and made the Review's first capture show an adopted server; I ended it afterwards. The Review ran its GUI scenes in a private network namespace for that reason. The recipe of this receipt ends with a `pkill` of the stub the GUI starts; the report suggests a line in `tools/dev/README.md` about a stub left over from an earlier run, which is A003's to decide.
+
+## Delivery
+
+Built after the push of the reviewed work, in `<CODING_ROOT>`, from the merged commit `47054b92160ad00e1937a469a6ff727dea097dad` (the pushed tip; `git status --porcelain` printed nothing before and after the packaging, and `git merge-base --is-ancestor HEAD origin/main` exited 0), at the owner's request of 2026-10-14 to test the SRT transcription on Windows. The reviewed candidate `74349d5` is `4411657` on `origin/main`, and the page commit `b3f7f52` is `a43bb6a`: the same patches (the patch ID of the diff of `src tests CMakeLists.txt tools docs/ENVIRONMENT.md` is `e334c13e` before and after the rebase onto `c9097c6`).
+
+| Item | Value |
+| --- | --- |
+| Zip | `crispgui-47054b9.zip`, 40,242,175 bytes |
+| SHA-256 | `5a4aaefd72c40abb705264a140be6a3c1c5e4191dac2d025a13542273127b073` (`crispgui-47054b9.zip.sha256`, `sha256sum -c`: OK) |
+| Commit | `47054b92160ad00e1937a469a6ff727dea097dad`, named in `BUILD-INFO.txt` ("on origin/main"); packaged 2026-10-14T19:25:32Z |
+| Location | `<HANDOFF_OUT>`: the folder `crispgui-47054b9/`, `crispgui-47054b9.zip`, and `crispgui-47054b9.zip.sha256`; the earlier deliveries and the returned files there were not touched |
+| Contents | 83 zip entries, 72 files: `crispgui.exe` (4,178,432 bytes), `WINDOWS-AGENT.md`, `CHECKLIST.md`, `BUILD-INFO.txt`, `tests.txt`, `run-tests.cmd`, `run-tests.ps1`, `run-api-probe.cmd`, `api_probe.exe`, `stub_crispasr.exe`, 23 test executables (17 unit, 6 integration; new since the last delivery: `srt_writer_test`, `file_write_test`, `transcription_test`), `assets/`, `fonts/` (3 files), and `testdata/` |
+
+Steps and results (`set -o pipefail`; logs in `<scratchpad>/logs/P5T4D-*.log`):
+
+| Command | Exit code | Result |
+| --- | --- | --- |
+| `cmake --build build/linux --target clean`, then G1: `cmake -S . -B build/linux -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCRISPGUI_FONT_DIR=… && cmake --build build/linux` | 0; 0 | All objects rebuilt (231 steps), 0 lines with a warning |
+| The same for `build/mingw` (G4, Release, the toolchain file) | 0; 0 | 234 steps, 0 warnings; `crispgui.exe` 4,178,432 bytes |
+| G2: `ctest --test-dir build/linux --output-on-failure` | 0 | 23 of 23 passed |
+| G3, extra: five rounds of `ctest -L integration` | 0, 0, 0, 0, 0 | 6 of 6 each round |
+| `tools/package-windows.sh` | 0 | Wrote the folder, the zip, and its `.sha256` into `<HANDOFF_OUT>` |
+| `sha256sum -c`; Python `zipfile`: `testzip()`, the names and entry count | 0 | OK; no damaged member; 83 entries, 72 files, all under `crispgui-47054b9/`; `crispgui.exe`, `transcription_test.exe`, and `file_write_test.exe` present; 23 test executables; no entry name contains `crisprust` |
+| `file` and `grep -c -v $'\r$'` on the seven text files | 0 | `BUILD-INFO.txt`, `tests.txt`, `run-tests.cmd`, `run-tests.ps1`, `run-api-probe.cmd` with CRLF line terminators and no bare LF line; `WINDOWS-AGENT.md` and `CHECKLIST.md` have no bare LF line either |
+| `tr -d '\r' < BUILD-INFO.txt`; `tests.txt` | 0 | `Commit: 47054b92… (on origin/main)`, "run-tests.cmd runs 17 unit and 6 integration tests"; `tests.txt` lists 17 `unit` and 6 `integration` entries |
+| `grep -r -i -l crisprust` over the folder; `grep -c -a` for the name as ASCII and UTF-16 in `crispgui.exe`, `api_probe.exe`, `transcription_test.exe` | 1 (no match); 0 hits each | No file of the delivery contains the old name |
+| `cmp` of `testdata/deployed-parakeet/transcript.srt` in the folder with the repository's | 0 | Identical |
+
+`CHECKLIST.md` in this delivery is still Phase 4's (W4-1 to W4-4); the Phase 5 checks (W5) are A003's to write. For the owner's test of the page, the steps are in my report to the owner: start the server from the Dashboard, copy the sample out of the CrispASR folder (the SRT goes next to the source, and the engine's folder is read-only), choose the copy on the Transcribe tab, and compare the SRT with `testdata\deployed-parakeet\transcript.srt` (the real server's answer for the same sample). The Windows side is `not run`.
