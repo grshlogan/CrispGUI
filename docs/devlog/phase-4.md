@@ -1,6 +1,6 @@
 # Phase 4 Report — ApiClient
 
-Status: implemented; the Linux acceptance passes. On Windows, with `crisprustgui-c296f23`: W4-1 passed 19 of 20 tests, the failing one allowing too little time for WinHTTP's coarse timer ([P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md)); W4-2 passed by the owner's statement; W4-3 passed; W4-4 passed by the owner's statement. The corrected delivery `crispgui-621df7d` waits for its Windows checks; the phase closes when its W4-1 has no failures. Written by A003 on 2026-10-12 (rounds 10 and 11; dates are UTC). The plan is [TASKS.md Phase 4](../TASKS.md#phase-4--apiclient); the design is [ARCHITECTURE.md §2.3](../ARCHITECTURE.md#23-apiclient-and-http-transport). On 2026-10-12 the owner agreed to two additions: a numbered checklist in every Windows delivery, and an entry for the Windows-side agent in the identity register.
+Status: complete, accepted on 2026-10-14. On Windows, `crisprustgui-c296f23` passed W4-2 (owner's statement), W4-3, and W4-4 (owner's statement), and its W4-1 failure was a test that allowed too little time for WinHTTP's coarse timer ([P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md)); the corrected delivery `crispgui-621df7d` passed W4-1 with 0 failures of 20 (round 26).
 
 ## What was built
 
@@ -68,6 +68,8 @@ W4-3 (round 14): passed. The owner ran `api_probe.exe --window 5000,10000` with 
 
 W4-4 (round 15, owner statement): passed. After Stop and its confirmation the server panel showed Stopped with exit code 1, and the GPU memory and RAM the server held were released. Exit code 1 is the code the GUI's stop gives the process: `src/platform/process_win32.cpp` ends it with `TerminateProcess(..., 1)`.
 
+W4-1 of `crispgui-621df7d` (round 26): the owner ran `run-tests.cmd` at 2026-10-14T19:43:19Z (03:43 on 2026-10-15, UTC+8) on Windows 11 Pro for Workstations 10.0.22631 with an RTX 5080 and an RTX 3080, and returned `test-results.txt`: 0 failures of 20. `api_client_test` timed out after 4185 ms, inside the new bounds of 900 ms to 7500 ms, the coarse timer at work, and its cancellation returned after 310 ms. W4-2 to W4-4 were not repeated with this delivery; W5-2 of the Phase 5 delivery shows the first screen's Start buttons on Windows. With that, Phase 4 is accepted.
+
 ## Decisions and deviations
 
 - The ApiClient offers the calls the transcription needs: the upload and `/progress`. `/health` and `/v1/models` stay with the ServerManager's poller, which already reads them; ARCHITECTURE's earlier list of four calls is updated.
@@ -82,7 +84,7 @@ W4-4 (round 15, owner statement): passed. After Stop and its confirmation the se
 ## Open items
 
 - [P4-T1](../agents/tasks/P4-T1-timeout-test/packet.md): a timeout check that allows for WinHTTP's coarse timer, merged as `c483964` after Review R01 passed it (its Windows check is W4-1 of the next delivery); [P4-T2](../agents/tasks/P4-T2-dashboard-start/packet.md): Start buttons on the dashboard's first screen, merged as `5649b4f` after Review R01 passed it; [P4-T3](../agents/tasks/P4-T3-delivery/packet-v2.md): the next delivery. With [P4-T4](../agents/tasks/P4-T4-rename/packet.md) (the rename to CrispGUI) and [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (the server's answers as test data), all go to A004 under the [workflow](../agents/README.md#workflow) of round 13.
-- W4-1 to W4-4 with `crispgui-621df7d`. The phase closes when a delivery that carries its corrections passes all its tests on Windows: W4-1 of `crispgui-621df7d` or of `crispgui-47054b9`, or W5-1 of the Phase 5 delivery.
+- Closed in round 26: W4-1 of `crispgui-621df7d` passed with 0 failures of 20.
 - The first screen at other window sizes (P4-T2 Review, finding F3): at the default 1100×720 the first ready profile's Start button sits about 50 px above the lower edge of the scrolling area with the fake deployment; at the minimum window of 800×560 no profile row is on the first screen. A longer Server panel or a folder path that wraps uses part of that margin. W4-2 of the next delivery shows how the owner's real list fits.
 - The probe's recorded answers are test data in `tests/data/deployed-parakeet/` since [P4-T5](../agents/tasks/P4-T5-server-answers/packet.md) (`017b5b5`); `transcript.srt` waits there for Phase 5's SRT writer ([OQ-4](../OPEN-QUESTIONS.md#oq-4-source-material-needed) item 3).
 - [P4-T4](../agents/tasks/P4-T4-rename/packet.md) renamed the code-level names to CrispGUI (`403bde9`): `crispgui.exe`, the window title, the WinHTTP user agent, the multipart boundary, the log notes, and the archive names; the next delivery is the first with them.

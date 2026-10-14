@@ -185,6 +185,8 @@ From the Phase 4 code and its Linux runs of 2026-10-12 ([Phase 4 report](devlog/
 | Transcription request | 30 min for one request, upload and answer; at most 512 MiB per upload, the server's limit, checked before sending; answers up to 64 MiB | `ApiClientOptions` (Phase 4); the timeout becomes a setting in Phase 8 |
 | Transcription window | 300 s (*proposed*, OQ-6) | GUI settings and each job snapshot |
 
+The deployed engine reports itself as `crispasr 0.8.41 (git 340d7085, Release) [backends: cpu,cuda]` in a server log the owner provided on 2026-10-14 (`smoke_5114.log` in `/home/claude/projects/CrispGUI-handoff/scratch`, `observed`), with CUDA devices RTX 5080 and RTX 3080; its `--help` text is `cli_help_full.txt` in the same folder. The project's server contract and CLI flag table were checked against the 0.8.42 source ([API-CRISPASR.md](API-CRISPASR.md)); W4-3 found the deployed build answering as that contract describes.
+
 ## 6. Verification entry points
 
 - Project: the Linux and MinGW builds and `ctest` of [§2.2](#22-commands). A Windows delivery carries the same unit and integration tests, the stub server, and `testdata/`; `run-tests.cmd` in the delivery folder runs them and writes `test-results.txt`. The integration tests start the stub on free ports of 127.0.0.1 and write their scratch folders next to the tests.

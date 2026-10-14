@@ -2,7 +2,7 @@
 
 A desktop GUI for driving the [CrispASR](https://github.com/CrispStrobe/CrispASR) speech engine, built with C++17 and the EUI-NEO UI framework.
 
-> **Status: Phases 0 (build environment), 1 (application skeleton), 2 (ProfileStore), and 3 (ServerManager) complete; Phase 4 (ApiClient) implemented; its Windows checks W4-2 and W4-3 passed, and its last corrections are under way.** This repository contains the specification, architecture plan, server contract, reference material, and the application as far as the completed phases go. A003 (Claude Code in WSL2) plans the work and writes the documents; A004 (Claude Code in WSL2) implements it from task packets, following `docs/TASKS.md` and the workflow in `docs/agents/README.md`; `docs/STATUS.md` records the current state.
+> **Status: Phases 0 (build environment), 1 (application skeleton), 2 (ProfileStore), 3 (ServerManager), and 4 (ApiClient) complete; Phase 5 (single-file transcription) in progress.** This repository contains the specification, architecture plan, server contract, reference material, and the application as far as the completed phases go. A003 (Claude Code in WSL2) plans the work and writes the documents; A004 (Claude Code in WSL2) implements it from task packets, following `docs/TASKS.md` and the workflow in `docs/agents/README.md`; `docs/STATUS.md` records the current state.
 
 > The project was called CrispRustGUI until 2026-10-13. It contains no Rust code and none is planned: the code is C++17, built with CMake, with helper scripts in Bash, Python, PowerShell, and Windows batch. Deliveries, files, and records made before the rename keep the old name.
 

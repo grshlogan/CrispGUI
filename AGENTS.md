@@ -6,7 +6,7 @@ Read [docs/START_HERE.md](docs/START_HERE.md) at the start of every task. [docs/
 
 ## Project scope
 
-CrispGUI is a Windows desktop client, written in C++17 on the EUI-NEO UI framework. It manages a local CrispASR HTTP server and transcribes audio and video files to SRT through a persistent batch queue. Version 1 covers the ASR step of a six-step media pipeline, and the job model must accept the other steps later without a rewrite. The specification is approved; Phases 0 to 3 are complete and Phase 4 is implemented ([STATUS](docs/STATUS.md)).
+CrispGUI is a Windows desktop client, written in C++17 on the EUI-NEO UI framework. It manages a local CrispASR HTTP server and transcribes audio and video files to SRT through a persistent batch queue. Version 1 covers the ASR step of a six-step media pipeline, and the job model must accept the other steps later without a rewrite. The specification is approved; Phases 0 to 4 are complete and Phase 5 is in progress ([STATUS](docs/STATUS.md)).
 
 ## Language
 
