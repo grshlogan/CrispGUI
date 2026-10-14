@@ -72,7 +72,14 @@ Commands run under `set -o pipefail` and record the real exit code. A check that
 
 ## Review dispatch
 
-A004 starts one fresh subagent per round: a general-purpose agent on Sonnet 5.5, never a fork of A004's conversation. It receives the prompt below with the placeholders filled and nothing else from the coding conversation. A new round (`R02`, ...) gets a new subagent and the previous report.
+Since 2026-10-14 each round is a fresh top-level Claude Code session that the owner starts ([workflow](../README.md#workflow)); before that it was a subagent of A004. A004 commits the candidate and the receipt, writes the prompt below with its placeholders filled to a file, and gives the owner the launch command:
+
+```bash
+mkdir -p /home/claude/projects/CrispGUI-review && cd /home/claude/projects/CrispGUI-review
+claude --model sonnet --add-dir /home/claude/projects/CrispGUI-a004 -n "<task-id> <Rxx> Review" "$(cat <prompt file>)"
+```
+
+The owner chooses the permission mode. The session gets nothing from the coding conversation but the prompt; a new round (`R02`, ...) is a new session with the previous report. When the owner says the session has ended, A004 commits the report unchanged: a reviewer may still correct its report minutes after the file appears.
 
 ```text
 You are the independent Review <Rxx> for task <TASK_ID> of CrispGUI, a C++17 Windows desktop client built in WSL2. You did not write this code, and you never change it.
@@ -99,7 +106,7 @@ Output: write your report to <CODING_ROOT>/docs/agents/tasks/<TASK_DIR>/review-<
 
 ```markdown
 # <task-id> Review <Rxx>
-- Reviewer: fresh subagent, <model>, dispatched by A004
+- Reviewer: top-level Claude Code session "<task-id> <Rxx> Review", <model>, started by the owner
 - Packet: packet.md (v<n>); candidate <sha>; base <sha>; previous report: <path or none>
 - Verdict: PASS | FAIL | BLOCKED | UNCERTAIN
 

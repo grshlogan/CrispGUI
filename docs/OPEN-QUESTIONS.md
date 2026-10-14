@@ -61,12 +61,13 @@ Owner directions of 2026-10-11:
 | OQ-4 item 1: EUI-NEO v0.6.1 comes from the shared Learn library | [ENVIRONMENT.md §4.1](ENVIRONMENT.md#41-eui-neo-snapshot) |
 | OQ-3: the owner installed the WSL2 packages | [ENVIRONMENT.md §2.1](ENVIRONMENT.md#21-wsl2-toolchain) |
 
-Owner directions of 2026-10-12 and 2026-10-13 (rounds 12 and 13):
+Owner directions of 2026-10-12 to 2026-10-14:
 
 | Decision | Recorded in |
 | --- | --- |
 | A003 becomes `A003[ClaudeCode]DocArch Planner` (decisions, documentation, direction); `A004[ClaudeCode]Master Coding` does all coding; A001 and A002 are the owner's Windows-side agents | [agents/README.md](agents/README.md#identities) |
 | OQ-9: coding on Sonnet 5.5 or Haiku 5.5 and Review on Sonnet 5.5 (owner, round 12); A003 decided a lightweight `agent-dev-loop` without coding subagents by default and with a fresh Review subagent per round; A004 merges reviewed work itself (owner's choice, round 13) | [agents/README.md](agents/README.md#workflow) |
+| Reviews run as fresh top-level Claude Code sessions that the owner starts, as the `agent-dev-loop` Skill's Claude Code CLI profile has it, after subagent Reviews died on the five-hour limit (owner, 2026-10-14) | [agents/README.md](agents/README.md#workflow), [tasks/README.md](agents/tasks/README.md#review-dispatch) |
 
 ### OQ-7: Local SRT generation
 
