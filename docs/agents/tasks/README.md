@@ -24,9 +24,11 @@ Maintained by A003 when it consumes a receipt.
 | [P5-T1](P5-T1-srt-writer/packet.md) | The SRT writer: the server's cue format from `verbose_json` | Consumed (round 21): R01 PASS | `3a11fef` |
 | [P5-T2](P5-T2-atomic-write/packet.md) | Writing a file atomically | Consumed (round 22): R01 PASS with one P2, repaired; R02 PASS; Windows cases in W5-1 | `d841b27`, `2575782` |
 | [P5-T3](P5-T3-transcription/packet.md) | Transcribing one file: the controller behind the Transcribe page | Consumed (round 23): R01 PASS; Windows run in W5 | `130bc75`, `b705173`, `e6a0600` |
-| [P5-T4](P5-T4-transcribe-page/packet-v2.md) (v2) | The Transcribe page, with the controller changes of P5-T3's Review | Ready for A004 | — |
+| [P5-T4](P5-T4-transcribe-page/packet-v2.md) (v2) | The Transcribe page, with the controller changes of P5-T3's Review | Consumed (round 25): R01 PASS (first top-level review session), one P2 left to P5-T5 | `a43bb6a`, `4411657` |
+| [P5-T5](P5-T5-kept-srt/packet.md) | A kept SRT is never overwritten or dropped by accident | Ready for A004 | — |
+| [P5-T6](P5-T6-delivery/packet.md) | The Phase 5 delivery | Waits for P5-T5 | — |
 
-Order for Phase 4: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3. Phase 5: P5-T1, P5-T2, P5-T3, then P5-T4; the Phase 5 delivery follows once Phase 4 closes.
+Order for Phase 4: P4-T1, P4-T2, P4-T4, P4-T5, then P4-T3. Phase 5: P5-T1, P5-T2, P5-T3, P5-T4, P5-T5, then P5-T6, the delivery with the W5 checks.
 
 States: `Ready for A004` → `Coding` → `Review Rxx` → `Merged` (A004) → `Consumed` (A003). `Blocked` names what is missing and who supplies it.
 
