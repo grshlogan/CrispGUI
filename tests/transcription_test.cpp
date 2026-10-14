@@ -516,31 +516,33 @@ int main() {
         }
 #if !defined(_WIN32)
         // A pipe is refused without being opened: opening one waits for the other end, so a lookup
-        // that is missing would block here (a helper thread frees it after 3 s, to fail instead of hang).
+        // that is missing would block the job. A helper thread opens the other end after 2.5 s, which
+        // frees such a job, so that the check fails instead of hanging.
         {
             const fs::path pipe = directory / "pipe.wav";
             CHECK(mkfifo(pipe.c_str(), 0600) == 0);
-            std::atomic<bool> finished{false};
+            std::atomic<bool> stop{false};
             std::thread rescue([&] {
-                for (int i = 0; i < 30 && !finished.load(); ++i) {
+                for (int i = 0; i < 25 && !stop.load(); ++i) {
                     PauseMs(100);
                 }
-                while (!finished.load()) {
+                while (!stop.load()) {
                     const int writer = open(pipe.c_str(), O_WRONLY | O_NONBLOCK);
                     if (writer >= 0) {
-                        close(writer);
+                        close(writer);  // a reader that waits for a writer is released
                         return;
                     }
                     PauseMs(50);
                 }
             });
             const int before = sample.Received();
-            CHECK(runner.Run(Ask(pipe, sample), 2000));
+            CHECK(runner.Run(Ask(pipe, sample), 2000));  // refused at once, long before the helper acts
+            runner.Finish(5000);
+            stop = true;
+            rescue.join();
             CHECK(Failed(runner.State(), TranscriptionFailure::kSourceUnreadable));
             CHECK(runner.State().detail.find("is not a regular file") != std::string::npos);
             CHECK(sample.Received() == before);
-            finished = true;
-            rescue.join();
             fs::remove(pipe, fsError);
             CHECK(Names(directory) == onlyAudio);
         }
@@ -914,6 +916,11 @@ int main() {
             CHECK(Failed(fourth.State(), TranscriptionFailure::kDestinationExists) && fourth.State().srtKept);
             CHECK(fourth.State().detail.find("is the source file itself") != std::string::npos);
             CHECK(Content(source) == AudioBytes());
+            // And not after Shutdown(), whatever is kept.
+            fourth.transcription.Shutdown();
+            CHECK(!fourth.transcription.RetryWrite());
+            CHECK(!fourth.transcription.SaveTo(rescue / "after-shutdown.srt"));
+            CHECK(!fs::exists(rescue / "after-shutdown.srt", fsError));
             fourthOwner.reset();
         }
     }
